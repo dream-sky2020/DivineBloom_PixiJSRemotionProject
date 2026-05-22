@@ -1,17 +1,29 @@
-import { Composition } from 'remotion';
-import { PixiComposition } from './PixiComposition';
+import { Composition, registerRoot } from 'remotion';
+import { PixiComposition, pixiCompositionSchema } from './PixiComposition';
+import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../simulation';
 
-export const RemotionRoot = () => {
+function RemotionRoot() {
   return (
-    <>
-      <Composition
-        id="PixiScene"
-        component={PixiComposition}
-        durationInFrames={150} // 5 秒 (30fps)
-        fps={30}
-        width={1920}
-        height={1080}
-      />
-    </>
+    <Composition
+      id="PixiBounce"
+      component={PixiComposition}
+      durationInFrames={240}
+      fps={60}
+      width={DEFAULT_WIDTH}
+      height={DEFAULT_HEIGHT}
+      schema={pixiCompositionSchema}
+      defaultProps={{
+        seed: 'new-world',
+        fromFrame: 0,
+      }}
+      calculateMetadata={({ props }) => ({
+        durationInFrames: Math.max(1, Number(props.durationInFrames ?? 240)),
+        fps: Number(props.fps ?? 60),
+        width: Number(props.width ?? DEFAULT_WIDTH),
+        height: Number(props.height ?? DEFAULT_HEIGHT),
+      })}
+    />
   );
-};
+}
+
+registerRoot(RemotionRoot);
