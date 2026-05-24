@@ -9,7 +9,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "remotion": "remotion",
-    "render": "remotion render src/remotion/Root.tsx PixiBounce renders/manual.mp4"
+    "render": "remotion render src/remotion/Root.tsx PixiBounce out/video.mp4"
   },
   "dependencies": {
     "@babel/parser": "^7.29.3",
@@ -19,12 +19,12 @@
     "react": "latest",
     "react-dom": "latest",
     "remotion": "latest",
-    "vite": "latest",
     "zod": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "typescript": "latest"
+    "typescript": "latest",
+    "vite": "^8.0.14"
   }
 }

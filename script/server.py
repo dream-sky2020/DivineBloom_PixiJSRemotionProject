@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT_DIR = ROOT / "renders"
+OUTPUT_DIR = ROOT / "out"
 HOST = "127.0.0.1"
 PORT = 8787
 
