@@ -1,0 +1,54 @@
+---
+description: 强制执行项目颜色系统规范，确保所有颜色均引用自 src/color.css 且命名具有描述性。
+globs: **/*.{css,tsx}
+alwaysApply: true
+---
+
+# 颜色系统规范
+
+为了保持项目视觉一致性并简化颜色管理，所有开发人员（包括 AI 助手）在编写 UI 相关代码时必须遵守以下规则：
+
+## 1. 适用范围
+本规则仅适用于 **.tsx** 页面/组件文件和 **.css** 样式文件。
+普通的逻辑文件（如 .ts 脚本）不受此颜色变量引用限制。
+
+## 2. 颜色引用规则
+在上述适用范围内，禁止使用硬编码的颜色值（如 `#FFFFFF`, `rgb(0,0,0)`, `white` 等）。
+**必须**使用 `src/color.css` 中定义的 CSS 变量。
+
+```css
+/* ❌ 错误示例 */
+.my-component {
+  color: #7ee7d9;
+  background-color: white;
+}
+
+/* ✅ 正确示例 */
+.my-component {
+  color: var(--cyan);
+  background-color: var(--white-blue);
+}
+```
+
+## 2. 颜色命名规范
+在 `src/color.css` 中定义新颜色时，必须使用**描述性名称**（如红色、粉色、黄色、深蓝色等），严禁使用功能性或过于宽泛的名称（如 `primary`, `theme-color`, `active-bg`）。
+
+```css
+/* ❌ 错误示例 */
+:root {
+  --primary-color: #7ee7d9;
+  --bg-main: #07111f;
+}
+
+/* ✅ 正确示例 */
+:root {
+  --cyan: #7ee7d9;
+  --dark-navy: #07111f;
+  --pale-blue: #d7e3f5;
+}
+```
+
+## 3. 检查清单
+- 修改样式前，先查看 `src/color.css` 已有的变量。
+- 如果需要新颜色，先在 `src/color.css` 中按描述性命名法添加变量。
+- 严禁在代码中直接书写十六进制、RGB 或颜色关键字。

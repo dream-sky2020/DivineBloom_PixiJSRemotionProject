@@ -19,19 +19,75 @@ PixiJS 数据驱动渲染引擎架构设计方案
 采用平铺式指令流，易于人类阅读和流式解析。
 示例：
 [FRAME 0]
-<BALL id=1 x=100.5 y=200.0 r=20 c=#ff0000>
+<SPRITE id="hero_1" src="hero_idle" x="500" y="300">  <!-- 这里的 hero_idle 可能是合图里的一个帧 -->
+<SPRITE id="bg_1" src="forest_bg" x="0" y="0">        <!-- 这里的 forest_bg 可能是个独立大图 -->
+<SPRITE 
+    id="hero_01" 
+    src="hero_idle"        
+    x="520.5" y="300.0"         <!-- 坐标 -->
+    anchorX="0.5"              <!-- 中心锚点 -->
+    anchorY="0.5"              <!-- 中心锚点 -->
+    scaleX="-1"               
+    scaleY="-1"               
+    rotation="0.1"
+    alphaR="1.0"
+    alphaG="0.5"
+    alphaB="0.2"
+    alpha="0.8"
+    tint="#ffffff"            
+    blendMode="normal"          
+    zIndex="10"              <!-- 渲染层级 -->
+    filter="outline(2)"     <!-- 描边滤镜 可以暂时不实现-->
+>
 <SPRITE id=hero src="hero.png" x=500 y=300>
+
+// 渲染层建立的混合模式映射表
+const blendModeMapping = {
+    'none':     PIXI.BLEND_MODES.NONE,     // 关闭混合（全屏大背景、极致性能）
+    'normal':   PIXI.BLEND_MODES.NORMAL,   // 正常 Alpha 混合（绝大多数普通精灵）
+    'add':      PIXI.BLEND_MODES.ADD,      // 加法混合（特效、受击闪白、弹幕）
+    'multiply': PIXI.BLEND_MODES.MULTIPLY, // 正片叠底（环境阴影、暗部）
+    'subtract': PIXI.BLEND_MODES.SUBTRACT  // 减法混合（高级负片、数字故障特效）
+};
+
 [FRAME 1]
 <BALL id=1 x=102.5 y=201.0>
 
 * 关键点：每一帧记录的是“绝对位置”，支持随机跳帧访问，防止误差累积。
 
+3.1 资源引用与命名契约 (Naming Convention)
+- 独立图片：src="bg_forest.png" (不含 .@. 标记，作为独立 BaseTexture 处理)
+- 合图子图：src="atlasID.@.子图id.png" (必须包含 .@. 标记)
+    * 校验规则：同一个 ParticleContainer (group) 内的所有 PARTICLE 必须拥有相同的 atlasID。
+    * 自动化：渲染器通过 .@. 标记自动识别并从对应的合图中提取纹理。
+
+3.2 指令示例
+[FRAME 0]
+<SPRITE id=hero_01 src="hero.@.run" x=520.5 y=300.0 anchor=0.5>
+
+<!-- 1. 定义粒子容器：显式绑定合图，可配置混合模式与全局特效 -->
+<PARTICLECONTAINER id="fx_layer" atlas="fx_atlas" blendMode="add" tintAdd=#220000>
+<!-- 2. 渲染普通精灵 -->
+<SPRITE id="hero_01" src="hero.@.run" x=520.5 y=300.0 anchor=0.5>
+<!-- 3. 渲染粒子：必须指定所属的 particleContainer -->
+<PARTICLE id="p_103" particleContainer="fx_layer" src="fx.@.fire" x=100 y=200 scale=0.5 rotation=1.57 alpha=0.8>
+
+
 4. 渲染层优化策略
 -----------------
 - 扁平化渲染：放弃复杂的 Container 嵌套，逻辑层直接计算绝对坐标。
 - 对象池 (Object Pooling)：不重复创建/销毁精灵，根据 ID 复用已有的 Pixi 对象。
-- 粒子容器 (ParticleContainer)：对于成千上万个重复图片（如弹幕），自动切换至粒子容器以获取 GPU 加速。
+- 粒子容器 (ParticleContainer)：由逻辑层根据对象类型（如弹幕、粒子系统）显式指定容器归属，渲染层仅负责按指令挂载，实现 GPU 加速，避免渲染层进行实时启发式判断。
 - 滤镜 (Filters)：作为可选属性附加在对象指令中，由渲染器统一处理。
+- 颜色混合 (Tinting System)：
+    * TintMultiply (默认)：<SPRITE tintMul=#FF0000>，实现原图与颜色的乘法混合（Pixi 原生支持）。
+    * TintAdditive (提亮)：<SPRITE tintAdd=#550000>，实现原图与颜色的加法混合，常用于受击闪白。
+    * TintSubtractive (变暗)：<SPRITE tintSub=#220000>，实现原图与颜色的减法混合。
+    * 注意：渲染层通过 ColorMatrixFilter 统一实现 Additive 和 Subtractive 效果。
+- 通道透明度 (Channel Alpha)：
+    * alphaR / alphaG / alphaB：独立控制红、绿、蓝三个通道的强度。
+    * 结合全局 alpha，可实现色差、分色淡出或高级数字故障特效。
+    * 渲染层实现：通过 ColorMatrixFilter 的对角线元素进行实时映射。
 
 5. 性能考量
 -----------

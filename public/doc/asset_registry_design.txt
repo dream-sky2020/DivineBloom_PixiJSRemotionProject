@@ -1,0 +1,71 @@
+============================================================
+资产注册表 (Asset Registry) 构建方案
+============================================================
+
+1. 核心目标
+-----------
+- 屏蔽物理路径：逻辑层通过语义化 ID (如 "hero_idle") 引用资源，不关心其底层是单图还是合图子图。
+- 集中管理：所有资源的物理映射、预加载策略、缩放因子等元数据统一管理。
+- 动态替换：支持在不修改逻辑代码的情况下，通过配置文件替换美术资源。
+
+2. 映射表结构 (Registry Schema)
+------------------------------
+建议采用 JSON 格式定义，支持以下两种映射模式：
+
+{
+  "assets": {
+    // 模式 A: 独立图片 (Single Image)
+    "bg_forest": {
+      "type": "image",
+      "url": "assets/env/forest_v2.png"
+    },
+
+    // 模式 B: 合图子图 (Atlas Frame)
+    "hero_idle": {
+      "type": "frame",
+      "atlas": "hero_atlas", // 引用下方定义的合图 ID
+      "frame": "idle_001"    // 合图 JSON 中的原始帧名
+    },
+
+    "hero_run": {
+      "type": "frame",
+      "atlas": "hero_atlas",
+      "frame": "run_005"
+    }
+  },
+
+  "containers": {
+    // 合图物理文件定义
+    "hero_atlas": {
+      "json": "assets/sprites/hero.json",
+      "image": "assets/sprites/hero.png" // 可选，通常 JSON 内已有定义
+    }
+  }
+}
+
+3. 资产管理系统流程
+------------------
+
+3.1 加载阶段 (Initialization)
+- 扫描 `containers`：批量加载所有 `.json` 合图文件。
+- 扫描 `assets` 中的 `type: "image"`：加载所有独立图片。
+- 建立内存索引：
+  Map<AssetID, PIXI.Texture> 
+  例如：registry.get("hero_idle") -> 返回对应的 PIXI.Texture 对象。
+
+3.2 运行阶段 (Runtime)
+- 渲染器解析 DSL 指令：`<SPRITE src="hero_idle" ...>`
+- 渲染器调用：`const texture = AssetManager.getTexture("hero_idle");`
+- 渲染器赋值：`pixiSprite.texture = texture;`
+
+4. 关键优势
+-----------
+- 自动降级：如果某个合图子图丢失，管理系统可以自动返回一个 "missing_texture" 的占位图，而不会导致渲染崩溃。
+- 性能优化：管理系统可以统计每个 AssetID 的使用频率，对于不再使用的单图进行引用计数释放。
+- 逻辑纯粹：DSL 脚本中只会出现 "hero_run" 这种业务词汇，没有任何文件路径干扰。
+
+5. 扩展性考虑
+-------------
+- 多分辨率支持：可以在映射表中加入 `@2x`, `@3x` 的自动切换逻辑。
+- 别名系统 (Alias)：支持多个 AssetID 指向同一个物理纹理。
+- 序列帧封装：可以在注册表中定义 "hero_walk_anim": ["hero_walk_1", "hero_walk_2"...]，虽然逻辑层目前是按帧驱动，但为未来扩展留出空间。

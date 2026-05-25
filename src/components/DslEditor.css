@@ -1,0 +1,22 @@
+.dsl-editor-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--transparent-white-12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--dark-gray);
+  width: 100%;
+}
+
+.dsl-editor-main {
+  flex: 1;
+}
+
+.cm-editor {
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.cm-focused {
+  outline: none !important;
+}

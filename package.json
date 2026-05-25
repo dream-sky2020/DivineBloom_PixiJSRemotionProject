@@ -8,16 +8,21 @@
     "server": "python script/server.py",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "manifest": "python script/asset_manifest_manager.py",
     "remotion": "remotion",
     "render": "remotion render src/remotion/Root.tsx PixiBounce out/video.mp4"
   },
   "dependencies": {
     "@babel/parser": "^7.29.3",
+    "@codemirror/lang-javascript": "^6.2.5",
     "@remotion/cli": "latest",
+    "@uiw/codemirror-theme-vscode": "^4.25.10",
+    "@uiw/react-codemirror": "^4.25.10",
     "@vitejs/plugin-react": "latest",
     "pixi.js": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-router-dom": "^7.15.1",
     "remotion": "latest",
     "zod": "latest"
   },

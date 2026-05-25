@@ -1,0 +1,25 @@
+:root {
+  /* 背景与基础深色 */
+  --dark-navy: #07111f;          /* 深海军蓝，用于主背景 */
+  --deep-black-blue: #020817;    /* 极深蓝黑，用于画布背景 */
+  --dark-gray: #1e1e1e;          /* 深灰色，用于编辑器背景 */
+  --darker-navy: #081423;        /* 稍深的蓝黑色，用于卡片背景 */
+
+  /* 文字与浅色 */
+  --white-blue: #eef4ff;         /* 偏蓝的白色，用于主文字 */
+  --gray-blue: #b8c7dd;          /* 灰蓝色，用于辅助文字 */
+  --pale-blue: #d7e3f5;          /* 苍蓝色，用于状态文字 */
+
+  /* 品牌与功能色 */
+  --cyan: #7ee7d9;               /* 青色，用于主要按钮和强调 */
+  --blue: #2f7fff;               /* 蓝色，用于渐变和链接 */
+  --yellow: #ffce73;             /* 黄色，用于录制按钮 */
+  
+  /* 半透明色 */
+  --transparent-white-08: rgba(255, 255, 255, 0.08);
+  --transparent-white-12: rgba(255, 255, 255, 0.12);
+  --transparent-white-05: rgba(255, 255, 255, 0.05);
+  --transparent-blue-30: rgba(47, 127, 255, 0.3);
+  --transparent-cyan-20: rgba(0, 220, 180, 0.2);
+  --transparent-cyan-10: rgba(126, 231, 217, 0.1);
+}

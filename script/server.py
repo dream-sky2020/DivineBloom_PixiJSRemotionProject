@@ -11,6 +11,8 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "out"
+PUBLIC_DIR = ROOT / "public"
+CONFIG_FILE = PUBLIC_DIR / "asset_custom_config.json"
 HOST = "127.0.0.1"
 PORT = 8787
 
@@ -31,17 +33,67 @@ class RenderHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self) -> None:
         self.respond(204, None)
 
-    def do_POST(self) -> None:
-        if self.path != "/render":
+    def do_GET(self) -> None:
+        if self.path == "/asset/config":
+            try:
+                config = {}
+                if CONFIG_FILE.exists():
+                    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                self.respond(200, {"ok": True, "config": config})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+        else:
             self.respond(404, {"ok": False, "error": "not found"})
-            return
 
-        try:
-            payload = self.read_json()
-            result = render_video(payload)
-            self.respond(200, {"ok": True, "output": result})
-        except Exception as error:  # noqa: BLE001 - errors are returned to the browser.
-            self.respond(500, {"ok": False, "error": str(error)})
+    def do_POST(self) -> None:
+        if self.path == "/render":
+            try:
+                payload = self.read_json()
+                result = render_video(payload)
+                self.respond(200, {"ok": True, "output": result})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+        
+        elif self.path == "/manifest/refresh":
+            try:
+                script_path = ROOT / "script" / "asset_manifest_manager.py"
+                subprocess.run(["python", str(script_path)], check=True)
+                self.respond(200, {"ok": True, "message": "Manifest refreshed"})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+
+        elif self.path == "/asset/update":
+            try:
+                payload = self.read_json()
+                # payload format: {"path": "assets/ui/hero.png", "alias": "hero", "tags": ["character", "player"]}
+                asset_path = payload.get("path")
+                if not asset_path:
+                    raise ValueError("Asset path is required")
+                
+                config = {}
+                if CONFIG_FILE.exists():
+                    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                        config = json.load(f)
+                
+                config[asset_path] = {
+                    "alias": payload.get("alias"),
+                    "tags": payload.get("tags", [])
+                }
+                
+                with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(config, f, indent=2, ensure_ascii=False)
+                
+                # 更新配置后自动刷新 Manifest
+                script_path = ROOT / "script" / "asset_manifest_manager.py"
+                subprocess.run(["python", str(script_path)], check=True)
+                
+                self.respond(200, {"ok": True, "message": "Asset updated and manifest refreshed"})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+        
+        else:
+            self.respond(404, {"ok": False, "error": "not found"})
 
     def read_json(self) -> dict[str, Any]:
         length = safe_int(self.headers.get("content-length"), 0)
@@ -52,7 +104,7 @@ class RenderHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "content-type")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         if data is None:
             self.end_headers()
             return
@@ -62,6 +114,7 @@ class RenderHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(encoded)))
         self.end_headers()
         self.wfile.write(encoded)
+        self.wfile.flush()
 
 
 def render_video(payload: dict[str, Any]) -> str:

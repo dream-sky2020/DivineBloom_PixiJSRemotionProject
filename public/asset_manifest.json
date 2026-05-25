@@ -1,0 +1,20 @@
+[
+  {
+    "id": "asset_manifest",
+    "url": "/asset_manifest.json",
+    "type": "json",
+    "path": "asset_manifest.json"
+  },
+  {
+    "id": "favicon",
+    "url": "/favicon.svg",
+    "type": "image",
+    "path": "favicon.svg"
+  },
+  {
+    "id": "icons",
+    "url": "/icons.svg",
+    "type": "image",
+    "path": "icons.svg"
+  }
+]
