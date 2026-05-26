@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Image
+    name="hero_poster"
+    width="1920"
+    height="1080"
+    transparent="false"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="render_dsl.xsd">
+
+    <FRAME id="0" cameraX="0.0" cameraY="0.0">
+        <SPRITE
+            id="hero_bg"
+            image="image/hero.png"
+            x="960.0"
+            y="540.0"
+            anchorX="0.5"
+            anchorY="0.5"
+            scaleX="1.0"
+            scaleY="1.0"
+            zIndex="0"
+            alpha="0.85"
+            tint="0xffffff"
+        />
+
+        <SPRITE
+            id="logo"
+            image="favicon"
+            x="1600.0"
+            y="180.0"
+            anchorX="0.5"
+            anchorY="0.5"
+            scaleX="2.5"
+            scaleY="2.5"
+            zIndex="10"
+        />
+    </FRAME>
+</Image>

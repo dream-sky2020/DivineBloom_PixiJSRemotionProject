@@ -8,6 +8,7 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_DIR = ROOT / "out"
@@ -34,7 +35,11 @@ class RenderHandler(BaseHTTPRequestHandler):
         self.respond(204, None)
 
     def do_GET(self) -> None:
-        if self.path == "/asset/config":
+        parsed_url = urlparse(self.path)
+        route = parsed_url.path
+        query = parse_qs(parsed_url.query)
+
+        if route == "/asset/config":
             try:
                 config = {}
                 if CONFIG_FILE.exists():
@@ -43,11 +48,28 @@ class RenderHandler(BaseHTTPRequestHandler):
                 self.respond(200, {"ok": True, "config": config})
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
+        elif route == "/file/pick":
+            try:
+                picked_path = pick_local_file()
+                self.respond(200, {"ok": True, "path": picked_path})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+        elif route == "/file/read":
+            try:
+                raw_path = first_query_value(query, "path")
+                if not raw_path:
+                    raise ValueError("缺少 path 参数")
+                content = read_local_text_file(raw_path)
+                self.respond(200, {"ok": True, "path": raw_path, "content": content})
+            except Exception as error:
+                self.respond(400, {"ok": False, "error": str(error)})
         else:
             self.respond(404, {"ok": False, "error": "not found"})
 
     def do_POST(self) -> None:
-        if self.path == "/render":
+        route = urlparse(self.path).path
+
+        if route == "/render":
             try:
                 payload = self.read_json()
                 result = render_video(payload)
@@ -55,7 +77,7 @@ class RenderHandler(BaseHTTPRequestHandler):
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
         
-        elif self.path == "/manifest/refresh":
+        elif route == "/manifest/refresh":
             try:
                 script_path = ROOT / "script" / "asset_manifest_manager.py"
                 subprocess.run(["python", str(script_path)], check=True)
@@ -70,7 +92,7 @@ class RenderHandler(BaseHTTPRequestHandler):
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
 
-        elif self.path == "/asset/update":
+        elif route == "/asset/update":
             try:
                 payload = self.read_json()
                 # payload format: {"path": "assets/ui/hero.png", "alias": "hero", "tags": ["character", "player"]}
@@ -122,6 +144,53 @@ class RenderHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
         self.wfile.flush()
+
+
+def first_query_value(query: dict[str, list[str]], key: str) -> str:
+    values = query.get(key)
+    if not values:
+        return ""
+    return values[0]
+
+
+def pick_local_file() -> str:
+    import tkinter as tk
+    from tkinter import filedialog
+
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    selected = filedialog.askopenfilename(
+        title="选择 DXML/XML 文件",
+        filetypes=[
+            ("DXML/XML 文件", "*.dxml *.xml"),
+            ("文本文件", "*.txt *.json *.yaml *.yml"),
+            ("所有文件", "*.*"),
+        ],
+    )
+    root.destroy()
+
+    return selected
+
+
+def read_local_text_file(raw_path: str) -> str:
+    file_path = Path(raw_path).expanduser().resolve()
+    if not file_path.exists():
+        raise FileNotFoundError(f"文件不存在：{file_path}")
+    if not file_path.is_file():
+        raise ValueError(f"目标不是文件：{file_path}")
+
+    file_size = file_path.stat().st_size
+    if file_size > 5 * 1024 * 1024:
+        raise ValueError("文件过大（>5MB），请拆分后再读取")
+
+    for encoding in ("utf-8-sig", "utf-8", "gb18030"):
+        try:
+            return file_path.read_text(encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+
+    raise ValueError("文件不是可读取的文本编码（支持 utf-8 / gb18030）")
 
 
 def render_video(payload: dict[str, Any]) -> str:

@@ -69,6 +69,8 @@ export interface SceneFrame {
 export interface ImageRenderDocument {
   type: 'image';
   name: string;
+  width: number;
+  height: number;
   transparent: boolean;
   frames: SceneFrame[];
 }
@@ -76,6 +78,8 @@ export interface ImageRenderDocument {
 export interface VideoRenderDocument {
   type: 'video';
   name: string;
+  width: number;
+  height: number;
   fps: number;
   totalFrames: number;
   frames: SceneFrame[];

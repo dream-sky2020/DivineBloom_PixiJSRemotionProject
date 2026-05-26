@@ -18,6 +18,18 @@
   padding: 20px;
 }
 
+.app-shell.full-width {
+  align-items: stretch;
+}
+
+.app-shell.full-width > .hero,
+.app-shell.full-width > .workspace-grid,
+.app-shell.full-width > .stage-card,
+.app-shell.full-width > .status {
+  width: 100%;
+  max-width: none;
+}
+
 .hero {
   width: min(100%, 1200px);
   border: 1px solid var(--light-slate);
@@ -155,6 +167,65 @@ button:disabled {
 .workspace-panel {
   display: grid;
   gap: 12px;
+}
+
+.dsl-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.dsl-file-path {
+  margin: 10px 0 0;
+  color: var(--medium-slate);
+  font-size: 13px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.dsl-workspace-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.dsl-preview-panel {
+  justify-items: center;
+}
+
+.dsl-preview-panel .panel-title {
+  justify-self: start;
+  width: 100%;
+}
+
+.dsl-preview-center {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+
+.dsl-preview-center .pixi-host {
+  width: min(100%, 1080px);
+}
+
+.dsl-preview-panel .json-preview {
+  width: 100%;
+}
+
+.dsl-frame-toolbar {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+}
+
+.dsl-frame-input {
+  min-width: 120px;
+}
+
+.dsl-frame-info {
+  color: var(--medium-slate);
+  font-size: 13px;
 }
 
 .panel-title {

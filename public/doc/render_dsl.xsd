@@ -176,6 +176,12 @@
       <xs:attribute name="name" type="xs:string" use="required">
         <xs:annotation><xs:documentation>图片渲染任务名称</xs:documentation></xs:annotation>
       </xs:attribute>
+      <xs:attribute name="width" type="xs:positiveInteger" use="required">
+        <xs:annotation><xs:documentation>输出画布宽度（像素）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="height" type="xs:positiveInteger" use="required">
+        <xs:annotation><xs:documentation>输出画布高度（像素）</xs:documentation></xs:annotation>
+      </xs:attribute>
       <xs:attribute name="transparent" type="xs:boolean" default="false">
         <xs:annotation><xs:documentation>是否使用透明背景</xs:documentation></xs:annotation>
       </xs:attribute>
@@ -190,6 +196,12 @@
       </xs:sequence>
       <xs:attribute name="name" type="xs:string" use="required">
         <xs:annotation><xs:documentation>视频渲染任务名称</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="width" type="xs:positiveInteger" use="required">
+        <xs:annotation><xs:documentation>输出画布宽度（像素）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="height" type="xs:positiveInteger" use="required">
+        <xs:annotation><xs:documentation>输出画布高度（像素）</xs:documentation></xs:annotation>
       </xs:attribute>
       <xs:attribute name="fps" type="xs:positiveInteger" use="required">
         <xs:annotation><xs:documentation>每秒帧率</xs:documentation></xs:annotation>

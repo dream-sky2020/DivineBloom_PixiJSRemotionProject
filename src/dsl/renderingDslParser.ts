@@ -86,6 +86,8 @@ function elementToImageDocument(documentElement: Element): RenderDocument {
   return {
     type: 'image',
     name: readRequiredString(attributes, 'name', 'Image'),
+    width: readRequiredPositiveInteger(attributes, 'width', 'Image'),
+    height: readRequiredPositiveInteger(attributes, 'height', 'Image'),
     transparent: readOptionalBoolean(attributes.transparent, 'transparent') ?? false,
     frames,
   };
@@ -93,12 +95,16 @@ function elementToImageDocument(documentElement: Element): RenderDocument {
 
 function elementToVideoDocument(documentElement: Element): RenderDocument {
   const attributes = elementAttributes(documentElement);
+  const width = readRequiredPositiveInteger(attributes, 'width', 'Video');
+  const height = readRequiredPositiveInteger(attributes, 'height', 'Video');
   const fps = readRequiredPositiveInteger(attributes, 'fps', 'Video');
   const totalFrames = readRequiredPositiveInteger(attributes, 'totalFrames', 'Video');
 
   return {
     type: 'video',
     name: readRequiredString(attributes, 'name', 'Video'),
+    width,
+    height,
     fps,
     totalFrames,
     frames: readRootFrames(documentElement),

@@ -7,11 +7,19 @@ import type { SceneFrame } from '../types/rendering';
 
 type DslSceneCanvasProps = {
   frame: SceneFrame | null;
+  width?: number;
+  height?: number;
   transparent?: boolean;
   onRenderError?: (message: string) => void;
 };
 
-export function DslSceneCanvas({ frame, transparent = false, onRenderError }: DslSceneCanvasProps) {
+export function DslSceneCanvas({
+  frame,
+  width = DEFAULT_WIDTH,
+  height = DEFAULT_HEIGHT,
+  transparent = false,
+  onRenderError,
+}: DslSceneCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<Application | null>(null);
   const rendererRef = useRef<PixiRenderer | null>(null);
@@ -38,8 +46,8 @@ export function DslSceneCanvas({ frame, transparent = false, onRenderError }: Ds
 
     void app
       .init({
-        width: DEFAULT_WIDTH,
-        height: DEFAULT_HEIGHT,
+        width,
+        height,
         antialias: true,
         backgroundAlpha: transparent ? 0 : 1,
         backgroundColor: OPAQUE_PREVIEW_BACKGROUND,
@@ -73,7 +81,7 @@ export function DslSceneCanvas({ frame, transparent = false, onRenderError }: Ds
       appRef.current = null;
       rendererRef.current = null;
     };
-  }, [transparent]);
+  }, [height, transparent, width]);
 
   useEffect(() => {
     const renderer = rendererRef.current;
