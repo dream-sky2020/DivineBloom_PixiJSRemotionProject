@@ -1,22 +1,32 @@
 .dsl-editor-container {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--transparent-white-12);
-  border-radius: 12px;
+  border: 1px solid var(--light-slate);
+  border-radius: 8px;
   overflow: hidden;
-  background: var(--dark-gray);
   width: 100%;
+  background: var(--near-white);
+}
+
+.dsl-editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--light-slate);
+  background: var(--soft-gray);
+  color: var(--ink-gray);
+  font-size: 13px;
+  font-weight: 650;
+  padding: 8px 12px;
+}
+
+.dsl-editor-hint {
+  color: var(--medium-slate);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .dsl-editor-main {
   flex: 1;
-}
-
-.cm-editor {
-  font-family: 'Fira Code', 'Courier New', monospace;
-  font-size: 14px;
-}
-
-.cm-focused {
-  outline: none !important;
+  height: 560px;
 }

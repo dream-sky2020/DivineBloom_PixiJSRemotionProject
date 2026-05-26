@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 定义基础属性类型 -->
+  <xs:simpleType name="percentage">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- 1. 角色结构 (CHARACTER) -->
+  <xs:element name="CHARACTER">
+    <xs:complexType>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>唯一标识符</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="name" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>角色名称</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="hp" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>当前生命值</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="hpMax" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>最大生命值</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="sp" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>当前精神值</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="spMin" type="xs:integer" default="-45">
+        <xs:annotation><xs:documentation>精神值下限</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="spMax" type="xs:integer" default="45">
+        <xs:annotation><xs:documentation>精神值上限</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="balance" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>混乱阈值（多个阶段，如 120,80,40）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="speedMin" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>速度范围下限</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="speedMax" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>速度范围上限</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="slots" type="xs:integer" default="1">
+        <xs:annotation><xs:documentation>当前可用技能槽位</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="slotsMax" type="xs:integer" default="5">
+        <xs:annotation><xs:documentation>技能槽位增长上限</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="drawCount" type="xs:integer" default="2">
+        <xs:annotation><xs:documentation>每回合抽取技能数量</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="sanityType" type="xs:string" default="default">
+        <xs:annotation><xs:documentation>理智系统类型（处理独特理智逻辑）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="resistSlash" type="percentage" default="1.0">
+        <xs:annotation><xs:documentation>斩击抗性倍率</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="resistPierce" type="percentage" default="1.0">
+        <xs:annotation><xs:documentation>穿刺抗性倍率</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="resistBlunt" type="percentage" default="1.0">
+        <xs:annotation><xs:documentation>打击抗性倍率</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="animationId" type="xs:string">
+        <xs:annotation><xs:documentation>关联的战斗动画资源ID</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 2. 技能结构 (SKILL) -->
+  <xs:element name="SKILL">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="COIN" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>技能唯一ID</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="name" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>技能名称</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="basePower" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>基础威力（未投掷硬币时的值）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="coinPower" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>硬币威力（正面时的增减值）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="coinCount" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>硬币总数</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="type">
+        <xs:annotation><xs:documentation>攻击类型：slash, pierce, blunt</xs:documentation></xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="slash"/>
+            <xs:enumeration value="pierce"/>
+            <xs:enumeration value="blunt"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="attribute" type="xs:string">
+        <xs:annotation><xs:documentation>罪恶属性</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="skillLevel" type="xs:integer" default="30">
+        <xs:annotation><xs:documentation>技能等级（用于拼点修正）</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 3. 硬币结构 (COIN) -->
+  <xs:element name="COIN">
+    <xs:complexType>
+      <xs:attribute name="frontValue" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>正面时的数值加成</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="backValue" type="xs:integer" use="required">
+        <xs:annotation><xs:documentation>反面时的数值加成</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="isDestroyed" type="xs:boolean" default="false">
+        <xs:annotation><xs:documentation>是否在拼点中被摧毁</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="side">
+        <xs:annotation><xs:documentation>当前面：front(正面), back(反面), undecided(未决定)</xs:documentation></xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="front"/>
+            <xs:enumeration value="back"/>
+            <xs:enumeration value="undecided"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="currentValue" type="xs:integer" default="0">
+        <xs:annotation><xs:documentation>投掷后的最终计算值</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 4. 状态效果 (STATUS) -->
+  <xs:element name="STATUS">
+    <xs:complexType>
+      <xs:attribute name="type" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>状态类型（如：guaranteed_heads）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="stack" type="xs:integer" default="1">
+        <xs:annotation><xs:documentation>堆叠层数</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="count" type="xs:integer" default="1">
+        <xs:annotation><xs:documentation>持续回合数或触发次数</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="targetId" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>作用目标ID</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 5. 罪孽资源 (SIN) -->
+  <xs:element name="SIN">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="substitutes" minOccurs="0">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="SUBSTITUTE" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:attribute name="id" type="xs:string" use="required">
+                    <xs:annotation><xs:documentation>可以用来替代的罪孽的id</xs:documentation></xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="rate" type="percentage" default="1.0">
+                    <xs:annotation><xs:documentation>转化率</xs:documentation></xs:annotation>
+                  </xs:attribute>
+                  <xs:attribute name="priority" type="xs:integer" default="1">
+                    <xs:annotation><xs:documentation>优先级</xs:documentation></xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>唯一标识符</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="name" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>罪孽名称</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="maxValue" type="xs:integer" default="99">
+        <xs:annotation><xs:documentation>存储上限</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 根容器 -->
+  <xs:element name="BATTLE_DATA">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="CHARACTER"/>
+        <xs:element ref="SKILL"/>
+        <xs:element ref="STATUS"/>
+        <xs:element ref="SIN"/>
+      </xs:choice>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

@@ -25,3 +25,12 @@ dist-ssr
 
 # Output
 out/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS
+.DS_Store
+Thumbs.db

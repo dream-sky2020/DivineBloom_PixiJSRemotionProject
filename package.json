@@ -14,11 +14,10 @@
   },
   "dependencies": {
     "@babel/parser": "^7.29.3",
-    "@codemirror/lang-javascript": "^6.2.5",
+    "@monaco-editor/react": "^4.7.0",
     "@remotion/cli": "latest",
-    "@uiw/codemirror-theme-vscode": "^4.25.10",
-    "@uiw/react-codemirror": "^4.25.10",
     "@vitejs/plugin-react": "latest",
+    "idb": "^8.0.3",
     "pixi.js": "latest",
     "react": "latest",
     "react-dom": "latest",

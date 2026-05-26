@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BATTLE_DATA 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="battle_dsl.xsd">
+
+<!-- # 罪孽资源定义 (Sin Resources) -->
+
+<!-- 双标 -->
+<SIN id="double_standard" name="双标" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="hypocrisy" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 虚伪 -->
+<SIN id="hypocrisy" name="虚伪" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="double_standard" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 冷酷 -->
+<SIN id="ruthlessness" name="冷酷" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="destruction" rate="0.8" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 傲慢 -->
+<SIN id="arrogance" name="傲慢" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="hypocrisy" rate="1.2" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 绝望 -->
+<SIN id="despair" name="绝望" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="sloth" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 怠惰 -->
+<SIN id="sloth" name="怠惰" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="despair" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 毁灭 -->
+<SIN id="destruction" name="毁灭" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="wrath" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 暴怒 -->
+<SIN id="wrath" name="暴怒" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="destruction" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 色欲 -->
+<SIN id="lust" name="色欲" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="envy" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+<!-- 嫉妒 -->
+<SIN id="envy" name="嫉妒" maxValue="99">
+    <substitutes>
+        <SUBSTITUTE id="lust" rate="1.0" priority="1" />
+    </substitutes>
+</SIN>
+
+</BATTLE_DATA>

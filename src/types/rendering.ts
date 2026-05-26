@@ -1,89 +1,84 @@
 /**
- * 结构化渲染数据定义 - 深度适配 PixiJS 属性
+ * 渲染 DSL 结构化数据定义，对应 public/doc/rendering_data_structures.txt。
  */
 
-export interface Point {
-  x: number;
-  y: number;
-}
-
-export interface TextData {
-  type: 'text';
-  text: string;
-  x: number;
-  y: number;
-  anchor?: Point;
-  style?: {
-    fontFamily?: string;
-    fontSize?: number;
-    fill?: string | number;
-    align?: 'left' | 'center' | 'right';
-    fontWeight?: string;
-    stroke?: string | number;
-    strokeThickness?: number;
-    dropShadow?: boolean;
-    dropShadowColor?: string | number;
-    wordWrap?: boolean;
-    wordWrapWidth?: number;
-  };
-  alpha?: number;
-  rotation?: number;
-  scale?: Point;
-  visible?: boolean;
-}
+export type BlendMode = 'none' | 'normal' | 'add' | 'multiply' | 'subtract' | 'screen';
 
 export interface SpriteData {
   type: 'sprite';
-  assetUrl: string;
+  id: string;
+  atlas?: string;
+  frame?: string;
+  image?: string;
   x: number;
   y: number;
-  anchor?: Point;
-  width?: number;
-  height?: number;
-  scale?: Point;
-  rotation?: number;
-  tint?: number; // PixiJS tint 通常使用十六进制数字
-  alpha?: number;
-  visible?: boolean;
-  blendMode?: 'normal' | 'add' | 'multiply' | 'screen';
+  anchorX: number;
+  anchorY: number;
+  zIndex: number;
+  scaleX: number;
+  scaleY: number;
+  rotation: number;
+  alpha: number;
+  visible: boolean;
+  blendMode: BlendMode;
+  tint: number;
 }
 
 /**
- * 单个粒子的数据定义
+ * 挂载在 PARTICLECONTAINER 下的单个粒子单元。
  */
-export interface ParticleItem {
+export interface ParticleData {
+  type: 'particle';
+  id: string;
+  particleContainer: string;
+  frame: string;
   x: number;
   y: number;
-  frame?: string | number; // 子图名称（对应 Spritesheet 中的 key）或索引
-  scale?: number;
-  rotation?: number;
-  alpha?: number;
-  tint?: number;
+  scaleX: number;
+  scaleY: number;
+  anchorX: number;
+  anchorY: number;
+  rotation: number;
+  alpha: number;
+  tint: number;
 }
 
 /**
- * 粒子容器数据定义 - 对应 PixiJS 的 ParticleContainer
+ * 高性能粒子渲染容器，同一容器内的粒子共享 atlas。
  */
 export interface ParticleContainerData {
   type: 'particleContainer';
-  assetUrl: string; // 粒子容器通常所有粒子共用一个纹理
-  maxCount?: number;
-  properties?: {
-    scale?: boolean;
-    position?: boolean;
-    rotation?: boolean;
-    uvs?: boolean;
-    alpha?: boolean;
-    tint?: boolean;
-  };
-  particles: ParticleItem[];
+  id: string;
+  atlas: string;
+  zIndex: number;
+  blendMode: BlendMode;
+  particles: ParticleData[];
 }
 
-export type RenderObject = 
-  | { type: 'text'; data: TextData }
+export type RenderObject =
   | { type: 'sprite'; data: SpriteData }
   | { type: 'particleContainer'; data: ParticleContainerData };
 
 export interface SceneFrame {
+  id: string;
+  cameraX: number;
+  cameraY: number;
   objects: RenderObject[];
 }
+
+export interface ImageRenderDocument {
+  type: 'image';
+  name: string;
+  transparent: boolean;
+  frames: SceneFrame[];
+}
+
+export interface VideoRenderDocument {
+  type: 'video';
+  name: string;
+  fps: number;
+  totalFrames: number;
+  frames: SceneFrame[];
+}
+
+export type RenderDocument = ImageRenderDocument | VideoRenderDocument;

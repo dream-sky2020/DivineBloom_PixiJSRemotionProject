@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- 定义颜色类型 (支持 0xRRGGBB) -->
+  <xs:simpleType name="colorType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="0x[0-9a-fA-F]{6}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- 1. 帧容器 (FRAME) -->
+  <xs:element name="FRAME">
+    <xs:complexType>
+      <xs:choice maxOccurs="unbounded">
+        <xs:element ref="SPRITE"/>
+        <xs:element ref="PARTICLECONTAINER"/>
+      </xs:choice>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>帧索引/唯一标识</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="cameraX" type="xs:decimal" default="0.0">
+        <xs:annotation><xs:documentation>摄像机 X 轴偏移 用于屏幕抖动</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="cameraY" type="xs:decimal" default="0.0">
+        <xs:annotation><xs:documentation>摄像机 Y 轴偏移 用于屏幕抖动</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 2. 粒子容器 (PARTICLECONTAINER) -->
+  <xs:element name="PARTICLECONTAINER">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="PARTICLE" minOccurs="0" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>容器唯一标识</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="atlas" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>绑定的合图资源 ID</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="zIndex" type="xs:integer" default="0">
+        <xs:annotation><xs:documentation>渲染层级（数值越大越靠前）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="blendMode" default="normal">
+        <xs:annotation><xs:documentation>混合模式：normal, add, multiply, screen 等</xs:documentation></xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="normal"/>
+            <xs:enumeration value="add"/>
+            <xs:enumeration value="multiply"/>
+            <xs:enumeration value="screen"/>
+            <xs:enumeration value="subtract"/>
+            <xs:enumeration value="none"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 3. 精灵结构 (SPRITE) -->
+  <xs:element name="SPRITE">
+    <xs:complexType>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>精灵唯一标识</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <!-- 合图模式属性 -->
+      <xs:attribute name="atlas" type="xs:string">
+        <xs:annotation><xs:documentation>合图资源 ID（与 frame 配合使用）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="frame" type="xs:string">
+        <xs:annotation><xs:documentation>合图中的分图名称（与 atlas 配合使用）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <!-- 单图模式属性 -->
+      <xs:attribute name="image" type="xs:string">
+        <xs:annotation><xs:documentation>单张图片路径（不能与 atlas/frame 同时使用）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      
+      <xs:attribute name="x" type="xs:decimal" use="required">
+        <xs:annotation><xs:documentation>X 绝对坐标</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="y" type="xs:decimal" use="required">
+        <xs:annotation><xs:documentation>Y 绝对坐标</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="anchorX" type="xs:decimal" default="0.5">
+        <xs:annotation><xs:documentation>中心锚点 X</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="anchorY" type="xs:decimal" default="0.5">
+        <xs:annotation><xs:documentation>中心锚点 Y</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="zIndex" type="xs:integer" default="0">
+        <xs:annotation><xs:documentation>渲染层级（数值越大越靠前）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="scaleX" type="xs:decimal" default="1.0">
+        <xs:annotation><xs:documentation>X 轴缩放</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="scaleY" type="xs:decimal" default="1.0">
+        <xs:annotation><xs:documentation>Y 轴缩放</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="rotation" type="xs:decimal" default="0.0">
+        <xs:annotation><xs:documentation>旋转弧度</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="alpha" type="xs:decimal" default="1.0">
+        <xs:annotation><xs:documentation>透明度</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="visible" type="xs:boolean" default="true">
+        <xs:annotation><xs:documentation>是否可见</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="blendMode" default="normal">
+        <xs:annotation><xs:documentation>混合模式：normal, add, multiply, screen 等</xs:documentation></xs:annotation>
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:enumeration value="normal"/>
+            <xs:enumeration value="add"/>
+            <xs:enumeration value="multiply"/>
+            <xs:enumeration value="screen"/>
+            <xs:enumeration value="subtract"/>
+            <xs:enumeration value="none"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute name="tint" type="colorType" default="0xffffff">
+        <xs:annotation><xs:documentation>染色（十六进制，如 0xffffff）。blendMode 为 normal 时生效。</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 4. 粒子结构 (PARTICLE) -->
+  <xs:element name="PARTICLE">
+    <xs:complexType>
+      <xs:attribute name="id" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>粒子唯一标识</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="particleContainer" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>所属的粒子容器 ID</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="frame" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>合图中的分图名称（资源继承自容器）</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="x" type="xs:decimal" use="required">
+        <xs:annotation><xs:documentation>绝对坐标 X</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="y" type="xs:decimal" use="required">
+        <xs:annotation><xs:documentation>绝对坐标 Y</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="anchorX" type="xs:decimal" default="0.5">
+        <xs:annotation><xs:documentation>中心锚点 X</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="anchorY" type="xs:decimal" default="0.5">
+        <xs:annotation><xs:documentation>中心锚点 Y</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="scaleX" type="xs:decimal" default="1.0">
+        <xs:annotation><xs:documentation>X 轴缩放</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="scaleY" type="xs:decimal" default="1.0">
+        <xs:annotation><xs:documentation>Y 轴缩放</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="rotation" type="xs:decimal" default="0.0">
+        <xs:annotation><xs:documentation>旋转弧度</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="alpha" type="xs:decimal" default="1.0">
+        <xs:annotation><xs:documentation>透明度</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="tint" type="colorType" default="0xffffff">
+        <xs:annotation><xs:documentation>混合颜色：混合模式跟随 PARTICLECONTAINER</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 图片根容器 -->
+  <xs:element name="Image">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="FRAME"/>
+      </xs:sequence>
+      <xs:attribute name="name" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>图片渲染任务名称</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="transparent" type="xs:boolean" default="false">
+        <xs:annotation><xs:documentation>是否使用透明背景</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+  <!-- 视频根容器 -->
+  <xs:element name="Video">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="FRAME" maxOccurs="unbounded"/>
+      </xs:sequence>
+      <xs:attribute name="name" type="xs:string" use="required">
+        <xs:annotation><xs:documentation>视频渲染任务名称</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="fps" type="xs:positiveInteger" use="required">
+        <xs:annotation><xs:documentation>每秒帧率</xs:documentation></xs:annotation>
+      </xs:attribute>
+      <xs:attribute name="totalFrames" type="xs:positiveInteger" use="required">
+        <xs:annotation><xs:documentation>视频总帧数</xs:documentation></xs:annotation>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>

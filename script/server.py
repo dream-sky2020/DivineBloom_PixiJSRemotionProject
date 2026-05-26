@@ -59,7 +59,14 @@ class RenderHandler(BaseHTTPRequestHandler):
             try:
                 script_path = ROOT / "script" / "asset_manifest_manager.py"
                 subprocess.run(["python", str(script_path)], check=True)
-                self.respond(200, {"ok": True, "message": "Manifest refreshed"})
+                manifest_file = PUBLIC_DIR / "asset_manifest.json"
+                with open(manifest_file, "r", encoding="utf-8") as f:
+                    assets = json.load(f)
+                self.respond(200, {
+                    "ok": True,
+                    "message": "Manifest refreshed",
+                    "assets": assets,
+                })
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
 

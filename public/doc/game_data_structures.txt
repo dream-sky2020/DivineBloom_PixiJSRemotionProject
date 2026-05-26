@@ -1,0 +1,90 @@
+# 战斗系统数据结构定义 (DSL 规范)
+
+本文档定义了同人游戏中核心战斗实体的 DSL 标签结构，采用类似 XML 的格式，支持属性逐行定义并附带注释。
+
+## 1. 角色结构 (CHARACTER)
+
+用于定义战斗单元的基础属性、理智系统及抗性。
+
+<CHARACTER
+    id="sinner_01"              <!-- 唯一标识符 -->
+    name="鸿璐"                 <!-- 角色名称 -->
+    hp="160"                    <!-- 当前生命值 -->
+    hpMax="160"                 <!-- 最大生命值 -->
+    sp="0"                      <!-- 当前精神值 -->
+    spMin="-45"                 <!-- 精神值下限 -->
+    spMax="45"                  <!-- 精神值上限 -->
+    balance="120,80,40"         <!-- 混乱阈值（多个阶段） -->
+    speedMin="3"                <!-- 速度范围下限 -->
+    speedMax="6"                <!-- 速度范围上限 -->
+    slots="1"                   <!-- 当前可用技能槽位 -->
+    slotsMax="5"                <!-- 技能槽位增长上限 -->
+    drawCount="2"               <!-- 每回合抽取技能数量 -->
+    sanityType="default"        <!-- 理智系统类型（处理独特理智逻辑） -->
+    resistSlash="1.0"           <!-- 斩击抗性倍率 -->
+    resistPierce="0.5"          <!-- 穿刺抗性倍率 -->
+    resistBlunt="2.0"           <!-- 打击抗性倍率 -->
+    animationId="anim_honglu"   <!-- 关联的战斗动画资源ID -->
+>
+
+## 2. 技能结构 (SKILL)
+
+定义角色释放的技能详情，包括基础威力和硬币配置。
+
+<SKILL
+    id="cloud_cutter"           <!-- 技能唯一ID -->
+    name="云遮雾罩"              <!-- 技能名称 -->
+    basePower="4"               <!-- 硬币默认配置 基础威力（未投掷硬币时的值） -->
+    frontValue="4"              <!-- 硬币默认配置 正面时的数值加成 -->
+    backValue="0"               <!-- 硬币默认配置 反面时的数值加成 -->
+    type="slash"                <!-- 硬币默认配置 攻击类型：slash, pierce, blunt -->
+    attribute="gluttony"        <!-- 硬币默认配置 罪恶属性 -->
+    baseDamage="5"              <!-- 硬币默认配置 基础伤害 -->
+    bonusDamagePerPoint="1"     <!-- 硬币默认配置 每一点数造成的伤害 -->
+>
+    <coins>
+        <COIN basePower="4" frontValue="4" backValue="0"/>
+        <COIN basePower="4" frontValue="4" backValue="0"/>
+    </coins>
+</SKILL>
+
+## 3. 硬币结构 (COIN)
+
+定义单个硬币的状态，通常嵌套在技能执行过程中或用于状态展示。
+
+<COIN
+    basePower="4"               <!-- 基础威力（未投掷硬币时的值） -->
+    frontValue="4"              <!-- 正面时的数值加成 -->
+    backValue="0"               <!-- 反面时的数值加成 -->
+    type="slash"                <!-- 攻击类型：slash, pierce, blunt -->
+    attribute="gluttony"        <!-- 罪恶属性 -->
+    baseDamage="5"              <!-- 基础伤害 -->
+    bonusDamagePerPoint="1"     <!-- 每一点数造成的伤害 -->
+>
+
+## 4. 状态效果 (STATUS)
+
+用于描述角色身上的 Buff/Debuff。
+
+<STATUS
+    type="guaranteed_heads"     <!-- 状态类型（如：下一次投掷必定正面） -->
+    stack="1"                   <!-- 堆叠层数 -->
+    count="1"                   <!-- 持续回合数或触发次数 -->
+    targetId="sinner_01"        <!-- 作用目标ID -->
+>
+
+## 5. 罪孽资源定义 (SIN)
+
+<SIN
+    id="hypocrisy"              <!-- 唯一标识符 -->
+    name="虚伪"                 <!-- 罪孽名称 -->
+    maxValue="99"               <!-- 存储上限 -->
+>
+    <substitutes>
+        <SUBSTITUTE 
+            id="double_standard"    <!-- 可以用来替代的罪孽的id -->
+            rate="1.0"              <!-- 转化率 -->
+            priority="1"            <!-- 优先级 -->
+        />
+    </substitutes>
+</SIN>

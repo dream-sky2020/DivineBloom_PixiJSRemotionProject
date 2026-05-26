@@ -1,27 +1,25 @@
-import { 
-  Container, 
-  Sprite, 
-  Text, 
-  TextStyle, 
-  Assets, 
+import {
+  Assets,
+  Container,
+  Sprite,
   Texture,
   Spritesheet
 } from 'pixi.js';
-import type { ColorSource, BLEND_MODES } from 'pixi.js';
-import type { 
-  SceneFrame, 
-  TextData, 
-  SpriteData, 
-  ParticleContainerData 
+import type {
+  SceneFrame,
+  RenderObject,
+  SpriteData,
+  ParticleContainerData
 } from '../types/rendering';
-import { assetRegistry } from '../utils/assetRegistry';
+import { assetRegistry } from '../assets/assetRegistry';
 
 export class PixiRenderer {
   private container: Container;
-  private assetCache: Map<string, any> = new Map();
+  private assetCache: Map<string, unknown> = new Map();
 
   constructor(container: Container) {
     this.container = container;
+    this.container.sortableChildren = true;
   }
 
   /**
@@ -29,115 +27,73 @@ export class PixiRenderer {
    */
   public async render(frame: SceneFrame) {
     this.container.removeChildren();
+    this.container.position.set(frame.cameraX, frame.cameraY);
 
-    const renderPromises = frame.objects.map(obj => {
+    const sortedObjects = [...frame.objects].sort(getObjectZIndex);
+
+    for (const obj of sortedObjects) {
       switch (obj.type) {
-        case 'text':
-          return this.renderText(obj.data);
         case 'sprite':
-          return this.renderSprite(obj.data);
+          await this.renderSprite(obj.data);
+          break;
         case 'particleContainer':
-          return this.renderParticleContainer(obj.data);
+          await this.renderParticleContainer(obj.data);
+          break;
         default:
-          return Promise.resolve();
+          break;
       }
-    });
-
-    await Promise.all(renderPromises);
-  }
-
-  private async renderText(data: TextData) {
-    const style = new TextStyle({
-      fontFamily: data.style?.fontFamily || 'Inter, sans-serif',
-      fontSize: data.style?.fontSize || 24,
-      fill: (data.style?.fill as ColorSource) || '#eef4ff',
-      align: data.style?.align || 'left',
-      fontWeight: (data.style?.fontWeight as any) || 'normal',
-      stroke: data.style?.stroke ? {
-        color: (data.style.stroke as ColorSource),
-        width: data.style.strokeThickness || 0,
-      } : undefined,
-      dropShadow: data.style?.dropShadow ? {
-        color: (data.style.dropShadowColor as ColorSource),
-      } : undefined,
-      wordWrap: data.style?.wordWrap,
-      wordWrapWidth: data.style?.wordWrapWidth,
-    });
-
-    const pixiText = new Text({
-      text: data.text,
-      style,
-    });
-
-    pixiText.x = data.x;
-    pixiText.y = data.y;
-    pixiText.alpha = data.alpha ?? 1;
-    pixiText.rotation = data.rotation ?? 0;
-    
-    if (data.anchor) {
-      pixiText.anchor.set(data.anchor.x, data.anchor.y);
     }
-    if (data.scale) {
-      pixiText.scale.set(data.scale.x, data.scale.y);
-    }
-    if (data.visible !== undefined) {
-      pixiText.visible = data.visible;
-    }
-
-    this.container.addChild(pixiText);
   }
 
   private async renderSprite(data: SpriteData) {
     try {
-      const url = assetRegistry.getUrl(data.assetUrl);
-      const texture = await this.getAsset<Texture>(url);
+      const texture = await this.resolveSpriteTexture(data);
       if (texture) {
         const sprite = new Sprite(texture);
         sprite.x = data.x;
         sprite.y = data.y;
-        sprite.alpha = data.alpha ?? 1;
-        sprite.rotation = data.rotation ?? 0;
-        
-        if (data.tint !== undefined) sprite.tint = data.tint;
-        if (data.width) sprite.width = data.width;
-        if (data.height) sprite.height = data.height;
-        if (data.anchor) sprite.anchor.set(data.anchor.x, data.anchor.y);
-        if (data.scale) sprite.scale.set(data.scale.x, data.scale.y);
-        if (data.visible !== undefined) sprite.visible = data.visible;
-        if (data.blendMode) sprite.blendMode = data.blendMode as BLEND_MODES;
+        sprite.anchor.set(data.anchorX, data.anchorY);
+        sprite.scale.set(data.scaleX, data.scaleY);
+        sprite.rotation = data.rotation;
+        sprite.alpha = data.alpha;
+        sprite.visible = data.visible;
+        sprite.blendMode = data.blendMode;
+        sprite.zIndex = data.zIndex;
+        sprite.tint = data.tint;
 
         this.container.addChild(sprite);
       }
     } catch (error) {
-      console.error('Failed to render sprite:', data.assetUrl, error);
+      console.error('Failed to render sprite:', data.id, error);
+      throw new Error(`SPRITE ${data.id} 渲染失败：${readErrorMessage(error)}`);
     }
   }
 
   private async renderParticleContainer(data: ParticleContainerData) {
     try {
-      const url = assetRegistry.getUrl(data.assetUrl);
+      const url = assetRegistry.getUrl(data.atlas);
       const asset = await this.getAsset<Texture | Spritesheet>(url);
       if (asset) {
         const pContainer = new Container();
-        const isSpritesheet = asset instanceof Spritesheet;
+        pContainer.zIndex = data.zIndex;
+        pContainer.blendMode = data.blendMode;
 
         data.particles.forEach(p => {
           let particleTexture: Texture | null = null;
           
-          if (isSpritesheet && p.frame !== undefined) {
+          if (hasTextures(asset)) {
             particleTexture = asset.textures[p.frame] || null;
-          } else if (asset instanceof Texture) {
-            particleTexture = asset;
           }
 
           if (particleTexture) {
             const sprite = new Sprite(particleTexture);
             sprite.x = p.x;
             sprite.y = p.y;
-            if (p.scale !== undefined) sprite.scale.set(p.scale);
-            if (p.rotation !== undefined) sprite.rotation = p.rotation;
-            if (p.alpha !== undefined) sprite.alpha = p.alpha;
-            if (p.tint !== undefined) sprite.tint = p.tint;
+            sprite.anchor.set(p.anchorX, p.anchorY);
+            sprite.scale.set(p.scaleX, p.scaleY);
+            sprite.rotation = p.rotation;
+            sprite.alpha = p.alpha;
+            sprite.tint = p.tint;
             pContainer.addChild(sprite);
           }
         });
@@ -145,8 +101,28 @@ export class PixiRenderer {
         this.container.addChild(pContainer);
       }
     } catch (error) {
-      console.error('Failed to render particle container:', data.assetUrl, error);
+      console.error('Failed to render particle container:', data.id, error);
+      throw new Error(`PARTICLECONTAINER ${data.id} 渲染失败：${readErrorMessage(error)}`);
     }
+  }
+
+  private async resolveSpriteTexture(data: SpriteData) {
+    if (data.image) {
+      const url = assetRegistry.getUrl(data.image);
+      return this.getAsset<Texture>(url);
+    }
+
+    if (!data.atlas || !data.frame) {
+      return null;
+    }
+
+    const url = assetRegistry.getUrl(data.atlas);
+    const asset = await this.getAsset<Texture | Spritesheet>(url);
+    if (asset && hasTextures(asset)) {
+      return asset.textures[data.frame] ?? null;
+    }
+
+    return null;
   }
 
   private async getAsset<T>(url: string): Promise<T | null> {
@@ -157,6 +133,29 @@ export class PixiRenderer {
         this.assetCache.set(url, asset);
       }
     }
-    return asset || null;
+    return (asset as T) || null;
   }
+}
+
+function getObjectZIndex(left: RenderObject, right: RenderObject) {
+  return readObjectZIndex(left) - readObjectZIndex(right);
+}
+
+function readObjectZIndex(object: RenderObject) {
+  if (object.type === 'sprite') {
+    return object.data.zIndex;
+  }
+  if (object.type === 'particleContainer') {
+    return object.data.zIndex;
+  }
+
+  return 0;
+}
+
+function hasTextures(asset: Texture | Spritesheet): asset is Spritesheet {
+  return 'textures' in asset;
+}
+
+function readErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : '资源加载失败';
 }

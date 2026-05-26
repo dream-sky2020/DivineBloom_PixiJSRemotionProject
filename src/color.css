@@ -4,6 +4,16 @@
   --deep-black-blue: #020817;    /* 极深蓝黑，用于画布背景 */
   --dark-gray: #1e1e1e;          /* 深灰色，用于编辑器背景 */
   --darker-navy: #081423;        /* 稍深的蓝黑色，用于卡片背景 */
+  --deep-slate: #0f172a;          /* 深石板蓝，用于严肃后台侧栏 */
+  --dark-slate: #1f2937;          /* 深石板灰，用于边框与强调 */
+  --medium-slate: #64748b;        /* 中石板灰，用于次要文字 */
+  --light-slate: #e2e8f0;         /* 浅石板灰，用于分隔线 */
+  --pale-slate: #f3f5f9;          /* 极浅石板灰，用于工作区背景 */
+  --near-white: #ffffff;          /* 近白色，用于面板背景 */
+  --soft-white: #f8fafc;          /* 柔和白色，用于侧栏文字 */
+  --ink-gray: #111827;            /* 墨灰色，用于主文字 */
+  --charcoal-gray: #374151;       /* 炭灰色，用于正文 */
+  --soft-gray: #f8fafc;           /* 柔灰色，用于代码与浅卡片背景 */
 
   /* 文字与浅色 */
   --white-blue: #eef4ff;         /* 偏蓝的白色，用于主文字 */
@@ -13,13 +23,19 @@
   /* 品牌与功能色 */
   --cyan: #7ee7d9;               /* 青色，用于主要按钮和强调 */
   --blue: #2f7fff;               /* 蓝色，用于渐变和链接 */
+  --dark-blue: #0050b3;           /* 深蓝色，用于严肃后台主按钮 */
+  --calm-blue: #dbeafe;           /* 平静浅蓝，用于选中背景 */
   --yellow: #ffce73;             /* 黄色，用于录制按钮 */
   
   /* 半透明色 */
   --transparent-white-08: rgba(255, 255, 255, 0.08);
   --transparent-white-12: rgba(255, 255, 255, 0.12);
   --transparent-white-05: rgba(255, 255, 255, 0.05);
+  --transparent-white-72: rgba(248, 250, 252, 0.72);
+  --transparent-black-06: rgba(15, 23, 42, 0.06);
+  --transparent-black-12: rgba(15, 23, 42, 0.12);
   --transparent-blue-30: rgba(47, 127, 255, 0.3);
   --transparent-cyan-20: rgba(0, 220, 180, 0.2);
   --transparent-cyan-10: rgba(126, 231, 217, 0.1);
+  --transparent-dark-blue-10: rgba(0, 80, 179, 0.1);
 }

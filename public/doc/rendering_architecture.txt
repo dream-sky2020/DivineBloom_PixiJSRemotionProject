@@ -10,9 +10,9 @@ PixiJS 数据驱动渲染引擎架构设计方案
 2. 数据流向
 -----------
 实时游戏：逻辑模拟 -> 结构化数据 (内存) -> PixiJS 渲染器
-录像保存：结构化数据 -> DSL 转换模块 -> .txt 脚本文件
-录像回放：.txt 脚本文件 -> DSL 转换模块 -> 结构化数据 -> PixiJS 渲染器
-视频导出：Remotion -> 读取 .txt 脚本 -> PixiJS 渲染器 -> MP4
+录像保存：结构化数据 -> DSL 转换模块 -> .xml 脚本文件
+录像回放：.xml 脚本文件 -> DSL 转换模块 -> 结构化数据 -> PixiJS 渲染器
+视频导出：Remotion -> 读取 .xml 脚本 -> PixiJS 渲染器 -> MP4
 
 3. 脚本规范 (DSL)
 -----------------
@@ -51,7 +51,9 @@ const blendModeMapping = {
 };
 
 [FRAME 1]
-<BALL id=1 x=102.5 y=201.0>
+<FRAME id="1">
+<BALL id="1" x="102.5" y="201.0" />
+</FRAME>
 
 * 关键点：每一帧记录的是“绝对位置”，支持随机跳帧访问，防止误差累积。
 
@@ -62,15 +64,16 @@ const blendModeMapping = {
     * 自动化：渲染器通过 .@. 标记自动识别并从对应的合图中提取纹理。
 
 3.2 指令示例
-[FRAME 0]
-<SPRITE id=hero_01 src="hero.@.run" x=520.5 y=300.0 anchor=0.5>
+<FRAME id="0">
+<SPRITE id="hero_01" src="hero.@.run" x="520.5" y="300.0" anchor="0.5" />
 
 <!-- 1. 定义粒子容器：显式绑定合图，可配置混合模式与全局特效 -->
-<PARTICLECONTAINER id="fx_layer" atlas="fx_atlas" blendMode="add" tintAdd=#220000>
+<PARTICLECONTAINER id="fx_layer" atlas="fx_atlas" blendMode="add" tintAdd="#220000" />
 <!-- 2. 渲染普通精灵 -->
-<SPRITE id="hero_01" src="hero.@.run" x=520.5 y=300.0 anchor=0.5>
+<SPRITE id="hero_01" src="hero.@.run" x="520.5" y="300.0" anchor="0.5" />
 <!-- 3. 渲染粒子：必须指定所属的 particleContainer -->
-<PARTICLE id="p_103" particleContainer="fx_layer" src="fx.@.fire" x=100 y=200 scale=0.5 rotation=1.57 alpha=0.8>
+<PARTICLE id="p_103" particleContainer="fx_layer" src="fx.@.fire" x="100" y="200" scale="0.5" rotation="1.57" alpha="0.8" />
+</FRAME>
 
 
 4. 渲染层优化策略

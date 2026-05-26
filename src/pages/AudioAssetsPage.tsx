@@ -1,9 +1,40 @@
+import { useEffect, useMemo, useState } from 'react';
+import { assetRegistry } from '../assets/assetRegistry';
+import type { AssetDefinition } from '../assets/assetRegistry';
+
 export function AudioAssetsPage() {
-  // 模拟数据
-  const audioAssets = [
-    { id: 'bgm-main', name: '主背景音乐', type: 'audio', tags: ['bgm', 'loop'] },
-    { id: 'sfx-click', name: '点击音效', type: 'audio', tags: ['sfx', 'ui'] },
-  ];
+  const [assets, setAssets] = useState<AssetDefinition[]>([]);
+  const [status, setStatus] = useState('等待加载资源清单');
+  const [loading, setLoading] = useState(false);
+
+  const audioAssets = useMemo(
+    () => assets.filter((asset) => asset.type === 'audio'),
+    [assets],
+  );
+
+  const refreshAssets = async () => {
+    setLoading(true);
+    setStatus('正在请求后端刷新 public 资源清单...');
+    try {
+      const latestAssets = await assetRegistry.refreshManifest();
+      setAssets(latestAssets);
+      setStatus(`资源清单已刷新，共 ${latestAssets.length} 个资源`);
+    } catch (error) {
+      try {
+        const fallbackAssets = await assetRegistry.loadManifest();
+        setAssets(fallbackAssets);
+        setStatus('后端刷新不可用，已读取现有 asset_manifest.json');
+      } catch {
+        setStatus(error instanceof Error ? error.message : '资源清单加载失败');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshAssets();
+  }, []);
 
   return (
     <div className="app-shell">
@@ -16,37 +47,41 @@ export function AudioAssetsPage() {
       </section>
 
       <section className="stage-card">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
-          {audioAssets.map(asset => (
-            <div key={asset.id} style={{ 
-              background: 'var(--dark-gray)', 
-              padding: '1.25rem', 
-              borderRadius: '16px',
-              border: '1px solid var(--transparent-white-12)'
-            }}>
-              <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🎵</div>
-              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--white-blue)' }}>{asset.name}</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--gray-blue)', marginBottom: '1rem' }}>ID: {asset.id}</p>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                {asset.tags.map(tag => (
-                  <span key={tag} style={{ 
-                    fontSize: '0.75rem', 
-                    padding: '0.2rem 0.6rem', 
-                    background: 'var(--transparent-cyan-10)', 
-                    color: 'var(--cyan)',
-                    borderRadius: '20px'
-                  }}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <button className="primary" style={{ width: '100%', marginTop: '1.25rem', padding: '0.6rem' }}>
-                播放预览
-              </button>
-            </div>
-          ))}
+        <div className="asset-toolbar">
+          <span className="asset-count">音频资源：{audioAssets.length}</span>
+          <button className="primary" disabled={loading} onClick={refreshAssets}>
+            {loading ? '刷新中...' : '刷新资源'}
+          </button>
         </div>
+
+        {audioAssets.length === 0 ? (
+          <div className="empty-state">未发现音频资源，请确认 public 目录下存在音频文件。</div>
+        ) : (
+          <div className="asset-grid">
+            {audioAssets.map(asset => (
+              <div key={asset.id} className="asset-card">
+                <div className="asset-preview">
+                  <audio src={asset.url} controls preload="metadata" />
+                </div>
+                <div className="asset-card-body">
+                  <h3 className="asset-title">{asset.id}</h3>
+                  <p className="asset-meta">{asset.path ?? asset.url}</p>
+                  <div className="asset-tags">
+                    <span className="asset-tag">{asset.type}</span>
+                    {(asset.tags ?? []).map(tag => (
+                      <span key={tag} className="asset-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
+
+      <p className="status">{status}</p>
     </div>
   );
 }

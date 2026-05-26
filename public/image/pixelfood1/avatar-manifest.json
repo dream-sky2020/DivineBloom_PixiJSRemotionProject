@@ -1,0 +1,1506 @@
+{
+  "version": 1,
+  "items": {
+    "public/avatar/05_apple_pie.png": {
+      "enabled": true,
+      "path": "public/avatar/05_apple_pie.png",
+      "tags": []
+    },
+    "public/avatar/07_bread.png": {
+      "enabled": true,
+      "path": "public/avatar/07_bread.png",
+      "tags": []
+    },
+    "public/avatar/01_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/01_dish.png",
+      "tags": []
+    },
+    "public/avatar/02_dish_2.png": {
+      "enabled": true,
+      "path": "public/avatar/02_dish_2.png",
+      "tags": []
+    },
+    "public/avatar/03_dish_pile.png": {
+      "enabled": true,
+      "path": "public/avatar/03_dish_pile.png",
+      "tags": []
+    },
+    "public/avatar/04_bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/04_bowl.png",
+      "tags": []
+    },
+    "public/avatar/06_apple_pie_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/06_apple_pie_dish.png",
+      "tags": []
+    },
+    "public/avatar/08_bread_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/08_bread_dish.png",
+      "tags": []
+    },
+    "public/avatar/09_baguette.png": {
+      "enabled": true,
+      "path": "public/avatar/09_baguette.png",
+      "tags": []
+    },
+    "public/avatar/100_taco_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/100_taco_dish.png",
+      "tags": []
+    },
+    "public/avatar/101_waffle.png": {
+      "enabled": true,
+      "path": "public/avatar/101_waffle.png",
+      "tags": []
+    },
+    "public/avatar/102_waffle_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/102_waffle_dish.png",
+      "tags": []
+    },
+    "public/avatar/10_baguette_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/10_baguette_dish.png",
+      "tags": []
+    },
+    "public/avatar/11_bun.png": {
+      "enabled": true,
+      "path": "public/avatar/11_bun.png",
+      "tags": []
+    },
+    "public/avatar/12_bun_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/12_bun_dish.png",
+      "tags": []
+    },
+    "public/avatar/13_bacon.png": {
+      "enabled": true,
+      "path": "public/avatar/13_bacon.png",
+      "tags": []
+    },
+    "public/avatar/14_bacon_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/14_bacon_dish.png",
+      "tags": []
+    },
+    "public/avatar/15_burger.png": {
+      "enabled": true,
+      "path": "public/avatar/15_burger.png",
+      "tags": []
+    },
+    "public/avatar/16_burger_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/16_burger_dish.png",
+      "tags": []
+    },
+    "public/avatar/17_burger_napkin.png": {
+      "enabled": true,
+      "path": "public/avatar/17_burger_napkin.png",
+      "tags": []
+    },
+    "public/avatar/18_burrito.png": {
+      "enabled": true,
+      "path": "public/avatar/18_burrito.png",
+      "tags": []
+    },
+    "public/avatar/19_burrito_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/19_burrito_dish.png",
+      "tags": []
+    },
+    "public/avatar/20_bagel.png": {
+      "enabled": true,
+      "path": "public/avatar/20_bagel.png",
+      "tags": []
+    },
+    "public/avatar/21_bagel_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/21_bagel_dish.png",
+      "tags": []
+    },
+    "public/avatar/22_cheesecake.png": {
+      "enabled": true,
+      "path": "public/avatar/22_cheesecake.png",
+      "tags": []
+    },
+    "public/avatar/23_cheesecake_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/23_cheesecake_dish.png",
+      "tags": []
+    },
+    "public/avatar/24_cheesepuff.png": {
+      "enabled": true,
+      "path": "public/avatar/24_cheesepuff.png",
+      "tags": []
+    },
+    "public/avatar/25_cheesepuff_bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/25_cheesepuff_bowl.png",
+      "tags": []
+    },
+    "public/avatar/26_chocolate.png": {
+      "enabled": true,
+      "path": "public/avatar/26_chocolate.png",
+      "tags": []
+    },
+    "public/avatar/27_chocolate_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/27_chocolate_dish.png",
+      "tags": []
+    },
+    "public/avatar/28_cookies.png": {
+      "enabled": true,
+      "path": "public/avatar/28_cookies.png",
+      "tags": []
+    },
+    "public/avatar/29_cookies_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/29_cookies_dish.png",
+      "tags": []
+    },
+    "public/avatar/30_chocolatecake.png": {
+      "enabled": true,
+      "path": "public/avatar/30_chocolatecake.png",
+      "tags": []
+    },
+    "public/avatar/31_chocolatecake_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/31_chocolatecake_dish.png",
+      "tags": []
+    },
+    "public/avatar/32_curry.png": {
+      "enabled": true,
+      "path": "public/avatar/32_curry.png",
+      "tags": []
+    },
+    "public/avatar/33_curry_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/33_curry_dish.png",
+      "tags": []
+    },
+    "public/avatar/34_donut.png": {
+      "enabled": true,
+      "path": "public/avatar/34_donut.png",
+      "tags": []
+    },
+    "public/avatar/35_donut_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/35_donut_dish.png",
+      "tags": []
+    },
+    "public/avatar/36_dumplings.png": {
+      "enabled": true,
+      "path": "public/avatar/36_dumplings.png",
+      "tags": []
+    },
+    "public/avatar/37_dumplings_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/37_dumplings_dish.png",
+      "tags": []
+    },
+    "public/avatar/38_friedegg.png": {
+      "enabled": true,
+      "path": "public/avatar/38_friedegg.png",
+      "tags": []
+    },
+    "public/avatar/39_friedegg_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/39_friedegg_dish.png",
+      "tags": []
+    },
+    "public/avatar/40_eggsalad.png": {
+      "enabled": true,
+      "path": "public/avatar/40_eggsalad.png",
+      "tags": []
+    },
+    "public/avatar/41_eggsalad_bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/41_eggsalad_bowl.png",
+      "tags": []
+    },
+    "public/avatar/42_eggtart.png": {
+      "enabled": true,
+      "path": "public/avatar/42_eggtart.png",
+      "tags": []
+    },
+    "public/avatar/43_eggtart_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/43_eggtart_dish.png",
+      "tags": []
+    },
+    "public/avatar/44_frenchfries.png": {
+      "enabled": true,
+      "path": "public/avatar/44_frenchfries.png",
+      "tags": []
+    },
+    "public/avatar/45_frenchfries_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/45_frenchfries_dish.png",
+      "tags": []
+    },
+    "public/avatar/46_fruitcake.png": {
+      "enabled": true,
+      "path": "public/avatar/46_fruitcake.png",
+      "tags": []
+    },
+    "public/avatar/47_fruitcake_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/47_fruitcake_dish.png",
+      "tags": []
+    },
+    "public/avatar/48_garlicbread.png": {
+      "enabled": true,
+      "path": "public/avatar/48_garlicbread.png",
+      "tags": []
+    },
+    "public/avatar/49_garlicbread_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/49_garlicbread_dish.png",
+      "tags": []
+    },
+    "public/avatar/50_giantgummybear.png": {
+      "enabled": true,
+      "path": "public/avatar/50_giantgummybear.png",
+      "tags": []
+    },
+    "public/avatar/51_giantgummybear_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/51_giantgummybear_dish.png",
+      "tags": []
+    },
+    "public/avatar/52_gingerbreadman.png": {
+      "enabled": true,
+      "path": "public/avatar/52_gingerbreadman.png",
+      "tags": []
+    },
+    "public/avatar/53_gingerbreadman_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/53_gingerbreadman_dish.png",
+      "tags": []
+    },
+    "public/avatar/54_hotdog.png": {
+      "enabled": true,
+      "path": "public/avatar/54_hotdog.png",
+      "tags": []
+    },
+    "public/avatar/55_hotdog_sauce.png": {
+      "enabled": true,
+      "path": "public/avatar/55_hotdog_sauce.png",
+      "tags": []
+    },
+    "public/avatar/56_hotdog_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/56_hotdog_dish.png",
+      "tags": []
+    },
+    "public/avatar/57_icecream.png": {
+      "enabled": true,
+      "path": "public/avatar/57_icecream.png",
+      "tags": []
+    },
+    "public/avatar/58_icecream_bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/58_icecream_bowl.png",
+      "tags": []
+    },
+    "public/avatar/59_jelly.png": {
+      "enabled": true,
+      "path": "public/avatar/59_jelly.png",
+      "tags": []
+    },
+    "public/avatar/60_jelly_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/60_jelly_dish.png",
+      "tags": []
+    },
+    "public/avatar/61_jam.png": {
+      "enabled": true,
+      "path": "public/avatar/61_jam.png",
+      "tags": []
+    },
+    "public/avatar/62_jam_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/62_jam_dish.png",
+      "tags": []
+    },
+    "public/avatar/63_lemonpie.png": {
+      "enabled": true,
+      "path": "public/avatar/63_lemonpie.png",
+      "tags": []
+    },
+    "public/avatar/64_lemonpie_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/64_lemonpie_dish.png",
+      "tags": []
+    },
+    "public/avatar/65_loafbread.png": {
+      "enabled": true,
+      "path": "public/avatar/65_loafbread.png",
+      "tags": []
+    },
+    "public/avatar/66_loafbread_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/66_loafbread_dish.png",
+      "tags": []
+    },
+    "public/avatar/67_macncheese.png": {
+      "enabled": true,
+      "path": "public/avatar/67_macncheese.png",
+      "tags": []
+    },
+    "public/avatar/68_macncheese_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/68_macncheese_dish.png",
+      "tags": []
+    },
+    "public/avatar/69_meatball.png": {
+      "enabled": true,
+      "path": "public/avatar/69_meatball.png",
+      "tags": []
+    },
+    "public/avatar/70_meatball_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/70_meatball_dish.png",
+      "tags": []
+    },
+    "public/avatar/71_nacho.png": {
+      "enabled": true,
+      "path": "public/avatar/71_nacho.png",
+      "tags": []
+    },
+    "public/avatar/72_nacho_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/72_nacho_dish.png",
+      "tags": []
+    },
+    "public/avatar/73_omlet.png": {
+      "enabled": true,
+      "path": "public/avatar/73_omlet.png",
+      "tags": []
+    },
+    "public/avatar/74_omlet_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/74_omlet_dish.png",
+      "tags": []
+    },
+    "public/avatar/75_pudding.png": {
+      "enabled": true,
+      "path": "public/avatar/75_pudding.png",
+      "tags": []
+    },
+    "public/avatar/76_pudding_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/76_pudding_dish.png",
+      "tags": []
+    },
+    "public/avatar/77_potatochips.png": {
+      "enabled": true,
+      "path": "public/avatar/77_potatochips.png",
+      "tags": []
+    },
+    "public/avatar/78_potatochips_bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/78_potatochips_bowl.png",
+      "tags": []
+    },
+    "public/avatar/79_pancakes.png": {
+      "enabled": true,
+      "path": "public/avatar/79_pancakes.png",
+      "tags": []
+    },
+    "public/avatar/80_pancakes_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/80_pancakes_dish.png",
+      "tags": []
+    },
+    "public/avatar/81_pizza.png": {
+      "enabled": true,
+      "path": "public/avatar/81_pizza.png",
+      "tags": []
+    },
+    "public/avatar/82_pizza_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/82_pizza_dish.png",
+      "tags": []
+    },
+    "public/avatar/83_popcorn.png": {
+      "enabled": true,
+      "path": "public/avatar/83_popcorn.png",
+      "tags": []
+    },
+    "public/avatar/84_popcorn_bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/84_popcorn_bowl.png",
+      "tags": []
+    },
+    "public/avatar/85_roastedchicken.png": {
+      "enabled": true,
+      "path": "public/avatar/85_roastedchicken.png",
+      "tags": []
+    },
+    "public/avatar/86_roastedchicken_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/86_roastedchicken_dish.png",
+      "tags": []
+    },
+    "public/avatar/87_ramen.png": {
+      "enabled": true,
+      "path": "public/avatar/87_ramen.png",
+      "tags": []
+    },
+    "public/avatar/88_salmon.png": {
+      "enabled": true,
+      "path": "public/avatar/88_salmon.png",
+      "tags": []
+    },
+    "public/avatar/89_salmon_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/89_salmon_dish.png",
+      "tags": []
+    },
+    "public/avatar/90_strawberrycake.png": {
+      "enabled": true,
+      "path": "public/avatar/90_strawberrycake.png",
+      "tags": []
+    },
+    "public/avatar/91_strawberrycake_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/91_strawberrycake_dish.png",
+      "tags": []
+    },
+    "public/avatar/92_sandwich.png": {
+      "enabled": true,
+      "path": "public/avatar/92_sandwich.png",
+      "tags": []
+    },
+    "public/avatar/93_sandwich_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/93_sandwich_dish.png",
+      "tags": []
+    },
+    "public/avatar/94_spaghetti.png": {
+      "enabled": true,
+      "path": "public/avatar/94_spaghetti.png",
+      "tags": []
+    },
+    "public/avatar/95_steak.png": {
+      "enabled": true,
+      "path": "public/avatar/95_steak.png",
+      "tags": []
+    },
+    "public/avatar/96_steak_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/96_steak_dish.png",
+      "tags": []
+    },
+    "public/avatar/97_sushi.png": {
+      "enabled": true,
+      "path": "public/avatar/97_sushi.png",
+      "tags": []
+    },
+    "public/avatar/98_sushi_dish.png": {
+      "enabled": true,
+      "path": "public/avatar/98_sushi_dish.png",
+      "tags": []
+    },
+    "public/avatar/99_taco.png": {
+      "enabled": true,
+      "path": "public/avatar/99_taco.png",
+      "tags": []
+    },
+    "public/avatar/American_cheese_p.png": {
+      "enabled": true,
+      "path": "public/avatar/American_cheese_p.png",
+      "tags": []
+    },
+    "public/avatar/Apple_Green.png": {
+      "enabled": true,
+      "path": "public/avatar/Apple_Green.png",
+      "tags": []
+    },
+    "public/avatar/Banana_Peeled.png": {
+      "enabled": true,
+      "path": "public/avatar/Banana_Peeled.png",
+      "tags": []
+    },
+    "public/avatar/Blueberry.png": {
+      "enabled": true,
+      "path": "public/avatar/Blueberry.png",
+      "tags": []
+    },
+    "public/avatar/Bone.png": {
+      "enabled": true,
+      "path": "public/avatar/Bone.png",
+      "tags": []
+    },
+    "public/avatar/Book.png": {
+      "enabled": true,
+      "path": "public/avatar/Book.png",
+      "tags": []
+    },
+    "public/avatar/Carrot.png": {
+      "enabled": true,
+      "path": "public/avatar/Carrot.png",
+      "tags": []
+    },
+    "public/avatar/Cauliflower.png": {
+      "enabled": true,
+      "path": "public/avatar/Cauliflower.png",
+      "tags": []
+    },
+    "public/avatar/Cherry.png": {
+      "enabled": true,
+      "path": "public/avatar/Cherry.png",
+      "tags": []
+    },
+    "public/avatar/Chilli_Red.png": {
+      "enabled": true,
+      "path": "public/avatar/Chilli_Red.png",
+      "tags": []
+    },
+    "public/avatar/Clay_Brick.png": {
+      "enabled": true,
+      "path": "public/avatar/Clay_Brick.png",
+      "tags": []
+    },
+    "public/avatar/Clay_Tan.png": {
+      "enabled": true,
+      "path": "public/avatar/Clay_Tan.png",
+      "tags": []
+    },
+    "public/avatar/Cloth_Woolen.png": {
+      "enabled": true,
+      "path": "public/avatar/Cloth_Woolen.png",
+      "tags": []
+    },
+    "public/avatar/Coal.png": {
+      "enabled": true,
+      "path": "public/avatar/Coal.png",
+      "tags": []
+    },
+    "public/avatar/Coins_Gold.png": {
+      "enabled": true,
+      "path": "public/avatar/Coins_Gold.png",
+      "tags": []
+    },
+    "public/avatar/Corn.png": {
+      "enabled": true,
+      "path": "public/avatar/Corn.png",
+      "tags": []
+    },
+    "public/avatar/Cucumber.png": {
+      "enabled": true,
+      "path": "public/avatar/Cucumber.png",
+      "tags": []
+    },
+    "public/avatar/Eggplant.png": {
+      "enabled": true,
+      "path": "public/avatar/Eggplant.png",
+      "tags": []
+    },
+    "public/avatar/Feather.png": {
+      "enabled": true,
+      "path": "public/avatar/Feather.png",
+      "tags": []
+    },
+    "public/avatar/Gem_Amethyst.png": {
+      "enabled": true,
+      "path": "public/avatar/Gem_Amethyst.png",
+      "tags": []
+    },
+    "public/avatar/Glass_Pane.png": {
+      "enabled": true,
+      "path": "public/avatar/Glass_Pane.png",
+      "tags": []
+    },
+    "public/avatar/Grapes_Black.png": {
+      "enabled": true,
+      "path": "public/avatar/Grapes_Black.png",
+      "tags": []
+    },
+    "public/avatar/Hay.png": {
+      "enabled": true,
+      "path": "public/avatar/Hay.png",
+      "tags": []
+    },
+    "public/avatar/Ingot_Copper.png": {
+      "enabled": true,
+      "path": "public/avatar/Ingot_Copper.png",
+      "tags": []
+    },
+    "public/avatar/Ingot_Iron.png": {
+      "enabled": true,
+      "path": "public/avatar/Ingot_Iron.png",
+      "tags": []
+    },
+    "public/avatar/Leather.png": {
+      "enabled": true,
+      "path": "public/avatar/Leather.png",
+      "tags": []
+    },
+    "public/avatar/Leek.png": {
+      "enabled": true,
+      "path": "public/avatar/Leek.png",
+      "tags": []
+    },
+    "public/avatar/Lemon.png": {
+      "enabled": true,
+      "path": "public/avatar/Lemon.png",
+      "tags": []
+    },
+    "public/avatar/Onion.png": {
+      "enabled": true,
+      "path": "public/avatar/Onion.png",
+      "tags": []
+    },
+    "public/avatar/Orange.png": {
+      "enabled": true,
+      "path": "public/avatar/Orange.png",
+      "tags": []
+    },
+    "public/avatar/Ore_Copper.png": {
+      "enabled": true,
+      "path": "public/avatar/Ore_Copper.png",
+      "tags": []
+    },
+    "public/avatar/Ore_Iron.png": {
+      "enabled": true,
+      "path": "public/avatar/Ore_Iron.png",
+      "tags": []
+    },
+    "public/avatar/Paper.png": {
+      "enabled": true,
+      "path": "public/avatar/Paper.png",
+      "tags": []
+    },
+    "public/avatar/Paprika.png": {
+      "enabled": true,
+      "path": "public/avatar/Paprika.png",
+      "tags": []
+    },
+    "public/avatar/Pear.png": {
+      "enabled": true,
+      "path": "public/avatar/Pear.png",
+      "tags": []
+    },
+    "public/avatar/Pineapple.png": {
+      "enabled": true,
+      "path": "public/avatar/Pineapple.png",
+      "tags": []
+    },
+    "public/avatar/Plant_Fiber.png": {
+      "enabled": true,
+      "path": "public/avatar/Plant_Fiber.png",
+      "tags": []
+    },
+    "public/avatar/Plum.png": {
+      "enabled": true,
+      "path": "public/avatar/Plum.png",
+      "tags": []
+    },
+    "public/avatar/Pumpkin.png": {
+      "enabled": true,
+      "path": "public/avatar/Pumpkin.png",
+      "tags": []
+    },
+    "public/avatar/Raspberry.png": {
+      "enabled": true,
+      "path": "public/avatar/Raspberry.png",
+      "tags": []
+    },
+    "public/avatar/Sand.png": {
+      "enabled": true,
+      "path": "public/avatar/Sand.png",
+      "tags": []
+    },
+    "public/avatar/Stone.png": {
+      "enabled": true,
+      "path": "public/avatar/Stone.png",
+      "tags": []
+    },
+    "public/avatar/Stone_Brick.png": {
+      "enabled": true,
+      "path": "public/avatar/Stone_Brick.png",
+      "tags": []
+    },
+    "public/avatar/Tomato.png": {
+      "enabled": true,
+      "path": "public/avatar/Tomato.png",
+      "tags": []
+    },
+    "public/avatar/Tree_Resin.png": {
+      "enabled": true,
+      "path": "public/avatar/Tree_Resin.png",
+      "tags": []
+    },
+    "public/avatar/Watermelon.png": {
+      "enabled": true,
+      "path": "public/avatar/Watermelon.png",
+      "tags": []
+    },
+    "public/avatar/Wood_Log.png": {
+      "enabled": true,
+      "path": "public/avatar/Wood_Log.png",
+      "tags": []
+    },
+    "public/avatar/Wood_Plank.png": {
+      "enabled": true,
+      "path": "public/avatar/Wood_Plank.png",
+      "tags": []
+    },
+    "public/avatar/Wood_Stick.png": {
+      "enabled": true,
+      "path": "public/avatar/Wood_Stick.png",
+      "tags": []
+    },
+    "public/avatar/aluminum_foil.png": {
+      "enabled": true,
+      "path": "public/avatar/aluminum_foil.png",
+      "tags": []
+    },
+    "public/avatar/bacon.png": {
+      "enabled": true,
+      "path": "public/avatar/bacon.png",
+      "tags": []
+    },
+    "public/avatar/baking_powder.png": {
+      "enabled": true,
+      "path": "public/avatar/baking_powder.png",
+      "tags": []
+    },
+    "public/avatar/ball_pen.png": {
+      "enabled": true,
+      "path": "public/avatar/ball_pen.png",
+      "tags": []
+    },
+    "public/avatar/banana.png": {
+      "enabled": true,
+      "path": "public/avatar/banana.png",
+      "tags": []
+    },
+    "public/avatar/bandage_box.png": {
+      "enabled": true,
+      "path": "public/avatar/bandage_box.png",
+      "tags": []
+    },
+    "public/avatar/barbeque_sauce.png": {
+      "enabled": true,
+      "path": "public/avatar/barbeque_sauce.png",
+      "tags": []
+    },
+    "public/avatar/basket_metal.png": {
+      "enabled": true,
+      "path": "public/avatar/basket_metal.png",
+      "tags": []
+    },
+    "public/avatar/basket_yellow.png": {
+      "enabled": true,
+      "path": "public/avatar/basket_yellow.png",
+      "tags": []
+    },
+    "public/avatar/bathroom_cleaner.png": {
+      "enabled": true,
+      "path": "public/avatar/bathroom_cleaner.png",
+      "tags": []
+    },
+    "public/avatar/batteries.png": {
+      "enabled": true,
+      "path": "public/avatar/batteries.png",
+      "tags": []
+    },
+    "public/avatar/bell_pepper.png": {
+      "enabled": true,
+      "path": "public/avatar/bell_pepper.png",
+      "tags": []
+    },
+    "public/avatar/bell_pepper_p.png": {
+      "enabled": true,
+      "path": "public/avatar/bell_pepper_p.png",
+      "tags": []
+    },
+    "public/avatar/body_lotion.png": {
+      "enabled": true,
+      "path": "public/avatar/body_lotion.png",
+      "tags": []
+    },
+    "public/avatar/bowl.png": {
+      "enabled": true,
+      "path": "public/avatar/bowl.png",
+      "tags": []
+    },
+    "public/avatar/bubble_gum.png": {
+      "enabled": true,
+      "path": "public/avatar/bubble_gum.png",
+      "tags": []
+    },
+    "public/avatar/butter.png": {
+      "enabled": true,
+      "path": "public/avatar/butter.png",
+      "tags": []
+    },
+    "public/avatar/butter2.png": {
+      "enabled": true,
+      "path": "public/avatar/butter2.png",
+      "tags": []
+    },
+    "public/avatar/cabbage.png": {
+      "enabled": true,
+      "path": "public/avatar/cabbage.png",
+      "tags": []
+    },
+    "public/avatar/cabbage_p.png": {
+      "enabled": true,
+      "path": "public/avatar/cabbage_p.png",
+      "tags": []
+    },
+    "public/avatar/candy_bar.png": {
+      "enabled": true,
+      "path": "public/avatar/candy_bar.png",
+      "tags": []
+    },
+    "public/avatar/cereal1.png": {
+      "enabled": true,
+      "path": "public/avatar/cereal1.png",
+      "tags": []
+    },
+    "public/avatar/cereal2.png": {
+      "enabled": true,
+      "path": "public/avatar/cereal2.png",
+      "tags": []
+    },
+    "public/avatar/chopping board.png": {
+      "enabled": true,
+      "path": "public/avatar/chopping board.png",
+      "tags": []
+    },
+    "public/avatar/cleaning_brush.png": {
+      "enabled": true,
+      "path": "public/avatar/cleaning_brush.png",
+      "tags": []
+    },
+    "public/avatar/cleaning_gloves.png": {
+      "enabled": true,
+      "path": "public/avatar/cleaning_gloves.png",
+      "tags": []
+    },
+    "public/avatar/cleaning_gloves_p.png": {
+      "enabled": true,
+      "path": "public/avatar/cleaning_gloves_p.png",
+      "tags": []
+    },
+    "public/avatar/coffee_bag.png": {
+      "enabled": true,
+      "path": "public/avatar/coffee_bag.png",
+      "tags": []
+    },
+    "public/avatar/cookies.png": {
+      "enabled": true,
+      "path": "public/avatar/cookies.png",
+      "tags": []
+    },
+    "public/avatar/cooking_oil.png": {
+      "enabled": true,
+      "path": "public/avatar/cooking_oil.png",
+      "tags": []
+    },
+    "public/avatar/credit_card_1.png": {
+      "enabled": true,
+      "path": "public/avatar/credit_card_1.png",
+      "tags": []
+    },
+    "public/avatar/credit_card_2.png": {
+      "enabled": true,
+      "path": "public/avatar/credit_card_2.png",
+      "tags": []
+    },
+    "public/avatar/credit_card_3.png": {
+      "enabled": true,
+      "path": "public/avatar/credit_card_3.png",
+      "tags": []
+    },
+    "public/avatar/detergent.png": {
+      "enabled": true,
+      "path": "public/avatar/detergent.png",
+      "tags": []
+    },
+    "public/avatar/dry_dog_food.png": {
+      "enabled": true,
+      "path": "public/avatar/dry_dog_food.png",
+      "tags": []
+    },
+    "public/avatar/egg_box.png": {
+      "enabled": true,
+      "path": "public/avatar/egg_box.png",
+      "tags": []
+    },
+    "public/avatar/egg_brown.png": {
+      "enabled": true,
+      "path": "public/avatar/egg_brown.png",
+      "tags": []
+    },
+    "public/avatar/egg_brown_p.png": {
+      "enabled": true,
+      "path": "public/avatar/egg_brown_p.png",
+      "tags": []
+    },
+    "public/avatar/egg_white.png": {
+      "enabled": true,
+      "path": "public/avatar/egg_white.png",
+      "tags": []
+    },
+    "public/avatar/egg_white_p.png": {
+      "enabled": true,
+      "path": "public/avatar/egg_white_p.png",
+      "tags": []
+    },
+    "public/avatar/energy_bar.png": {
+      "enabled": true,
+      "path": "public/avatar/energy_bar.png",
+      "tags": []
+    },
+    "public/avatar/eraser.png": {
+      "enabled": true,
+      "path": "public/avatar/eraser.png",
+      "tags": []
+    },
+    "public/avatar/eraser_p.png": {
+      "enabled": true,
+      "path": "public/avatar/eraser_p.png",
+      "tags": []
+    },
+    "public/avatar/fish.png": {
+      "enabled": true,
+      "path": "public/avatar/fish.png",
+      "tags": []
+    },
+    "public/avatar/fish_p.png": {
+      "enabled": true,
+      "path": "public/avatar/fish_p.png",
+      "tags": []
+    },
+    "public/avatar/flour.png": {
+      "enabled": true,
+      "path": "public/avatar/flour.png",
+      "tags": []
+    },
+    "public/avatar/fruit_cocktail_can.png": {
+      "enabled": true,
+      "path": "public/avatar/fruit_cocktail_can.png",
+      "tags": []
+    },
+    "public/avatar/frying pan.png": {
+      "enabled": true,
+      "path": "public/avatar/frying pan.png",
+      "tags": []
+    },
+    "public/avatar/frying pan_p.png": {
+      "enabled": true,
+      "path": "public/avatar/frying pan_p.png",
+      "tags": []
+    },
+    "public/avatar/glue.png": {
+      "enabled": true,
+      "path": "public/avatar/glue.png",
+      "tags": []
+    },
+    "public/avatar/glue_p.png": {
+      "enabled": true,
+      "path": "public/avatar/glue_p.png",
+      "tags": []
+    },
+    "public/avatar/glue_stick.png": {
+      "enabled": true,
+      "path": "public/avatar/glue_stick.png",
+      "tags": []
+    },
+    "public/avatar/grape_soda.png": {
+      "enabled": true,
+      "path": "public/avatar/grape_soda.png",
+      "tags": []
+    },
+    "public/avatar/green_apple.png": {
+      "enabled": true,
+      "path": "public/avatar/green_apple.png",
+      "tags": []
+    },
+    "public/avatar/green_apple_p.png": {
+      "enabled": true,
+      "path": "public/avatar/green_apple_p.png",
+      "tags": []
+    },
+    "public/avatar/green_grape.png": {
+      "enabled": true,
+      "path": "public/avatar/green_grape.png",
+      "tags": []
+    },
+    "public/avatar/green_grape_p.png": {
+      "enabled": true,
+      "path": "public/avatar/green_grape_p.png",
+      "tags": []
+    },
+    "public/avatar/hand_sanitiser.png": {
+      "enabled": true,
+      "path": "public/avatar/hand_sanitiser.png",
+      "tags": []
+    },
+    "public/avatar/hot_cocoa_mix.png": {
+      "enabled": true,
+      "path": "public/avatar/hot_cocoa_mix.png",
+      "tags": []
+    },
+    "public/avatar/jam_strawberry.png": {
+      "enabled": true,
+      "path": "public/avatar/jam_strawberry.png",
+      "tags": []
+    },
+    "public/avatar/ketchup.png": {
+      "enabled": true,
+      "path": "public/avatar/ketchup.png",
+      "tags": []
+    },
+    "public/avatar/kitchen_knife_set.png": {
+      "enabled": true,
+      "path": "public/avatar/kitchen_knife_set.png",
+      "tags": []
+    },
+    "public/avatar/kitchen_knife_set_p.png": {
+      "enabled": true,
+      "path": "public/avatar/kitchen_knife_set_p.png",
+      "tags": []
+    },
+    "public/avatar/kitchen_soap.png": {
+      "enabled": true,
+      "path": "public/avatar/kitchen_soap.png",
+      "tags": []
+    },
+    "public/avatar/light_bulb.png": {
+      "enabled": true,
+      "path": "public/avatar/light_bulb.png",
+      "tags": []
+    },
+    "public/avatar/light_bulb_box.png": {
+      "enabled": true,
+      "path": "public/avatar/light_bulb_box.png",
+      "tags": []
+    },
+    "public/avatar/marshmallows.png": {
+      "enabled": true,
+      "path": "public/avatar/marshmallows.png",
+      "tags": []
+    },
+    "public/avatar/meat1.png": {
+      "enabled": true,
+      "path": "public/avatar/meat1.png",
+      "tags": []
+    },
+    "public/avatar/meat1_p.png": {
+      "enabled": true,
+      "path": "public/avatar/meat1_p.png",
+      "tags": []
+    },
+    "public/avatar/meat2.png": {
+      "enabled": true,
+      "path": "public/avatar/meat2.png",
+      "tags": []
+    },
+    "public/avatar/meat2_p.png": {
+      "enabled": true,
+      "path": "public/avatar/meat2_p.png",
+      "tags": []
+    },
+    "public/avatar/milk_bottle.png": {
+      "enabled": true,
+      "path": "public/avatar/milk_bottle.png",
+      "tags": []
+    },
+    "public/avatar/milk_chocolate.png": {
+      "enabled": true,
+      "path": "public/avatar/milk_chocolate.png",
+      "tags": []
+    },
+    "public/avatar/milk_gallon.png": {
+      "enabled": true,
+      "path": "public/avatar/milk_gallon.png",
+      "tags": []
+    },
+    "public/avatar/milk_pack.png": {
+      "enabled": true,
+      "path": "public/avatar/milk_pack.png",
+      "tags": []
+    },
+    "public/avatar/milk_plastic.png": {
+      "enabled": true,
+      "path": "public/avatar/milk_plastic.png",
+      "tags": []
+    },
+    "public/avatar/mushroom_white.png": {
+      "enabled": true,
+      "path": "public/avatar/mushroom_white.png",
+      "tags": []
+    },
+    "public/avatar/mushroom_white_p.png": {
+      "enabled": true,
+      "path": "public/avatar/mushroom_white_p.png",
+      "tags": []
+    },
+    "public/avatar/mustard.png": {
+      "enabled": true,
+      "path": "public/avatar/mustard.png",
+      "tags": []
+    },
+    "public/avatar/olive_oil.png": {
+      "enabled": true,
+      "path": "public/avatar/olive_oil.png",
+      "tags": []
+    },
+    "public/avatar/orange_juice.png": {
+      "enabled": true,
+      "path": "public/avatar/orange_juice.png",
+      "tags": []
+    },
+    "public/avatar/paper_bag.png": {
+      "enabled": true,
+      "path": "public/avatar/paper_bag.png",
+      "tags": []
+    },
+    "public/avatar/peanut_butter.png": {
+      "enabled": true,
+      "path": "public/avatar/peanut_butter.png",
+      "tags": []
+    },
+    "public/avatar/pencil_box.png": {
+      "enabled": true,
+      "path": "public/avatar/pencil_box.png",
+      "tags": []
+    },
+    "public/avatar/plain_yogurt.png": {
+      "enabled": true,
+      "path": "public/avatar/plain_yogurt.png",
+      "tags": []
+    },
+    "public/avatar/potato.png": {
+      "enabled": true,
+      "path": "public/avatar/potato.png",
+      "tags": []
+    },
+    "public/avatar/potato_p.png": {
+      "enabled": true,
+      "path": "public/avatar/potato_p.png",
+      "tags": []
+    },
+    "public/avatar/potatochip_blue.png": {
+      "enabled": true,
+      "path": "public/avatar/potatochip_blue.png",
+      "tags": []
+    },
+    "public/avatar/potatochip_green.png": {
+      "enabled": true,
+      "path": "public/avatar/potatochip_green.png",
+      "tags": []
+    },
+    "public/avatar/potatochip_yellow.png": {
+      "enabled": true,
+      "path": "public/avatar/potatochip_yellow.png",
+      "tags": []
+    },
+    "public/avatar/power_strip_typeA.png": {
+      "enabled": true,
+      "path": "public/avatar/power_strip_typeA.png",
+      "tags": []
+    },
+    "public/avatar/power_strip_typeF.png": {
+      "enabled": true,
+      "path": "public/avatar/power_strip_typeF.png",
+      "tags": []
+    },
+    "public/avatar/receipt.png": {
+      "enabled": true,
+      "path": "public/avatar/receipt.png",
+      "tags": []
+    },
+    "public/avatar/red_apple.png": {
+      "enabled": true,
+      "path": "public/avatar/red_apple.png",
+      "tags": []
+    },
+    "public/avatar/red_apple_p.png": {
+      "enabled": true,
+      "path": "public/avatar/red_apple_p.png",
+      "tags": []
+    },
+    "public/avatar/red_grape.png": {
+      "enabled": true,
+      "path": "public/avatar/red_grape.png",
+      "tags": []
+    },
+    "public/avatar/red_grape_p.png": {
+      "enabled": true,
+      "path": "public/avatar/red_grape_p.png",
+      "tags": []
+    },
+    "public/avatar/rolling pin.png": {
+      "enabled": true,
+      "path": "public/avatar/rolling pin.png",
+      "tags": []
+    },
+    "public/avatar/rubber_duck.png": {
+      "enabled": true,
+      "path": "public/avatar/rubber_duck.png",
+      "tags": []
+    },
+    "public/avatar/rubber_ducktopus.png": {
+      "enabled": true,
+      "path": "public/avatar/rubber_ducktopus.png",
+      "tags": []
+    },
+    "public/avatar/salmon.png": {
+      "enabled": true,
+      "path": "public/avatar/salmon.png",
+      "tags": []
+    },
+    "public/avatar/salmon_p.png": {
+      "enabled": true,
+      "path": "public/avatar/salmon_p.png",
+      "tags": []
+    },
+    "public/avatar/salt.png": {
+      "enabled": true,
+      "path": "public/avatar/salt.png",
+      "tags": []
+    },
+    "public/avatar/sausage_p.png": {
+      "enabled": true,
+      "path": "public/avatar/sausage_p.png",
+      "tags": []
+    },
+    "public/avatar/scissors.png": {
+      "enabled": true,
+      "path": "public/avatar/scissors.png",
+      "tags": []
+    },
+    "public/avatar/scissors_p.png": {
+      "enabled": true,
+      "path": "public/avatar/scissors_p.png",
+      "tags": []
+    },
+    "public/avatar/scrub_brush.png": {
+      "enabled": true,
+      "path": "public/avatar/scrub_brush.png",
+      "tags": []
+    },
+    "public/avatar/scrub_sponge.png": {
+      "enabled": true,
+      "path": "public/avatar/scrub_sponge.png",
+      "tags": []
+    },
+    "public/avatar/shampoo.png": {
+      "enabled": true,
+      "path": "public/avatar/shampoo.png",
+      "tags": []
+    },
+    "public/avatar/sliced_bread_p.png": {
+      "enabled": true,
+      "path": "public/avatar/sliced_bread_p.png",
+      "tags": []
+    },
+    "public/avatar/snack1.png": {
+      "enabled": true,
+      "path": "public/avatar/snack1.png",
+      "tags": []
+    },
+    "public/avatar/snack2.png": {
+      "enabled": true,
+      "path": "public/avatar/snack2.png",
+      "tags": []
+    },
+    "public/avatar/soap.png": {
+      "enabled": true,
+      "path": "public/avatar/soap.png",
+      "tags": []
+    },
+    "public/avatar/soap_box.png": {
+      "enabled": true,
+      "path": "public/avatar/soap_box.png",
+      "tags": []
+    },
+    "public/avatar/soft_drink_blue.png": {
+      "enabled": true,
+      "path": "public/avatar/soft_drink_blue.png",
+      "tags": []
+    },
+    "public/avatar/soft_drink_green.png": {
+      "enabled": true,
+      "path": "public/avatar/soft_drink_green.png",
+      "tags": []
+    },
+    "public/avatar/soft_drink_red.png": {
+      "enabled": true,
+      "path": "public/avatar/soft_drink_red.png",
+      "tags": []
+    },
+    "public/avatar/soft_drink_yellow.png": {
+      "enabled": true,
+      "path": "public/avatar/soft_drink_yellow.png",
+      "tags": []
+    },
+    "public/avatar/spatula.png": {
+      "enabled": true,
+      "path": "public/avatar/spatula.png",
+      "tags": []
+    },
+    "public/avatar/spatula_p.png": {
+      "enabled": true,
+      "path": "public/avatar/spatula_p.png",
+      "tags": []
+    },
+    "public/avatar/strawberry.png": {
+      "enabled": true,
+      "path": "public/avatar/strawberry.png",
+      "tags": []
+    },
+    "public/avatar/strawberry_ice_cream.png": {
+      "enabled": true,
+      "path": "public/avatar/strawberry_ice_cream.png",
+      "tags": []
+    },
+    "public/avatar/strawberry_jam.png": {
+      "enabled": true,
+      "path": "public/avatar/strawberry_jam.png",
+      "tags": []
+    },
+    "public/avatar/strawberry_p.png": {
+      "enabled": true,
+      "path": "public/avatar/strawberry_p.png",
+      "tags": []
+    },
+    "public/avatar/sugar.png": {
+      "enabled": true,
+      "path": "public/avatar/sugar.png",
+      "tags": []
+    },
+    "public/avatar/sun_cream_tube.png": {
+      "enabled": true,
+      "path": "public/avatar/sun_cream_tube.png",
+      "tags": []
+    },
+    "public/avatar/teakettle.png": {
+      "enabled": true,
+      "path": "public/avatar/teakettle.png",
+      "tags": []
+    },
+    "public/avatar/toilet_paper.png": {
+      "enabled": true,
+      "path": "public/avatar/toilet_paper.png",
+      "tags": []
+    },
+    "public/avatar/toothbrush.png": {
+      "enabled": true,
+      "path": "public/avatar/toothbrush.png",
+      "tags": []
+    },
+    "public/avatar/toothbrush_set.png": {
+      "enabled": true,
+      "path": "public/avatar/toothbrush_set.png",
+      "tags": []
+    },
+    "public/avatar/toothpaste.png": {
+      "enabled": true,
+      "path": "public/avatar/toothpaste.png",
+      "tags": []
+    },
+    "public/avatar/toothpaste_box.png": {
+      "enabled": true,
+      "path": "public/avatar/toothpaste_box.png",
+      "tags": []
+    },
+    "public/avatar/tuna_can.png": {
+      "enabled": true,
+      "path": "public/avatar/tuna_can.png",
+      "tags": []
+    },
+    "public/avatar/vanilla_or_lemon_ice_cream.png": {
+      "enabled": true,
+      "path": "public/avatar/vanilla_or_lemon_ice_cream.png",
+      "tags": []
+    },
+    "public/avatar/water.png": {
+      "enabled": true,
+      "path": "public/avatar/water.png",
+      "tags": []
+    },
+    "public/avatar/watermelon1.png": {
+      "enabled": true,
+      "path": "public/avatar/watermelon1.png",
+      "tags": []
+    },
+    "public/avatar/watermelon2.png": {
+      "enabled": true,
+      "path": "public/avatar/watermelon2.png",
+      "tags": []
+    },
+    "public/avatar/wax.png": {
+      "enabled": true,
+      "path": "public/avatar/wax.png",
+      "tags": []
+    },
+    "public/avatar/wet_wipe.png": {
+      "enabled": true,
+      "path": "public/avatar/wet_wipe.png",
+      "tags": []
+    },
+    "public/avatar/whisk.png": {
+      "enabled": true,
+      "path": "public/avatar/whisk.png",
+      "tags": []
+    },
+    "public/avatar/whisk_p.png": {
+      "enabled": true,
+      "path": "public/avatar/whisk_p.png",
+      "tags": []
+    },
+    "public/avatar/white_cheese.png": {
+      "enabled": true,
+      "path": "public/avatar/white_cheese.png",
+      "tags": []
+    },
+    "public/avatar/white_cheese_p.png": {
+      "enabled": true,
+      "path": "public/avatar/white_cheese_p.png",
+      "tags": []
+    },
+    "public/avatar/white_cheese_piece.png": {
+      "enabled": true,
+      "path": "public/avatar/white_cheese_piece.png",
+      "tags": []
+    },
+    "public/avatar/white_cheese_piece_p.png": {
+      "enabled": true,
+      "path": "public/avatar/white_cheese_piece_p.png",
+      "tags": []
+    },
+    "public/avatar/wine_red.png": {
+      "enabled": true,
+      "path": "public/avatar/wine_red.png",
+      "tags": []
+    },
+    "public/avatar/wine_white.png": {
+      "enabled": true,
+      "path": "public/avatar/wine_white.png",
+      "tags": []
+    },
+    "public/avatar/wine_white2.png": {
+      "enabled": true,
+      "path": "public/avatar/wine_white2.png",
+      "tags": []
+    },
+    "public/avatar/wine_white3.png": {
+      "enabled": true,
+      "path": "public/avatar/wine_white3.png",
+      "tags": []
+    }
+  },
+  "updatedAt": "2026-05-19T22:11:01.180444"
+}

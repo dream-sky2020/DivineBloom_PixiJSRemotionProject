@@ -1,10 +1,40 @@
+import { useEffect, useMemo, useState } from 'react';
+import { assetRegistry } from '../assets/assetRegistry';
+import type { AssetDefinition } from '../assets/assetRegistry';
+
 export function ImageAssetsPage() {
-  // 模拟数据
-  const imageAssets = [
-    { id: 'hero-sprite', name: '主角精灵图', type: 'spritesheet', tags: ['character', 'player'] },
-    { id: 'bg-forest', name: '森林背景', type: 'image', tags: ['environment', 'background'] },
-    { id: 'icon-sword', name: '剑图标', type: 'image', tags: ['item', 'ui'] },
-  ];
+  const [assets, setAssets] = useState<AssetDefinition[]>([]);
+  const [status, setStatus] = useState('等待加载资源清单');
+  const [loading, setLoading] = useState(false);
+
+  const imageAssets = useMemo(
+    () => assets.filter((asset) => asset.type === 'image' || asset.type === 'spritesheet'),
+    [assets],
+  );
+
+  const refreshAssets = async () => {
+    setLoading(true);
+    setStatus('正在请求后端刷新 public 资源清单...');
+    try {
+      const latestAssets = await assetRegistry.refreshManifest();
+      setAssets(latestAssets);
+      setStatus(`资源清单已刷新，共 ${latestAssets.length} 个资源`);
+    } catch (error) {
+      try {
+        const fallbackAssets = await assetRegistry.loadManifest();
+        setAssets(fallbackAssets);
+        setStatus('后端刷新不可用，已读取现有 asset_manifest.json');
+      } catch {
+        setStatus(error instanceof Error ? error.message : '资源清单加载失败');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void refreshAssets();
+  }, []);
 
   return (
     <div className="app-shell">
@@ -17,45 +47,45 @@ export function ImageAssetsPage() {
       </section>
 
       <section className="stage-card">
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
-          {imageAssets.map(asset => (
-            <div key={asset.id} style={{ 
-              background: 'var(--dark-gray)', 
-              borderRadius: '16px',
-              border: '1px solid var(--transparent-white-12)',
-              overflow: 'hidden'
-            }}>
-              <div style={{ 
-                height: '140px', 
-                background: 'var(--deep-black-blue)', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                fontSize: '2.5rem'
-              }}>
-                {asset.type === 'spritesheet' ? '🖼️' : '📷'}
-              </div>
-              <div style={{ padding: '1rem' }}>
-                <h3 style={{ margin: '0 0 0.4rem 0', fontSize: '1rem', color: 'var(--white-blue)' }}>{asset.name}</h3>
-                <p style={{ fontSize: '0.8rem', color: 'var(--gray-blue)', marginBottom: '0.8rem' }}>{asset.id}</p>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  {asset.tags.map(tag => (
-                    <span key={tag} style={{ 
-                      fontSize: '0.7rem', 
-                      padding: '0.15rem 0.5rem', 
-                      background: 'var(--transparent-blue-30)', 
-                      color: 'var(--blue)',
-                      borderRadius: '20px'
-                    }}>
-                      {tag}
-                    </span>
-                  ))}
+        <div className="asset-toolbar">
+          <span className="asset-count">图片资源：{imageAssets.length}</span>
+          <button className="primary" disabled={loading} onClick={refreshAssets}>
+            {loading ? '刷新中...' : '刷新资源'}
+          </button>
+        </div>
+
+        {imageAssets.length === 0 ? (
+          <div className="empty-state">未发现图片资源，请确认 public 目录下存在图片文件。</div>
+        ) : (
+          <div className="asset-grid">
+            {imageAssets.map(asset => (
+              <div key={asset.id} className="asset-card">
+                <div className="asset-preview">
+                  {asset.type === 'image' ? (
+                    <img src={asset.url} alt={asset.id} loading="lazy" />
+                  ) : (
+                    <span className="asset-icon">SHEET</span>
+                  )}
+                </div>
+                <div className="asset-card-body">
+                  <h3 className="asset-title">{asset.id}</h3>
+                  <p className="asset-meta">{asset.path ?? asset.url}</p>
+                  <div className="asset-tags">
+                    <span className="asset-tag">{asset.type}</span>
+                    {(asset.tags ?? []).map(tag => (
+                      <span key={tag} className="asset-tag">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </section>
+
+      <p className="status">{status}</p>
     </div>
   );
 }
