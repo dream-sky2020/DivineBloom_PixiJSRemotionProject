@@ -1,6 +1,9 @@
-import { useEffect, useRef } from 'react';
-import { Application, Container, Graphics } from 'pixi.js';
+import { useEffect, useRef, useCallback } from 'react';
+import { Application } from 'pixi.js';
 import { DEFAULT_HEIGHT, DEFAULT_WIDTH, getBallsAtFrame } from '../simulation';
+import { PixiCommandProcessor } from '../pixiJSRenderer/PixiCommandProcessor';
+import { PixiFrameReconciler } from '../pixiJSRenderer/PixiFrameReconciler';
+import { PixiCanvas } from '../pixiJSRenderer/PixiCanvas';
 
 type PixiBounceCanvasProps = {
   seed: string;
@@ -8,59 +11,63 @@ type PixiBounceCanvasProps = {
 };
 
 export function PixiBounceCanvas({ seed, running }: PixiBounceCanvasProps) {
-  const hostRef = useRef<HTMLDivElement | null>(null);
-  const appRef = useRef<Application | null>(null);
-  const layerRef = useRef<Container | null>(null);
+  const processorRef = useRef<PixiCommandProcessor | null>(null);
+  const reconcilerRef = useRef<PixiFrameReconciler | null>(null);
   const frameRef = useRef(0);
   const animationRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    const host = hostRef.current;
-    if (!host) {
+  const drawFrame = useCallback((currentSeed: string, frame: number) => {
+    const processor = processorRef.current;
+    const reconciler = reconcilerRef.current;
+    if (!processor || !reconciler) {
       return;
     }
 
-    let disposed = false;
-    const app = new Application();
-
-    void app
-      .init({
-        width: DEFAULT_WIDTH,
-        height: DEFAULT_HEIGHT,
-        antialias: true,
-        background: '#020817',
-        resolution: window.devicePixelRatio || 1,
-        autoDensity: true,
-      })
-      .then(() => {
-        if (disposed) {
-          app.destroy(true);
-          return;
-        }
-
-        const layer = new Container();
-        app.stage.addChild(layer);
-        host.appendChild(app.canvas);
-        appRef.current = app;
-        layerRef.current = layer;
-        drawFrame(seed, frameRef.current);
+    // 1. 构建下一帧状态
+    reconciler.beginFrame();
+    const balls = getBallsAtFrame(currentSeed, frame);
+    
+    for (const ball of balls) {
+      const ballId = `ball-${ball.id}`;
+      
+      reconciler.setObject({
+        id: ballId,
+        kind: 'circleGraphic',
+        props: {
+          x: ball.x,
+          y: ball.y,
+          radius: ball.radius,
+          fill: { color: ball.color, alpha: 0.92 },
+          stroke: { width: 3, color: '#ffffff', alpha: 0.2 },
+        },
       });
+    }
 
-    return () => {
-      disposed = true;
-      if (animationRef.current !== null) {
-        cancelAnimationFrame(animationRef.current);
-      }
-      appRef.current?.destroy(true);
-      appRef.current = null;
-      layerRef.current = null;
-    };
+    // 2. 差异对比并获取命令
+    const commands = reconciler.reconcile();
+
+    // 3. 执行命令
+    processor.processCommands(commands);
+  }, []);
+
+  const handleInit = useCallback((app: Application) => {
+    processorRef.current = new PixiCommandProcessor(app);
+    reconcilerRef.current = new PixiFrameReconciler();
+    
+    // 初始帧
+    drawFrame(seed, frameRef.current);
+  }, [seed, drawFrame]);
+
+  const handleDestroy = useCallback(() => {
+    processorRef.current?.destroy();
+    processorRef.current = null;
+    reconcilerRef.current = null;
   }, []);
 
   useEffect(() => {
     frameRef.current = 0;
     drawFrame(seed, 0);
-  }, [seed]);
+  }, [seed, drawFrame]);
 
   useEffect(() => {
     const tick = () => {
@@ -77,23 +84,16 @@ export function PixiBounceCanvas({ seed, running }: PixiBounceCanvasProps) {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [running, seed]);
+  }, [running, seed, drawFrame]);
 
-  const drawFrame = (currentSeed: string, frame: number) => {
-    const layer = layerRef.current;
-    if (!layer) {
-      return;
-    }
-
-    layer.removeChildren();
-    for (const ball of getBallsAtFrame(currentSeed, frame)) {
-      const graphics = new Graphics();
-      graphics.circle(ball.x, ball.y, ball.radius);
-      graphics.fill({ color: ball.color, alpha: 0.92 });
-      graphics.stroke({ width: 3, color: '#ffffff', alpha: 0.2 });
-      layer.addChild(graphics);
-    }
-  };
-
-  return <div className="pixi-host" ref={hostRef} />;
+  return (
+    <PixiCanvas
+      width={DEFAULT_WIDTH}
+      height={DEFAULT_HEIGHT}
+      background="#020817"
+      onInit={handleInit}
+      onDestroy={handleDestroy}
+      className="pixi-host"
+    />
+  );
 }
