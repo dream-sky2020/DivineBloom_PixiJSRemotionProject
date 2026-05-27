@@ -14,7 +14,7 @@ export function AppSidebar() {
           className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
         >
           <span className="nav-icon">SIM</span>
-          <span className="nav-label">物理模拟</span>
+          <span className="nav-label">游戏模拟</span>
         </NavLink>
         <NavLink 
           to="/dsl-to-image.html" 
@@ -36,6 +36,13 @@ export function AppSidebar() {
         >
           <span className="nav-icon">AUD</span>
           <span className="nav-label">音频资源</span>
+        </NavLink>
+        <NavLink 
+          to="/bezier-editor.html" 
+          className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+        >
+          <span className="nav-icon">CRV</span>
+          <span className="nav-label">贝塞尔曲线</span>
         </NavLink>
       </nav>
     </header>

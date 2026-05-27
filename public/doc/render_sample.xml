@@ -1,49 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Video
-    name="battle_replay_01"
-    fps="30"
-    totalFrames="2"
+<Canvas 
+    name="battle_replay_01" 
+    width="1920" 
+    height="1080" 
+    fps="30" 
+    totalFrames="12"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="render_dsl.xsd">
+    xsi:noNamespaceSchemaLocation="render_dsl.xsd"
+>
+    <CAMERA id="main_camera">
+        <KEYFRAME frame="0" x="0.0" y="0.0" />
+        <KEYFRAME frame="1" x="10.0" y="5.0" />
+    </CAMERA>
 
-    <!-- 第一帧：初始化场景 -->
-    <FRAME id="0" cameraX="0.0" cameraY="0.0">
-        <!-- 背景角色 -->
-        <SPRITE 
-            id="hero_bg" 
+    <SPRITE id="hero_bg">
+        <KEYFRAME 
+            frame="0" 
             image="image/hero.png" 
             x="400.0" 
             y="300.0" 
             anchorX="0.5" 
             anchorY="0.5" 
             zIndex="0" 
-            alpha="0.3"
+            alpha="0.3" 
         />
-        
-        <!-- 场景物品 -->
-        <SPRITE 
-            id="dish_01" 
-            image="image/pixelfood1/01_dish.png" 
-            x="200.0" 
-            y="400.0" 
-            zIndex="1"
-        />
-        
-        <SPRITE 
-            id="pie_01" 
-            image="image/pixelfood1/05_apple_pie.png" 
-            x="200.0" 
-            y="390.0" 
-            zIndex="2" 
-            scaleX="1.2" 
-            scaleY="1.2"
-        />
-    </FRAME>
-
-    <!-- 第二帧：发生位移或状态变化 -->
-    <FRAME id="1" cameraX="10.0" cameraY="5.0">
-        <SPRITE 
-            id="hero_bg" 
+        <KEYFRAME 
+            frame="1" 
             image="image/hero.png" 
             x="410.0" 
             y="305.0" 
@@ -51,26 +33,50 @@
             anchorY="0.5" 
             zIndex="0" 
             alpha="0.5" 
-            rotation="0.1"
+            rotation="0.1" 
         />
-        
-        <SPRITE 
-            id="dish_01" 
+        <KEYFRAME 
+            frame="9"
+            x="910.0"
+            y="905.0"
+        />
+    </SPRITE>
+
+    <SPRITE id="dish_01">
+        <KEYFRAME 
+            frame="0" 
+            image="image/pixelfood1/01_dish.png" 
+            x="200.0" 
+            y="400.0" 
+            zIndex="1" 
+        />
+        <KEYFRAME 
+            frame="1" 
             image="image/pixelfood1/01_dish.png" 
             x="210.0" 
             y="405.0" 
             zIndex="1" 
-            tint="0xff0000"
+            tint="0xff0000" 
         />
-        
-        <SPRITE 
-            id="pie_01" 
+    </SPRITE>
+
+    <SPRITE id="pie_01">
+        <KEYFRAME 
+            frame="0" 
+            image="image/pixelfood1/05_apple_pie.png" 
+            x="200.0" 
+            y="390.0" 
+            zIndex="2" 
+            scaleX="1.2" 
+            scaleY="1.2" 
+        />
+        <KEYFRAME 
+            frame="1" 
             image="image/pixelfood1/05_apple_pie.png" 
             x="210.0" 
             y="395.0" 
             zIndex="2" 
-            visible="false"
+            visible="false" 
         />
-    </FRAME>
-
-</Video>
+    </SPRITE>
+</Canvas>

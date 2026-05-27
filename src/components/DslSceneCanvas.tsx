@@ -3,10 +3,10 @@ import { Application, Container } from 'pixi.js';
 import { DEFAULT_HEIGHT, DEFAULT_WIDTH } from '../simulation';
 import { PixiRenderer } from '../rendering/pixiRenderer';
 import { OPAQUE_PREVIEW_BACKGROUND } from '../rendering/renderingColors';
-import type { SceneFrame } from '../types/rendering';
+import type { CanvasRenderDocument } from '../dsl/types';
 
 type DslSceneCanvasProps = {
-  frame: SceneFrame | null;
+  frame: CanvasRenderDocument | null;
   width?: number;
   height?: number;
   transparent?: boolean;
@@ -23,7 +23,7 @@ export function DslSceneCanvas({
   const hostRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<Application | null>(null);
   const rendererRef = useRef<PixiRenderer | null>(null);
-  const frameRef = useRef<SceneFrame | null>(null);
+  const frameRef = useRef<CanvasRenderDocument | null>(null);
   const onRenderErrorRef = useRef(onRenderError);
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function DslSceneCanvas({
         appRef.current = app;
         host.appendChild(app.canvas);
         if (frameRef.current) {
-          void renderer.render(frameRef.current).catch(reportRenderError);
+          void renderer.render(frameRef.current, 0).catch(reportRenderError);
         }
       })
       .catch((error: unknown) => {
@@ -89,7 +89,7 @@ export function DslSceneCanvas({
       return;
     }
 
-    void renderer.render(frame).catch(reportRenderError);
+    void renderer.render(frame, 0).catch(reportRenderError);
   }, [frame]);
 
   return <div className="pixi-host" ref={hostRef} />;

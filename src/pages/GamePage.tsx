@@ -10,7 +10,7 @@ type RenderResponse = {
 
 const DEFAULT_SEED = 'new-world';
 
-export function SimulationPage() {
+export function GamePage() {
   const [seed, setSeed] = useState(DEFAULT_SEED);
   const [running, setRunning] = useState(false);
   const [fromFrame, setFromFrame] = useState(0);
