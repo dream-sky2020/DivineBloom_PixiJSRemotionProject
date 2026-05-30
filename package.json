@@ -13,11 +13,13 @@
     "render": "remotion render src/remotion/Root.tsx PixiBounce out/video.mp4"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.2.5",
     "@babel/parser": "^7.29.3",
     "@monaco-editor/react": "^4.7.0",
     "@remotion/cli": "latest",
     "@vitejs/plugin-react": "latest",
     "antd": "^6.4.3",
+    "axios": "^1.16.1",
     "idb": "^8.0.3",
     "pixi.js": "latest",
     "react": "latest",

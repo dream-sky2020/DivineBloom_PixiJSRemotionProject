@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { assetRegistry } from '../assets/assetRegistry';
 import type { AssetDefinition } from '../assets/assetRegistry';
+import { dialogs } from '../components/Dialogs';
+import { ImageViewContent } from '../components/ImageViewContent';
 
 export function ImageAssetsPage() {
   const [assets, setAssets] = useState<AssetDefinition[]>([]);
@@ -36,6 +38,16 @@ export function ImageAssetsPage() {
     void refreshAssets();
   }, []);
 
+  const handleImageClick = (asset: AssetDefinition) => {
+    if (asset.type === 'image') {
+      dialogs.preview({
+        title: `图片预览: ${asset.id}`,
+        content: <ImageViewContent url={asset.url} title={asset.id} />,
+        width: 1000,
+      });
+    }
+  };
+
   return (
     <div className="app-shell">
       <section className="hero">
@@ -59,7 +71,12 @@ export function ImageAssetsPage() {
         ) : (
           <div className="asset-grid">
             {imageAssets.map(asset => (
-              <div key={asset.id} className="asset-card">
+              <div 
+                key={asset.id} 
+                className="asset-card" 
+                onClick={() => handleImageClick(asset)}
+                style={{ cursor: asset.type === 'image' ? 'pointer' : 'default' }}
+              >
                 <div className="asset-preview">
                   {asset.type === 'image' ? (
                     <img src={asset.url} alt={asset.id} loading="lazy" />

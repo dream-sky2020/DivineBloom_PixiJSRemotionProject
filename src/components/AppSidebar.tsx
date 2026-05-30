@@ -20,8 +20,8 @@ export function AppSidebar() {
           to="/dsl-to-image.html" 
           className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
         >
-          <span className="nav-icon">DSL</span>
-          <span className="nav-label">DSL 转图像</span>
+          <span className="nav-icon">XML</span>
+          <span className="nav-label">XML 回放</span>
         </NavLink>
         <NavLink 
           to="/image-assets.html" 
@@ -43,6 +43,13 @@ export function AppSidebar() {
         >
           <span className="nav-icon">CRV</span>
           <span className="nav-label">贝塞尔曲线</span>
+        </NavLink>
+        <NavLink 
+          to="/python-tools.html" 
+          className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+        >
+          <span className="nav-icon">PYT</span>
+          <span className="nav-label">Python 工具</span>
         </NavLink>
       </nav>
     </header>

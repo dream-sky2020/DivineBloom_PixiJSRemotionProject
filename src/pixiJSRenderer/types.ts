@@ -1,5 +1,6 @@
 import type { Container, Graphics, ParticleContainer, Sprite, Texture } from 'pixi.js';
-import type { BlendMode } from '../dsl/types';
+
+export type BlendMode = 'none' | 'normal' | 'add' | 'multiply' | 'subtract' | 'screen';
 
 export type PixiRendererObjectId = string;
 

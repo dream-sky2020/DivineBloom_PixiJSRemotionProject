@@ -1,0 +1,286 @@
+# 渲染系统数据结构定义 (DSL 规范)
+
+本文档定义渲染引擎核心实体的 DSL 标签结构。DSL 采用 XML 格式，所有属性必须使用双引号。
+KEYFRAME除 `frame` 外的任何渲染属性（如 x, y, alpha, image, scaleX 等），
+如果没有在当前 <KEYFRAME> 中显式写出，则表示该属性不发生改变，
+自动沿用（继承）该实体在上一个关键帧中的最终状态。
+KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声明所有需要的初始属性。
+
+## 1. 根容器 (Canvas)
+
+用于渲染视频序列。
+
+<Canvas
+    name="battle_replay_01"         <!-- 视频渲染任务名称 -->
+    width="1920"                    <!-- 输出画布宽度（像素） -->
+    height="1080"                   <!-- 输出画布高度（像素） -->
+    fps="30"                        <!-- 每秒帧率 -->
+    totalFrames="3600"              <!-- 视频总帧数 -->
+>
+    <!--CAMERA、SPRITE、PARTICLECONTAINER -->
+</Canvas>
+
+## 2. 摄像头数据结构 (CAMERA)
+
+<CAMERA 
+    id="main_camera"                <!-- [必填] 相机索引 -->
+>
+    <!-- KEYFRAME -->
+</CAMERA>
+
+## 2.1 摄像头关键帧数据结构 (KEYFRAME)
+
+挂载在 CAMERA 等实体内部，定义特定帧的属性。
+
+<KEYFRAME
+    frame="0"                       <!-- [必填] 关键帧索引 -->
+    x="0.0"                         <!-- 摄像机 X 轴偏移  -->
+    y="0.0"                         <!-- 摄像机 Y 轴偏移  -->
+/>
+
+案例:
+
+<CAMERA id="main_camera">
+    <KEYFRAME frame="0" x="0.0" y="0.0" />
+    <KEYFRAME frame="15" x="20.0" y="20.0"/>
+    <KEYFRAME frame="0" x="0.0" y="0.0" />
+</CAMERA>
+
+## 3. 精灵数据结构 (SPRITE)
+
+基础图像渲染单元。SPRITE 支持合图模式和单图模式。
+
+<SPRITE
+    id="hero_01"                    <!-- [必填] 精灵唯一标识 -->
+>
+    <!-- KEYFRAME -->
+</SPRITE>
+
+
+## 3.1 精灵关键帧数据结构 合图资源 (KEYFRAME)
+
+挂载在 SPRITE 等实体内部，定义特定帧的属性。
+
+<KEYFRAME
+    frame="0"                       <!-- [必填] 关键帧索引 -->
+    atlas="hero_spritesheet"        <!-- 合图资源 ID，与 frame 配合使用 -->
+    atlasFrame="run_01"             <!-- 合图中的分图名称 -->
+    x="520.5"                       <!-- X 绝对坐标 -->
+    y="300.0"                       <!-- Y 绝对坐标 -->
+    anchorX="0.5"                   <!-- 中心锚点 X -->
+    anchorY="0.5"                   <!-- 中心锚点 Y -->
+    zIndex="2"                      <!-- 渲染层级，数值越大越靠前 -->
+    scaleX="1.0"                    <!-- X 轴缩放 -->
+    scaleY="1.0"                    <!-- Y 轴缩放 -->
+    rotation="0.0"                  <!-- 旋转弧度 -->
+    alpha="1.0"                     <!-- 透明度 -->
+    visible="true"                  <!-- 是否可见 -->
+    blendMode="normal"              <!-- 混合模式：normal, add, multiply, screen, subtract, none -->
+    tint="0x220000"                 <!-- 全局乘法染色 -->
+    active="false"                  <!-- 填写false后生命周期结束可以删除 -->
+/>
+
+
+## 3.2 精灵关键帧数据结构 单图资源 (KEYFRAME)
+
+挂载在 SPRITE 等实体内部，定义特定帧的属性。
+
+<KEYFRAME
+    frame="0"                       <!-- [必填] 关键帧索引 -->
+    image="backgrounds/sky.png"     <!-- 单图路径；使用 image 时不能填写 atlas 和 frame -->
+    x="520.5"                       <!-- X 绝对坐标 -->
+    y="300.0"                       <!-- Y 绝对坐标 -->
+    anchorX="0.5"                   <!-- 中心锚点 X -->
+    anchorY="0.5"                   <!-- 中心锚点 Y -->
+    zIndex="2"                      <!-- 渲染层级，数值越大越靠前 -->
+    scaleX="1.0"                    <!-- X 轴缩放 -->
+    scaleY="1.0"                    <!-- Y 轴缩放 -->
+    rotation="0.0"                  <!-- 旋转弧度 -->
+    alpha="1.0"                     <!-- 透明度 -->
+    visible="true"                  <!-- 是否可见 -->
+    blendMode="normal"              <!-- 混合模式：normal, add, multiply, screen, subtract, none -->
+    tint="0x220000"                 <!-- 全局乘法染色 -->
+    active="false"                  <!-- 填写false后生命周期结束可以删除 -->
+/>
+
+精灵合图动画案例 (对应 3.0 & 3.1):
+
+<SPRITE id="hero_01">
+    <KEYFRAME 
+        frame="0" 
+        atlas="hero_spritesheet" 
+        atlasFrame="run_01" 
+        x="0.0" 
+        y="300.0" 
+        anchorX="0.5" 
+        anchorY="0.5" 
+        zIndex="5" 
+        alpha="0.0" 
+    />
+    
+    <KEYFRAME 
+        frame="15" 
+        atlasFrame="run_02" 
+        x="520.5" 
+        alpha="1.0" 
+    />
+    
+    <KEYFRAME frame="30" active="false" /> 
+</SPRITE>
+
+精灵单图静态案例 (对应 3.0 & 3.2):
+
+<SPRITE id="bg_sky">
+    <KEYFRAME 
+        frame="0" 
+        image="backgrounds/sky.png" 
+        x="0.0" 
+        y="0.0" 
+        anchorX="0.0" 
+        anchorY="0.0" 
+        zIndex="-1" 
+        alpha="1.0" 
+    />
+</SPRITE>
+
+## 4. 粒子容器数据结构 (PARTICLECONTAINER)
+
+高性能粒子渲染容器，同一容器内的粒子共享纹理。
+
+<PARTICLECONTAINER
+    id="fx_layer"                   <!-- 容器唯一标识 -->
+>
+    <!-- PARTICLE、KEYFRAME -->
+</PARTICLECONTAINER>
+
+
+## 4.1 粒子容器关键帧数据结构 (KEYFRAME)
+
+
+<KEYFRAME
+    frame="0"                       <!-- [必填] 关键帧索引 -->
+    atlas="fx_atlas"                <!-- 绑定的合图资源 ID -->
+    zIndex="1"                      <!-- 渲染层级，数值越大越靠前 -->
+    blendMode="add"                 <!-- 混合模式：normal, add, multiply, screen, subtract, none -->
+    visible="true"                  <!-- 是否可见 -->
+    active="false"                  <!-- 填写false后生命周期结束可以删除 -->
+/>
+
+## 4.2 粒子数据结构 (PARTICLE)
+
+挂载在 PARTICLECONTAINER 下的单个粒子单元。
+
+<PARTICLE
+    id="p_103"                      <!-- 粒子唯一标识 -->
+>
+    <!-- KEYFRAME -->
+</PARTICLE>
+
+## 4.2.1 粒子容器关键帧数据结构 (KEYFRAME)
+
+<KEYFRAME
+    frame="0"                       <!-- [必填] 关键帧索引 -->
+    atlasFrame="sparkle_03"         <!-- 合图中的分图名称；资源继承自父容器 atlas -->
+    x="100.0"                       <!-- 绝对坐标 X -->
+    y="200.0"                       <!-- 绝对坐标 Y -->
+    scaleX="1.0"                    <!-- X 轴缩放 -->
+    scaleY="1.0"                    <!-- Y 轴缩放 -->
+    anchorX="0.5"                   <!-- 中心锚点 X -->
+    anchorY="0.5"                   <!-- 中心锚点 Y -->
+    rotation="1.57"                 <!-- 旋转弧度 -->
+    alpha="0.8"                     <!-- 透明度 -->
+    tint="0xffffff"                 <!-- 混合颜色，混合模式跟随 PARTICLECONTAINER -->
+    active="false"                  <!-- 填写false后生命周期结束可以删除 -->
+/>
+
+案例:
+
+<PARTICLECONTAINER id="fx_layer">
+    
+    <KEYFRAME 
+        frame="0" 
+        atlas="fx_atlas" 
+        zIndex="10" 
+        blendMode="add" 
+        visible="true" 
+    />
+
+    <PARTICLE id="spark_01">
+        <KEYFRAME 
+            frame="10" 
+            atlasFrame="sparkle_03" 
+            x="100.0" 
+            y="200.0" 
+            scaleX="0.5" 
+            scaleY="0.5" 
+            alpha="1.0" 
+        />
+        <KEYFRAME frame="20" y="50.0" scaleX="2.0" scaleY="2.0" alpha="0.0" active="false" />
+    </PARTICLE>
+
+    <PARTICLE id="spark_02">
+        <KEYFRAME frame="12" atlasFrame="sparkle_01" x="120.0" y="210.0" alpha="1.0" />
+        <KEYFRAME frame="22" y="80.0" alpha="0.0" active="false" />
+    </PARTICLE>
+
+</PARTICLECONTAINER>
+
+## 5. 矢量图形数据结构 (GRAPHIC)
+
+用于绘制基础几何图形（矩形、圆形、多边形等）。
+
+<GRAPHIC
+    id="rect_01"                    <!-- [必填] 图形唯一标识 -->
+    kind="rectangleGraphic"         <!-- [必填] 图形种类：lineGraphic, rectangleGraphic, circleGraphic, polygonGraphic, etc. -->
+>
+    <!-- KEYFRAME -->
+</GRAPHIC>
+
+## 5.1 矢量图形关键帧数据结构 (KEYFRAME)
+
+图形的基础变换与描边/填充属性。
+
+<KEYFRAME
+    frame="0"                       <!-- [必填] 关键帧索引 -->
+    x="0.0"                         <!-- X 轴偏移 -->
+    y="0.0"                         <!-- Y 轴偏移 -->
+    zIndex="1"                      <!-- 渲染层级 -->
+    scaleX="1.0"                    <!-- X 轴缩放 -->
+    scaleY="1.0"                    <!-- Y 轴缩放 -->
+    rotation="0.0"                  <!-- 旋转弧度 -->
+    alpha="1.0"                     <!-- 整体透明度 -->
+    visible="true"                  <!-- 是否可见 -->
+    blendMode="normal"              <!-- 混合模式 -->
+    
+    <!-- 描边属性 (Stroke) -->
+    strokeColor="0xffffff"          <!-- 描边颜色 -->
+    strokeAlpha="1.0"               <!-- 描边透明度 -->
+    strokeWidth="2"                 <!-- 描边宽度（像素） -->
+    
+    <!-- 填充属性 (Fill) -->
+    fillColor="0xff0000"            <!-- 填充颜色 -->
+    fillAlpha="1.0"                 <!-- 填充透明度 -->
+
+    <!-- 特定图形形状属性 (根据 kind 不同而不同) -->
+    width="100"                     <!-- [rectangleGraphic] 宽度 -->
+    height="50"                     <!-- [rectangleGraphic] 高度 -->
+    radius="10"                     <!-- [rectangleGraphic/circleGraphic] 圆角半径或圆半径 -->
+    
+    points="0,0 100,0 50,100"       <!-- [polygonGraphic] 顶点坐标列表 -->
+    
+    active="false"                  <!-- 填写false后生命周期结束可以删除 -->
+/>
+
+案例 (矩形):
+
+<GRAPHIC id="box_01" kind="rectangleGraphic">
+    <KEYFRAME 
+        frame="0" 
+        x="100" y="100" 
+        width="200" height="100" 
+        fillColor="0x00ff00" 
+        strokeColor="0xffffff" 
+        strokeWidth="2" 
+    />
+    <KEYFRAME frame="30" scaleX="1.5" alpha="0.5" />
+</GRAPHIC>

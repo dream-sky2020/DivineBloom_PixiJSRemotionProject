@@ -2,10 +2,11 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 import { AppSidebar } from './components/AppSidebar';
 import { GamePage } from './pages/GamePage';
-import { DslToVideoPage } from './pages/DslToVideoPage';
+import { XmlToVideoPage } from './pages/XmlToVideoPage';
 import { ImageAssetsPage } from './pages/ImageAssetsPage';
 import { AudioAssetsPage } from './pages/AudioAssetsPage';
 import { BezierEditorPage } from './pages/BezierEditorPage';
+import { PythonToolsPage } from './pages/PythonToolsPage';
 
 function App() {
   return (
@@ -15,10 +16,11 @@ function App() {
         <main className="content-area">
           <Routes>
             <Route path="/simulation.html" element={<GamePage />} />
-            <Route path="/dsl-to-image.html" element={<DslToVideoPage />} />
+            <Route path="/dsl-to-image.html" element={<XmlToVideoPage />} />
             <Route path="/image-assets.html" element={<ImageAssetsPage />} />
             <Route path="/audio-assets.html" element={<AudioAssetsPage />} />
             <Route path="/bezier-editor.html" element={<BezierEditorPage />} />
+            <Route path="/python-tools.html" element={<PythonToolsPage />} />
             <Route path="/" element={<Navigate to="/simulation.html" replace />} />
           </Routes>
         </main>

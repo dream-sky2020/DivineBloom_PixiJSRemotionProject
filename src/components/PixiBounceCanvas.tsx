@@ -4,13 +4,15 @@ import { DEFAULT_HEIGHT, DEFAULT_WIDTH, getBallsAtFrame } from '../simulation';
 import { PixiCommandProcessor } from '../pixiJSRenderer/PixiCommandProcessor';
 import { PixiFrameReconciler } from '../pixiJSRenderer/PixiFrameReconciler';
 import { PixiCanvas } from '../pixiJSRenderer/PixiCanvas';
+import type { PixiReadonlyFrameStateMap } from '../pixiJSRenderer/types';
 
 type PixiBounceCanvasProps = {
   seed: string;
   running: boolean;
+  onFrame?: (frameIndex: number, state: PixiReadonlyFrameStateMap) => void;
 };
 
-export function PixiBounceCanvas({ seed, running }: PixiBounceCanvasProps) {
+export function PixiBounceCanvas({ seed, running, onFrame }: PixiBounceCanvasProps) {
   const processorRef = useRef<PixiCommandProcessor | null>(null);
   const reconcilerRef = useRef<PixiFrameReconciler | null>(null);
   const frameRef = useRef(0);
@@ -48,7 +50,12 @@ export function PixiBounceCanvas({ seed, running }: PixiBounceCanvasProps) {
 
     // 3. 执行命令
     processor.processCommands(commands);
-  }, []);
+
+    // 4. 回传状态给父组件（用于录制）
+    if (onFrame) {
+      onFrame(frame, reconciler.getCurrentFrameState());
+    }
+  }, [onFrame]);
 
   const handleInit = useCallback((app: Application) => {
     processorRef.current = new PixiCommandProcessor(app);

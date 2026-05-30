@@ -54,6 +54,12 @@ class RenderHandler(BaseHTTPRequestHandler):
                 self.respond(200, {"ok": True, "path": picked_path})
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
+        elif route == "/file/pick-dir":
+            try:
+                picked_path = pick_local_directory()
+                self.respond(200, {"ok": True, "path": picked_path})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
         elif route == "/file/read":
             try:
                 raw_path = first_query_value(query, "path")
@@ -121,6 +127,25 @@ class RenderHandler(BaseHTTPRequestHandler):
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
         
+        elif route == "/tool/batch-rename":
+            try:
+                payload = self.read_json()
+                target_dir = payload.get("target_dir")
+                old_str = payload.get("old_str")
+                new_str = payload.get("new_str")
+                
+                if not target_dir or not os.path.exists(target_dir):
+                    raise ValueError(f"Invalid target directory: {target_dir}")
+                
+                from batch_rename_files_and_folders import batch_rename_files_and_folders
+                
+                # Capture output if possible, or just run it
+                batch_rename_files_and_folders(target_dir, old_str, new_str)
+                
+                self.respond(200, {"ok": True, "message": "Batch rename completed successfully"})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+        
         else:
             self.respond(404, {"ok": False, "error": "not found"})
 
@@ -168,6 +193,19 @@ def pick_local_file() -> str:
             ("所有文件", "*.*"),
         ],
     )
+    root.destroy()
+
+    return selected
+
+
+def pick_local_directory() -> str:
+    import tkinter as tk
+    from tkinter import filedialog
+
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    selected = filedialog.askdirectory(title="选择目标文件夹")
     root.destroy()
 
     return selected

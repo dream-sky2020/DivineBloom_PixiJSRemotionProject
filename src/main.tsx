@@ -6,11 +6,13 @@ import './index.css'
 import './assets/registry'
 import App from './App.tsx'
 import { ToastInit } from './components/Toast'
+import { DialogsInit } from './components/Dialogs'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AntdApp>
       <ToastInit />
+      <DialogsInit />
       <App />
     </AntdApp>
   </StrictMode>,
