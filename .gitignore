@@ -34,3 +34,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Assets
+public/image/
+public/audio/
