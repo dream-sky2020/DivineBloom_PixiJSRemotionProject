@@ -4,12 +4,8 @@ import type {
   PixiRendererObjectId,
   PixiSpriteProps,
   PixiGraphicDisplayProps,
-  PixiRectangleGraphicProps,
-  PixiCircleGraphicProps,
+  PixiLineGraphicProps,
   PixiPolygonGraphicProps,
-  PixiParticleProps,
-  PixiCameraProps,
-  PixiParticleContainerProps
 } from './types';
 
 interface CanvasExportProps {
@@ -23,6 +19,7 @@ interface CanvasExportProps {
  * PixiXmlExporter: 将连续的帧数据导出为符合 xml_data_structures.txt 规范的 XML 字符串
  */
 export class PixiXmlExporter {
+  private static readonly EXPORT_PRECISION = 2;
   /**
    * 导出 XML
    * @param frames 帧状态数组
@@ -185,14 +182,31 @@ export class PixiXmlExporter {
       // 多边形点位
       if (state.kind === 'polygonGraphic') {
         const pProps = state.props as PixiPolygonGraphicProps;
-        props.points = pProps.points.map(p => `${p.x},${p.y}`).join(' ');
+        props.points = pProps.points
+          .map((p) => `${roundNumber(p.x, this.EXPORT_PRECISION)},${roundNumber(p.y, this.EXPORT_PRECISION)}`)
+          .join(' ');
+      }
+
+      // 直线点位
+      if (state.kind === 'lineGraphic') {
+        const lProps = state.props as PixiLineGraphicProps;
+        if (lProps.start) {
+          props.startX = lProps.start.x;
+          props.startY = lProps.start.y;
+          delete props.start;
+        }
+        if (lProps.end) {
+          props.endX = lProps.end.x;
+          props.endY = lProps.end.y;
+          delete props.end;
+        }
       }
 
       // 贝塞尔曲线路径
       if (state.kind === 'bezierCurveGraphic') {
         const bProps = state.props as any;
         if (bProps.path) {
-          props.path = JSON.stringify(bProps.path).replace(/"/g, '&quot;');
+          props.path = JSON.stringify(normalizeValue(bProps.path, this.EXPORT_PRECISION)).replace(/"/g, '&quot;');
         }
       }
     }
@@ -226,11 +240,33 @@ export class PixiXmlExporter {
       
       // 格式化数值，避免过长的小数
       if (typeof val === 'number') {
-        val = Math.round(val * 1000) / 1000;
+        val = roundNumber(val, this.EXPORT_PRECISION);
       }
       
       attrs += ` ${key}="${val}"`;
     }
     return attrs;
   }
+}
+
+function normalizeValue(value: unknown, precision: number): unknown {
+  if (typeof value === 'number') {
+    return roundNumber(value, precision);
+  }
+  if (Array.isArray(value)) {
+    return value.map((child) => normalizeValue(child, precision));
+  }
+  if (value && typeof value === 'object') {
+    const result: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      result[key] = normalizeValue(child, precision);
+    }
+    return result;
+  }
+  return value;
+}
+
+function roundNumber(value: number, precision: number) {
+  const factor = 10 ** precision;
+  return Math.round(value * factor) / factor;
 }

@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 import { AppSidebar } from './components/AppSidebar';
 import { GamePage } from './pages/GamePage';
-import { XmlToVideoPage } from './pages/XmlToVideoPage';
+import { ReplayToVideoPage } from './pages/ReplayToVideoPage';
 import { ImageAssetsPage } from './pages/ImageAssetsPage';
 import { AudioAssetsPage } from './pages/AudioAssetsPage';
 import { BezierEditorPage } from './pages/BezierEditorPage';
@@ -16,7 +16,7 @@ function App() {
         <main className="content-area">
           <Routes>
             <Route path="/simulation.html" element={<GamePage />} />
-            <Route path="/dsl-to-image.html" element={<XmlToVideoPage />} />
+            <Route path="/dsl-to-image.html" element={<ReplayToVideoPage />} />
             <Route path="/image-assets.html" element={<ImageAssetsPage />} />
             <Route path="/audio-assets.html" element={<AudioAssetsPage />} />
             <Route path="/bezier-editor.html" element={<BezierEditorPage />} />

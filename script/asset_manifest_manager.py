@@ -60,6 +60,12 @@ def generate_manifest(public_dir, output_file, config_file):
                 
                 if 'tags' in config:
                     asset_data['tags'] = config['tags']
+                if 'defaultScale' in config:
+                    asset_data['defaultScale'] = config['defaultScale']
+                if 'defaultAnchorX' in config:
+                    asset_data['defaultAnchorX'] = config['defaultAnchorX']
+                if 'defaultAnchorY' in config:
+                    asset_data['defaultAnchorY'] = config['defaultAnchorY']
                 
                 manifest.append(asset_data)
 

@@ -197,6 +197,16 @@ export class PixiXmlLoader {
           delete props.endY;
         }
       }
+
+      // 重构贝塞尔路径
+      if (kind === 'bezierCurveGraphic' && typeof props.path === 'string') {
+        try {
+          props.path = JSON.parse(props.path);
+        } catch (error) {
+          console.warn('Invalid bezier path in XML:', props.path, error);
+          props.path = [];
+        }
+      }
     }
 
     return props;

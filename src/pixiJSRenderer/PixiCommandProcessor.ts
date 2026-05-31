@@ -47,8 +47,37 @@ type TextureAsset = Texture | Spritesheet;
 type DisplayObjectWithBlendMode = {
   blendMode?: string;
 };
+type Projectable3D = {
+  convertTo3d?: () => void;
+  position3d?: { z: number };
+  euler?: { x: number; y: number };
+};
+type FocusProjectable = {
+  setPlanes?: (focus: number, near: number, far: number, orthographic: boolean) => void;
+};
+type CameraViewport = {
+  width: number;
+  height: number;
+};
+type CameraPlanes = {
+  focus: number;
+  near: number;
+  far: number;
+  orthographic: boolean;
+};
+
+const cameraPlanesCache = new WeakMap<Container, CameraPlanes>();
+const CAMERA_PLANE_CONFIG = {
+  nearFromFocusRatio: 0.08,
+  nearMin: 0.1,
+  nearFocusMargin: 0.1,
+  farViewportMultiplier: 12,
+  farFocusMultiplier: 4,
+  farCameraZMultiplier: 2,
+} as const;
 
 export class PixiCommandProcessor {
+  private readonly app: Application;
   private readonly stage: Container;
   private readonly world: Container;
   private readonly textureAssetCache = new Map<string, Promise<TextureAsset>>();
@@ -60,6 +89,7 @@ export class PixiCommandProcessor {
   };
 
   constructor(app: Application) {
+    this.app = app;
     this.stage = app.stage;
     this.stage.sortableChildren = true;
     this.world = new Container();
@@ -85,7 +115,7 @@ export class PixiCommandProcessor {
 
   public clear() {
     if (this.pool.camera) {
-      applyCameraProps(this.pool.camera.instance, {});
+      applyCameraProps(this.pool.camera.instance, {}, this.getViewport());
       this.pool.camera = undefined;
     }
 
@@ -143,7 +173,7 @@ export class PixiCommandProcessor {
         return;
       }
       entry.props = { ...entry.props, ...command.props };
-      applyCameraProps(entry.instance, entry.props);
+      applyCameraProps(entry.instance, entry.props, this.getViewport());
       return;
     }
     if (command.kind === 'sprite') {
@@ -186,7 +216,7 @@ export class PixiCommandProcessor {
   private destroyObject(command: PixiDestroyCommand) {
     if (command.kind === 'camera') {
       if (this.pool.camera?.id === command.id) {
-        applyCameraProps(this.pool.camera.instance, {});
+        applyCameraProps(this.pool.camera.instance, {}, this.getViewport());
         this.pool.camera = undefined;
       }
       return;
@@ -214,7 +244,7 @@ export class PixiCommandProcessor {
       instance: this.world,
       props,
     };
-    applyCameraProps(this.world, props);
+    applyCameraProps(this.world, props, this.getViewport());
   }
 
   private createSprite(id: PixiRendererObjectId, props: PixiSpriteProps) {
@@ -383,6 +413,7 @@ export class PixiCommandProcessor {
     instance.alpha = props.alpha ?? 1;
     instance.visible = props.visible ?? true;
     instance.zIndex = props.zIndex ?? 0;
+    applySprite3dProps(instance, props);
     applyBlendMode(instance, props.blendMode);
     if (props.tint !== undefined) {
       instance.tint = parseColor(props.tint);
@@ -459,16 +490,23 @@ export class PixiCommandProcessor {
     }
 
     applyFillAndStroke(instance, entry.props);
+    applyGraphicAnchor(instance, entry.props);
     applyGraphicDisplayProps(instance, entry.props);
   }
 
   private applyTexture(source: PixiTextureSource, onTexture: (texture: Texture) => void) {
     if (source.kind === 'image') {
-      onTexture(Texture.from(source.image));
+      const url = normalizeAssetUrl(source.image);
+      void this.loadTextureAsset(url).then((asset) => {
+        if (asset instanceof Texture) {
+          onTexture(asset);
+        }
+      });
       return;
     }
 
-    void this.loadTextureAsset(source.atlas).then((asset) => {
+    const atlasUrl = normalizeAssetUrl(source.atlas);
+    void this.loadTextureAsset(atlasUrl).then((asset) => {
       if (isSpritesheet(asset)) {
         const texture = asset.textures[source.atlasFrame];
         if (texture) {
@@ -487,6 +525,13 @@ export class PixiCommandProcessor {
     const assetPromise = Assets.load<TextureAsset>(url);
     this.textureAssetCache.set(url, assetPromise);
     return assetPromise;
+  }
+
+  private getViewport(): CameraViewport {
+    return {
+      width: this.app.screen.width || 1920,
+      height: this.app.screen.height || 1080,
+    };
   }
 }
 
@@ -559,9 +604,45 @@ function createGraphicEntry(
   } as PixiGraphicPoolEntry;
 }
 
-function applyCameraProps(camera: Container, props: { x?: number; y?: number }) {
+function applyCameraProps(camera: Container, props: PixiCameraProps, viewport: CameraViewport) {
   camera.x = props.x ?? 0;
   camera.y = props.y ?? 0;
+
+  const maybe3d = camera as Container & Projectable3D;
+  maybe3d.convertTo3d?.();
+
+  const cameraZ = props.z ?? 0;
+  if (maybe3d.position3d) {
+    maybe3d.position3d.z = cameraZ;
+  }
+
+  if (props.focus === undefined) {
+    cameraPlanesCache.delete(camera);
+    return;
+  }
+
+  if (!Number.isFinite(props.focus) || props.focus <= 0) {
+    return;
+  }
+
+  const maybeFocus = camera as Container & FocusProjectable;
+  if (!maybeFocus.setPlanes) {
+    return;
+  }
+
+  const nextPlanes = computeCameraPlanes(props.focus, cameraZ, viewport);
+  const lastPlanes = cameraPlanesCache.get(camera);
+  if (lastPlanes && isSameCameraPlanes(lastPlanes, nextPlanes)) {
+    return;
+  }
+
+  maybeFocus.setPlanes(
+    nextPlanes.focus,
+    nextPlanes.near,
+    nextPlanes.far,
+    nextPlanes.orthographic,
+  );
+  cameraPlanesCache.set(camera, nextPlanes);
 }
 
 function applyGraphicDisplayProps(instance: Graphics, props: PixiGraphicDisplayProps) {
@@ -573,6 +654,22 @@ function applyGraphicDisplayProps(instance: Graphics, props: PixiGraphicDisplayP
   instance.visible = props.visible ?? true;
   instance.zIndex = props.zIndex ?? 0;
   applyBlendMode(instance, props.blendMode);
+}
+
+function applyGraphicAnchor(instance: Graphics, props: PixiGraphicDisplayProps) {
+  const hasExplicitAnchor = props.anchorX !== undefined || props.anchorY !== undefined;
+  if (!hasExplicitAnchor) {
+    instance.pivot.set(0, 0);
+    return;
+  }
+
+  const anchorX = props.anchorX ?? 0;
+  const anchorY = props.anchorY ?? 0;
+  const bounds = instance.getLocalBounds();
+  instance.pivot.set(
+    bounds.x + bounds.width * anchorX,
+    bounds.y + bounds.height * anchorY,
+  );
 }
 
 function applyFillAndStroke(instance: Graphics, props: PixiGraphicDisplayProps) {
@@ -625,12 +722,83 @@ function applyBlendMode(instance: DisplayObjectWithBlendMode, blendMode: string 
 function resetDisplayObject(instance: Container | Graphics) {
   instance.x = 0;
   instance.y = 0;
+  instance.pivot.set(0, 0);
   instance.scale.set(1, 1);
+  instance.skew.set(0, 0);
   instance.rotation = 0;
   instance.alpha = 1;
   instance.visible = true;
   instance.zIndex = 0;
   applyBlendMode(instance, undefined);
+}
+
+function applySprite3dProps(instance: Sprite, props: PixiSpriteProps) {
+  const maybe3d = instance as Sprite & Projectable3D;
+  maybe3d.convertTo3d?.();
+
+  if (props.z !== undefined) {
+    if (maybe3d.position3d) {
+      maybe3d.position3d.z = props.z;
+    } else if (props.zIndex === undefined) {
+      // 未启用 projection 时，用 z 兜底映射层级，保持“远近”可见差异。
+      instance.zIndex = props.z;
+    }
+  }
+
+  if (props.rotationX !== undefined || props.rotationY !== undefined) {
+    if (maybe3d.euler) {
+      if (props.rotationX !== undefined) {
+        maybe3d.euler.x = props.rotationX;
+      }
+      if (props.rotationY !== undefined) {
+        maybe3d.euler.y = props.rotationY;
+      }
+    } else {
+      // 无 3D 能力时做 2D 近似：用 skew 提供轻量“前后仰/左右翻”错觉。
+      instance.skew.set(props.rotationY ?? 0, props.rotationX ?? 0);
+    }
+  } else {
+    instance.skew.set(0, 0);
+  }
+}
+
+function computeCameraPlanes(focus: number, cameraZ: number, viewport: CameraViewport): CameraPlanes {
+  const viewportSpan = Math.max(1, Math.max(viewport.width, viewport.height));
+  const near = clampNumber(
+    focus * CAMERA_PLANE_CONFIG.nearFromFocusRatio,
+    CAMERA_PLANE_CONFIG.nearMin,
+    Math.max(CAMERA_PLANE_CONFIG.nearMin, focus - CAMERA_PLANE_CONFIG.nearFocusMargin),
+  );
+  const depthRange =
+    Math.max(
+      viewportSpan * CAMERA_PLANE_CONFIG.farViewportMultiplier,
+      focus * CAMERA_PLANE_CONFIG.farFocusMultiplier,
+    ) + Math.abs(cameraZ) * CAMERA_PLANE_CONFIG.farCameraZMultiplier;
+  const far = focus + depthRange;
+
+  return {
+    focus,
+    near,
+    far,
+    orthographic: false,
+  };
+}
+
+function isSameCameraPlanes(left: CameraPlanes, right: CameraPlanes) {
+  return (
+    Math.abs(left.focus - right.focus) < 0.0001 &&
+    Math.abs(left.near - right.near) < 0.0001 &&
+    Math.abs(left.far - right.far) < 0.0001 &&
+    left.orthographic === right.orthographic
+  );
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function normalizeAssetUrl(url: string) {
+  return encodeURI(url);
 }
 
 function destroyIdleObjects<TReusableInstance>(

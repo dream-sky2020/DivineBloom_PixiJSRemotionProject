@@ -21,7 +21,9 @@
     "antd": "^6.4.3",
     "axios": "^1.16.1",
     "idb": "^8.0.3",
+    "pixi-projection": "^1.0.0",
     "pixi.js": "latest",
+    "planck": "^1.5.0",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "^7.15.1",
@@ -31,7 +33,10 @@
   "devDependencies": {
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "rollup": "^4.60.4",
     "typescript": "latest",
-    "vite": "^8.0.14"
+    "vite": "^8.0.14",
+    "vite-plugin-top-level-await": "^1.6.0",
+    "vite-plugin-wasm": "^3.6.0"
   }
 }

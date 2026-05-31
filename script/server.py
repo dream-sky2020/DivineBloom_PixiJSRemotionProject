@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shutil
 import subprocess
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -28,6 +29,69 @@ def safe_int(value: Any, fallback: int) -> int:
 def safe_slug(value: str) -> str:
     slug = re.sub(r"[^a-zA-Z0-9_-]+", "-", value).strip("-")
     return slug[:48] or "seed"
+
+
+def is_finite_number(value: float) -> bool:
+    return value == value and value not in (float("inf"), float("-inf"))
+
+
+def load_asset_config() -> dict[str, Any]:
+    if CONFIG_FILE.exists():
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+
+def apply_asset_update(config: dict[str, Any], payload: dict[str, Any]) -> None:
+    asset_path = payload.get("path")
+    if not asset_path:
+        raise ValueError("Asset path is required")
+
+    existing = config.get(asset_path, {})
+    if not isinstance(existing, dict):
+        existing = {}
+
+    if "alias" in payload:
+        alias = payload.get("alias")
+        if alias:
+            existing["alias"] = alias
+        elif "alias" in existing:
+            del existing["alias"]
+
+    if "tags" in payload:
+        tags = payload.get("tags")
+        if isinstance(tags, list):
+            existing["tags"] = tags
+        elif "tags" in existing:
+            del existing["tags"]
+
+    for field_name in ("defaultScale", "defaultAnchorX", "defaultAnchorY"):
+        if field_name not in payload:
+            continue
+        value = payload.get(field_name)
+        if value is None or value == "":
+            if field_name in existing:
+                del existing[field_name]
+            continue
+        number = float(value)
+        if not is_finite_number(number):
+            raise ValueError(f"{field_name} 不是有效数字")
+        existing[field_name] = number
+
+    config[asset_path] = existing
+
+
+def save_asset_config(config: dict[str, Any]) -> None:
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(config, f, indent=2, ensure_ascii=False)
+
+
+def refresh_manifest_assets() -> list[dict[str, Any]]:
+    script_path = ROOT / "script" / "asset_manifest_manager.py"
+    subprocess.run(["python", str(script_path)], check=True)
+    manifest_file = PUBLIC_DIR / "asset_manifest.json"
+    with open(manifest_file, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 class RenderHandler(BaseHTTPRequestHandler):
@@ -60,6 +124,12 @@ class RenderHandler(BaseHTTPRequestHandler):
                 self.respond(200, {"ok": True, "path": picked_path})
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
+        elif route == "/file/pick-image":
+            try:
+                picked_image = pick_local_image_into_public()
+                self.respond(200, {"ok": True, **picked_image})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
         elif route == "/file/read":
             try:
                 raw_path = first_query_value(query, "path")
@@ -83,13 +153,26 @@ class RenderHandler(BaseHTTPRequestHandler):
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
         
+        elif route == "/render-xml":
+            try:
+                payload = self.read_json()
+                xml_content = payload.get("xml")
+                if not xml_content:
+                    raise ValueError("Missing xml content")
+                
+                # 保存 XML 到临时文件供 Remotion 读取
+                temp_xml_path = PUBLIC_DIR / "temp_render.xml"
+                temp_xml_path.write_text(xml_content, encoding="utf-8")
+                
+                # 调用 Remotion 渲染 PixiXml 组合
+                result = render_xml_video(payload)
+                self.respond(200, {"ok": True, "output": result})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+        
         elif route == "/manifest/refresh":
             try:
-                script_path = ROOT / "script" / "asset_manifest_manager.py"
-                subprocess.run(["python", str(script_path)], check=True)
-                manifest_file = PUBLIC_DIR / "asset_manifest.json"
-                with open(manifest_file, "r", encoding="utf-8") as f:
-                    assets = json.load(f)
+                assets = refresh_manifest_assets()
                 self.respond(200, {
                     "ok": True,
                     "message": "Manifest refreshed",
@@ -101,29 +184,30 @@ class RenderHandler(BaseHTTPRequestHandler):
         elif route == "/asset/update":
             try:
                 payload = self.read_json()
-                # payload format: {"path": "assets/ui/hero.png", "alias": "hero", "tags": ["character", "player"]}
-                asset_path = payload.get("path")
-                if not asset_path:
-                    raise ValueError("Asset path is required")
-                
-                config = {}
-                if CONFIG_FILE.exists():
-                    with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                        config = json.load(f)
-                
-                config[asset_path] = {
-                    "alias": payload.get("alias"),
-                    "tags": payload.get("tags", [])
-                }
-                
-                with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-                    json.dump(config, f, indent=2, ensure_ascii=False)
-                
-                # 更新配置后自动刷新 Manifest
-                script_path = ROOT / "script" / "asset_manifest_manager.py"
-                subprocess.run(["python", str(script_path)], check=True)
-                
+                config = load_asset_config()
+                apply_asset_update(config, payload)
+                save_asset_config(config)
+                refresh_manifest_assets()
                 self.respond(200, {"ok": True, "message": "Asset updated and manifest refreshed"})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
+
+        elif route == "/asset/batch-update":
+            try:
+                payload = self.read_json()
+                updates = payload.get("updates")
+                if not isinstance(updates, list) or len(updates) == 0:
+                    raise ValueError("updates 不能为空")
+
+                config = load_asset_config()
+                for update in updates:
+                    if not isinstance(update, dict):
+                        raise ValueError("updates 中存在非法项")
+                    apply_asset_update(config, update)
+
+                save_asset_config(config)
+                refresh_manifest_assets()
+                self.respond(200, {"ok": True, "message": f"Batch updated {len(updates)} assets"})
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
         
@@ -211,6 +295,44 @@ def pick_local_directory() -> str:
     return selected
 
 
+def pick_local_image_into_public() -> dict[str, str]:
+    import tkinter as tk
+    from tkinter import filedialog
+
+    root = tk.Tk()
+    root.withdraw()
+    root.attributes("-topmost", True)
+    selected = filedialog.askopenfilename(
+        title="选择图片文件",
+        filetypes=[
+            ("图片文件", "*.png *.jpg *.jpeg *.webp *.gif *.bmp"),
+            ("所有文件", "*.*"),
+        ],
+    )
+    root.destroy()
+
+    if not selected:
+        raise ValueError("未选择任何图片文件")
+
+    source = Path(selected).expanduser().resolve()
+    if not source.exists() or not source.is_file():
+        raise ValueError(f"图片文件无效：{source}")
+
+    target_dir = PUBLIC_DIR / "user_uploads"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    ext = source.suffix.lower() or ".png"
+    target_name = f"user-{int(time.time())}-{safe_slug(source.stem)}{ext}"
+    target = target_dir / target_name
+    shutil.copy2(source, target)
+
+    relative_path = target.relative_to(PUBLIC_DIR).as_posix()
+    return {
+        "path": relative_path,
+        "url": f"/{relative_path}",
+    }
+
+
 def read_local_text_file(raw_path: str) -> str:
     file_path = Path(raw_path).expanduser().resolve()
     if not file_path.exists():
@@ -261,6 +383,49 @@ def render_video(payload: dict[str, Any]) -> str:
         str(output),
         f"--props={json.dumps(props, ensure_ascii=False)}",
       ]
+
+    completed = subprocess.run(
+        command,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        details = completed.stderr.strip() or completed.stdout.strip()
+        raise RuntimeError(details or "Remotion render failed")
+
+    return str(output)
+
+
+def render_xml_video(payload: dict[str, Any]) -> str:
+    name = safe_slug(str(payload.get("name") or "xml-render"))
+    fps = max(1, safe_int(payload.get("fps"), 60))
+    width = max(64, safe_int(payload.get("width"), 1280))
+    height = max(64, safe_int(payload.get("height"), 720))
+    total_frames = max(1, safe_int(payload.get("totalFrames"), 1))
+
+    OUTPUT_DIR.mkdir(exist_ok=True)
+    output = OUTPUT_DIR / f"{name}-{int(time.time())}.mp4"
+    
+    props = {
+        "xmlPath": "temp_render.xml",
+        "width": width,
+        "height": height,
+        "fps": fps,
+        "durationInFrames": total_frames
+    }
+
+    npx = "npx.cmd" if os.name == "nt" else "npx"
+    command = [
+        npx,
+        "remotion",
+        "render",
+        "src/remotion/Root.tsx",
+        "PixiXml",
+        str(output),
+        f"--props={json.dumps(props, ensure_ascii=False)}",
+    ]
 
     completed = subprocess.run(
         command,

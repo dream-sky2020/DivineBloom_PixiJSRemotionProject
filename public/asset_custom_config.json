@@ -1,0 +1,201 @@
+{
+  "image/君主宝/君主宝/轻伤-受击/优势.png": {
+    "defaultScale": 0.18,
+    "defaultAnchorX": 0.5,
+    "defaultAnchorY": 0.5
+  },
+  "image/君主宝/君主宝/轻伤-受击/优势（白边）.png": {
+    "defaultScale": 0.18,
+    "defaultAnchorX": 0.5,
+    "defaultAnchorY": 0.5
+  },
+  "image/君主宝/君主宝/轻伤-受击/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-受击/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-受击/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-受击/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击前摇/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击前摇/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击前摇/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击前摇/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击前摇/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击前摇/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击后摇/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击后摇/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击后摇/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击后摇/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击后摇/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-攻击后摇/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-移动/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-移动/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-移动/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-移动/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-移动/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-移动/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-站立/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-站立/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-站立/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-站立/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-站立/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/轻伤-站立/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-受击/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-受击/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-受击/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-受击/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-受击/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-受击/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击前摇/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击前摇/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击前摇/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击前摇/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击前摇/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击前摇/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击后摇/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击后摇/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击后摇/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击后摇/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击后摇/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-攻击后摇/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-移动/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-移动/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-移动/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-移动/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-移动/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-移动/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-站立/优势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-站立/优势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-站立/劣势.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-站立/劣势（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-站立/默认.png": {
+    "defaultScale": 0.18
+  },
+  "image/君主宝/君主宝/默认-站立/默认（白边）.png": {
+    "defaultScale": 0.18
+  },
+  "image/第九章背景/第九章最后演出floor.png": {
+    "defaultScale": 0.5,
+    "defaultAnchorX": 0.5,
+    "defaultAnchorY": 0.5
+  },
+  "image/第九章背景/第九章最后演出back.png": {
+    "defaultScale": 0.5,
+    "defaultAnchorX": 0.5,
+    "defaultAnchorY": 0.5
+  },
+  "image/1779766347972.png": {
+    "defaultScale": 0.1,
+    "defaultAnchorX": 0.5,
+    "defaultAnchorY": 0.5
+  }
+}

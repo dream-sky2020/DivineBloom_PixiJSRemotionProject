@@ -10,6 +10,9 @@ export interface AssetDefinition {
   group?: string;
   path?: string;
   tags?: string[];
+  defaultScale?: number;
+  defaultAnchorX?: number;
+  defaultAnchorY?: number;
   metadata?: Record<string, unknown>;
 }
 

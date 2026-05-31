@@ -36,19 +36,22 @@ KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声
     frame="0"                       <!-- [必填] 关键帧索引 -->
     x="0.0"                         <!-- 摄像机 X 轴偏移  -->
     y="0.0"                         <!-- 摄像机 Y 轴偏移  -->
+    z="0.0"                         <!-- 摄像机 Z 轴偏移（推进/拉远镜头） -->
+    focus="400.0"                   <!-- 焦点距离/焦距（与投影强度相关） -->
 />
 
 案例:
 
 <CAMERA id="main_camera">
-    <KEYFRAME frame="0" x="0.0" y="0.0" />
-    <KEYFRAME frame="15" x="20.0" y="20.0"/>
+    <KEYFRAME frame="0" x="0.0" y="0.0" z="0.0" focus="400.0" />
+    <KEYFRAME frame="15" x="20.0" y="20.0" z="40.0" focus="420.0"/>
     <KEYFRAME frame="0" x="0.0" y="0.0" />
 </CAMERA>
 
 ## 3. 精灵数据结构 (SPRITE)
 
 基础图像渲染单元。SPRITE 支持合图模式和单图模式。
+可选支持 3D 空间描述字段，用于表现伪 3D 景深错觉。
 
 <SPRITE
     id="hero_01"                    <!-- [必填] 精灵唯一标识 -->
@@ -77,6 +80,9 @@ KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声
     visible="true"                  <!-- 是否可见 -->
     blendMode="normal"              <!-- 混合模式：normal, add, multiply, screen, subtract, none -->
     tint="0x220000"                 <!-- 全局乘法染色 -->
+    z="0.0"                         <!-- 精灵 Z 深度（影响近大远小） -->
+    rotationX="0.0"                 <!-- 绕 X 轴旋转（前倾/后仰） -->
+    rotationY="0.0"                 <!-- 绕 Y 轴旋转（左翻/右翻） -->
     active="false"                  <!-- 填写false后生命周期结束可以删除 -->
 />
 
@@ -100,8 +106,26 @@ KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声
     visible="true"                  <!-- 是否可见 -->
     blendMode="normal"              <!-- 混合模式：normal, add, multiply, screen, subtract, none -->
     tint="0x220000"                 <!-- 全局乘法染色 -->
+    z="0.0"                         <!-- 精灵 Z 深度（影响近大远小） -->
+    rotationX="0.0"                 <!-- 绕 X 轴旋转（前倾/后仰） -->
+    rotationY="0.0"                 <!-- 绕 Y 轴旋转（左翻/右翻） -->
     active="false"                  <!-- 填写false后生命周期结束可以删除 -->
 />
+
+## 3.3 精灵 3D 空间字段说明
+
+用于精灵空间姿态描述，不包含计算逻辑语义：
+
+- `z`：精灵深度值。
+- `rotationX`：绕 X 轴旋转，常用于“前倾/后仰”。
+- `rotationY`：绕 Y 轴旋转，常用于“左翻/右翻”。
+- `rotation`：保留原有平面旋转（可视作绕 Z 轴）。
+
+常见用法：
+
+- 远景角色：提高 `z`，并配合较小 `scaleX/scaleY`。
+- 地板/背景平面：使用 `rotationX` 做俯仰透视感。
+- 立面物体（墙体/卡牌）：使用 `rotationY` 做左右翻转透视感。
 
 精灵合图动画案例 (对应 3.0 & 3.1):
 
@@ -244,6 +268,8 @@ KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声
     frame="0"                       <!-- [必填] 关键帧索引 -->
     x="0.0"                         <!-- X 轴偏移 -->
     y="0.0"                         <!-- Y 轴偏移 -->
+    anchorX="0.0"                   <!-- 图形锚点 X（0-1，默认 0） -->
+    anchorY="0.0"                   <!-- 图形锚点 Y（0-1，默认 0） -->
     zIndex="1"                      <!-- 渲染层级 -->
     scaleX="1.0"                    <!-- X 轴缩放 -->
     scaleY="1.0"                    <!-- Y 轴缩放 -->
@@ -262,11 +288,16 @@ KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声
     fillAlpha="1.0"                 <!-- 填充透明度 -->
 
     <!-- 特定图形形状属性 (根据 kind 不同而不同) -->
+    startX="0"                      <!-- [lineGraphic] 起点 X -->
+    startY="0"                      <!-- [lineGraphic] 起点 Y -->
+    endX="100"                      <!-- [lineGraphic] 终点 X -->
+    endY="100"                      <!-- [lineGraphic] 终点 Y -->
     width="100"                     <!-- [rectangleGraphic] 宽度 -->
     height="50"                     <!-- [rectangleGraphic] 高度 -->
     radius="10"                     <!-- [rectangleGraphic/circleGraphic] 圆角半径或圆半径 -->
     
     points="0,0 100,0 50,100"       <!-- [polygonGraphic] 顶点坐标列表 -->
+    path="[{&quot;type&quot;:&quot;moveTo&quot;,...}]"  <!-- [bezierCurveGraphic] JSON 路径命令 -->
     
     active="false"                  <!-- 填写false后生命周期结束可以删除 -->
 />
@@ -284,3 +315,175 @@ KEYFRAME的 0 帧（或该实体生命周期的首个关键帧）必须显式声
     />
     <KEYFRAME frame="30" scaleX="1.5" alpha="0.5" />
 </GRAPHIC>
+
+## 6. 对应 JSON 数据结构规范（三轨压缩版）
+
+本节定义与 XML 语义等价、但更适合大规模录制（如 9999 帧）的 JSON 标准。
+核心思想：每个属性按“变化频率”分轨存储，而不是一律全帧数组。
+
+### 6.1 三轨模型
+
+- 静态属性（`static`）：生命周期内不变，只写一次。
+- 稀疏轨道（`anim`）：偶尔变化，采用 `[frame, value]` 数组。
+- 密集轨道（`dense`）：大部分帧都变化，才使用连续数组（数组索引即帧号）。
+
+### 6.2 根结构
+
+```json
+{
+  "meta": {
+    "name": "battle_replay_01",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "totalFrames": 3600
+  },
+  "camera": {},
+  "sprites": {},
+  "particleContainers": {},
+  "graphics": {}
+}
+```
+
+### 6.3 对象通用结构
+
+```json
+{
+  "kind": "rectangleGraphic",
+  "static": {},
+  "anim": {},
+  "dense": {}
+}
+```
+
+#### 6.3.1 `static`
+
+- 存储从对象出生到销毁都不变的属性。
+- 例如：`kind` 专用几何参数、固定颜色、固定锚点等。
+
+#### 6.3.2 `anim`
+
+- 轨道格式：`"attrName": [[frame0, value0], [frame1, value1], ...]`
+- 语义：
+  - 默认采用 Hold（阶梯保持）：在下个关键点前保持当前值。
+  - `active` 推荐放在 `anim` 中（如 `[[0, true], [200, false]]`）。
+- 帧号必须升序，建议去重。
+
+#### 6.3.3 `dense`
+
+- 轨道格式：`"attrName": [v0, v1, v2, ...]`
+- `index === frame`，数组长度建议等于 `totalFrames` 或对象存活区间长度。
+- 适合物理坐标、逐帧顶点等高频变化属性。
+
+### 6.4 轨道选择规则（导出器建议）
+
+针对每个对象的每个属性，按以下顺序判定：
+
+1. 全生命周期恒定：放 `static`。
+2. 变化次数较少（例如变更点 <= 总帧数的 10%）：放 `anim`。
+3. 高频变化（例如变更点 > 总帧数的 10%）：放 `dense`。
+
+说明：10% 为建议阈值，可在导出器中配置。
+
+### 6.5 GRAPHIC 示例（你期望的结构）
+
+```json
+{
+  "graphics": {
+    "box_01": {
+      "kind": "rectangleGraphic",
+      "static": {
+        "x": 100,
+        "y": 100,
+        "anchorX": 0.5,
+        "anchorY": 0.5,
+        "zIndex": 1,
+        "visible": true,
+        "blendMode": "normal",
+        "strokeColor": "0xffffff",
+        "strokeAlpha": 1,
+        "strokeWidth": 2,
+        "fillColor": "0x00ff00",
+        "fillAlpha": 1,
+        "width": 200,
+        "height": 100,
+        "radius": 10
+      },
+      "anim": {
+        "scaleX": [[0, 1], [1, 1.2], [2, 1.5]],
+        "scaleY": [[0, 1], [1, 1.2], [2, 1.5]],
+        "alpha": [[0, 1], [1, 0.8], [2, 0.5], [100, 0]],
+        "active": [[0, true], [200, false]]
+      },
+      "dense": {}
+    }
+  }
+}
+```
+
+### 6.6 物理录制示例（球 + 调试线）
+
+```json
+{
+  "graphics": {
+    "ball_01": {
+      "kind": "circleGraphic",
+      "static": {
+        "radius": 8,
+        "fillColor": "0x7ee7d9",
+        "fillAlpha": 0.92
+      },
+      "anim": {
+        "active": [[0, true], [9999, false]]
+      },
+      "dense": {
+        "x": [10.5, 11.2, 12.0, 12.8],
+        "y": [20.0, 20.0, 20.0, 20.0]
+      }
+    },
+    "debug_outline_obj_01": {
+      "kind": "polygonGraphic",
+      "static": {
+        "strokeWidth": 1.5,
+        "strokeAlpha": 0.9,
+        "fillAlpha": 0.04
+      },
+      "anim": {
+        "active": [[0, true], [9999, false]]
+      },
+      "dense": {
+        "points": [
+          "0,0 10,0 10,10 0,10",
+          "0,0 11,0 11,11 0,11",
+          "0,0 12,0 12,12 0,12"
+        ]
+      }
+    }
+  }
+}
+```
+
+### 6.7 各 kind 的专用字段
+
+- `lineGraphic`：`startX`, `startY`, `endX`, `endY`
+- `rectangleGraphic`：`width`, `height`, `radius`
+- `squareGraphic`：`size`, `radius`
+- `circleGraphic`：`radius`
+- `ellipseGraphic`：`radiusX`, `radiusY`
+- `polygonGraphic`：`points`（字符串或点数组，建议统一一种）
+- `bezierCurveGraphic`：`path`
+
+这些字段同样遵循三轨规则：不变进 `static`，偶尔变进 `anim`，高频变进 `dense`。
+
+### 6.8 与 XML 的语义对齐
+
+- XML 的 KEYFRAME 继承语义，对应 JSON 的 `anim` Hold 语义。
+- XML 的 `active="false"`，对应 JSON `anim.active` 切换为 `false`。
+- XML 中未出现过的属性，在 JSON 可省略；由渲染端使用默认值。
+
+### 6.9 压缩建议
+
+- 数值保留 2 位小数。
+- `dense` 数值轨可选用定点化（例如乘 100 存 int）。
+- 对调试几何（如 `points`）可选采样（如每 2~4 帧存一次）再插值/保持。
+- 对长序列可分块：例如每 1000 帧一块，便于流式读写。

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 // 如果你有外部引入的 toast 或其他组件，可以在这里保留
 // import { toast } from '../components/Toast';
 

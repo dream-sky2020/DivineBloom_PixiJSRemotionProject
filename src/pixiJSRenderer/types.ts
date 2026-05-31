@@ -22,18 +22,20 @@ export type PixiRendererObjectKind =
 
 export type PixiTextureSource =
   | {
-      kind: 'image';
-      image: string;
-    }
+    kind: 'image';
+    image: string;
+  }
   | {
-      kind: 'atlasFrame';
-      atlas: string;
-      atlasFrame: string;
-    };
+    kind: 'atlasFrame';
+    atlas: string;
+    atlasFrame: string;
+  };
 
 export interface PixiCameraProps {
   x?: number;
   y?: number;
+  z?: number;
+  focus?: number;
 }
 
 export interface PixiSpriteProps {
@@ -50,6 +52,9 @@ export interface PixiSpriteProps {
   visible?: boolean;
   blendMode?: BlendMode;
   tint?: string | number;
+  z?: number;
+  rotationX?: number;
+  rotationY?: number;
 }
 
 export interface PixiParticleContainerProps {
@@ -91,6 +96,8 @@ export interface PixiGraphicFillProps {
 export interface PixiGraphicDisplayProps {
   x?: number;
   y?: number;
+  anchorX?: number;
+  anchorY?: number;
   zIndex?: number;
   scaleX?: number;
   scaleY?: number;
@@ -133,27 +140,27 @@ export interface PixiPolygonGraphicProps extends PixiGraphicDisplayProps {
 
 export type PixiBezierCurvePathCommand =
   | {
-      type: 'moveTo';
-      point: PixiGraphicPoint;
-    }
+    type: 'moveTo';
+    point: PixiGraphicPoint;
+  }
   | {
-      type: 'lineTo';
-      point: PixiGraphicPoint;
-    }
+    type: 'lineTo';
+    point: PixiGraphicPoint;
+  }
   | {
-      type: 'quadraticCurveTo';
-      control: PixiGraphicPoint;
-      end: PixiGraphicPoint;
-    }
+    type: 'quadraticCurveTo';
+    control: PixiGraphicPoint;
+    end: PixiGraphicPoint;
+  }
   | {
-      type: 'bezierCurveTo';
-      control1: PixiGraphicPoint;
-      control2: PixiGraphicPoint;
-      end: PixiGraphicPoint;
-    }
+    type: 'bezierCurveTo';
+    control1: PixiGraphicPoint;
+    control2: PixiGraphicPoint;
+    end: PixiGraphicPoint;
+  }
   | {
-      type: 'closePath';
-    };
+    type: 'closePath';
+  };
 
 export interface PixiBezierCurveGraphicProps extends PixiGraphicDisplayProps {
   path: PixiBezierCurvePathCommand[];
@@ -197,8 +204,8 @@ export type PixiFrameObjectState<
 > = TObjectKind extends 'particle'
   ? PixiFrameParticleObjectState
   : TObjectKind extends PixiFrameStandaloneObjectKind
-    ? PixiFrameStandaloneObjectState<TObjectKind>
-    : never;
+  ? PixiFrameStandaloneObjectState<TObjectKind>
+  : never;
 
 export type PixiFrameStateMap = Map<PixiRendererObjectId, PixiFrameObjectState>;
 
@@ -309,208 +316,208 @@ export interface PixiRendererObjectPool {
 
 export type PixiCreateGraphicCommand =
   | {
-      type: 'create';
-      kind: 'lineGraphic';
-      id: PixiRendererObjectId;
-      props: PixiLineGraphicProps;
-    }
+    type: 'create';
+    kind: 'lineGraphic';
+    id: PixiRendererObjectId;
+    props: PixiLineGraphicProps;
+  }
   | {
-      type: 'create';
-      kind: 'rectangleGraphic';
-      id: PixiRendererObjectId;
-      props: PixiRectangleGraphicProps;
-    }
+    type: 'create';
+    kind: 'rectangleGraphic';
+    id: PixiRendererObjectId;
+    props: PixiRectangleGraphicProps;
+  }
   | {
-      type: 'create';
-      kind: 'squareGraphic';
-      id: PixiRendererObjectId;
-      props: PixiSquareGraphicProps;
-    }
+    type: 'create';
+    kind: 'squareGraphic';
+    id: PixiRendererObjectId;
+    props: PixiSquareGraphicProps;
+  }
   | {
-      type: 'create';
-      kind: 'circleGraphic';
-      id: PixiRendererObjectId;
-      props: PixiCircleGraphicProps;
-    }
+    type: 'create';
+    kind: 'circleGraphic';
+    id: PixiRendererObjectId;
+    props: PixiCircleGraphicProps;
+  }
   | {
-      type: 'create';
-      kind: 'ellipseGraphic';
-      id: PixiRendererObjectId;
-      props: PixiEllipseGraphicProps;
-    }
+    type: 'create';
+    kind: 'ellipseGraphic';
+    id: PixiRendererObjectId;
+    props: PixiEllipseGraphicProps;
+  }
   | {
-      type: 'create';
-      kind: 'polygonGraphic';
-      id: PixiRendererObjectId;
-      props: PixiPolygonGraphicProps;
-    }
+    type: 'create';
+    kind: 'polygonGraphic';
+    id: PixiRendererObjectId;
+    props: PixiPolygonGraphicProps;
+  }
   | {
-      type: 'create';
-      kind: 'bezierCurveGraphic';
-      id: PixiRendererObjectId;
-      props: PixiBezierCurveGraphicProps;
-    };
+    type: 'create';
+    kind: 'bezierCurveGraphic';
+    id: PixiRendererObjectId;
+    props: PixiBezierCurveGraphicProps;
+  };
 
 export type PixiCreateCommand =
   | {
-      type: 'create';
-      kind: 'camera';
-      id: PixiRendererObjectId;
-      props: PixiCameraProps;
-    }
+    type: 'create';
+    kind: 'camera';
+    id: PixiRendererObjectId;
+    props: PixiCameraProps;
+  }
   | {
-      type: 'create';
-      kind: 'sprite';
-      id: PixiRendererObjectId;
-      props: PixiSpriteProps;
-    }
+    type: 'create';
+    kind: 'sprite';
+    id: PixiRendererObjectId;
+    props: PixiSpriteProps;
+  }
   | {
-      type: 'create';
-      kind: 'particleContainer';
-      id: PixiRendererObjectId;
-      props: PixiParticleContainerProps;
-    }
+    type: 'create';
+    kind: 'particleContainer';
+    id: PixiRendererObjectId;
+    props: PixiParticleContainerProps;
+  }
   | {
-      type: 'create';
-      kind: 'particle';
-      id: PixiRendererObjectId;
-      containerId: PixiRendererObjectId;
-      props: PixiParticleProps;
-    }
+    type: 'create';
+    kind: 'particle';
+    id: PixiRendererObjectId;
+    containerId: PixiRendererObjectId;
+    props: PixiParticleProps;
+  }
   | PixiCreateGraphicCommand;
 
 export type PixiUpdateGraphicCommand =
   | {
-      type: 'update';
-      kind: 'lineGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiLineGraphicProps>;
-    }
+    type: 'update';
+    kind: 'lineGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiLineGraphicProps>;
+  }
   | {
-      type: 'update';
-      kind: 'rectangleGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiRectangleGraphicProps>;
-    }
+    type: 'update';
+    kind: 'rectangleGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiRectangleGraphicProps>;
+  }
   | {
-      type: 'update';
-      kind: 'squareGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiSquareGraphicProps>;
-    }
+    type: 'update';
+    kind: 'squareGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiSquareGraphicProps>;
+  }
   | {
-      type: 'update';
-      kind: 'circleGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiCircleGraphicProps>;
-    }
+    type: 'update';
+    kind: 'circleGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiCircleGraphicProps>;
+  }
   | {
-      type: 'update';
-      kind: 'ellipseGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiEllipseGraphicProps>;
-    }
+    type: 'update';
+    kind: 'ellipseGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiEllipseGraphicProps>;
+  }
   | {
-      type: 'update';
-      kind: 'polygonGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiPolygonGraphicProps>;
-    }
+    type: 'update';
+    kind: 'polygonGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiPolygonGraphicProps>;
+  }
   | {
-      type: 'update';
-      kind: 'bezierCurveGraphic';
-      id: PixiRendererObjectId;
-      props: Partial<PixiBezierCurveGraphicProps>;
-    };
+    type: 'update';
+    kind: 'bezierCurveGraphic';
+    id: PixiRendererObjectId;
+    props: Partial<PixiBezierCurveGraphicProps>;
+  };
 
 export type PixiUpdateCommand =
   | {
-      type: 'update';
-      kind: 'camera';
-      id: PixiRendererObjectId;
-      props: Partial<PixiCameraProps>;
-    }
+    type: 'update';
+    kind: 'camera';
+    id: PixiRendererObjectId;
+    props: Partial<PixiCameraProps>;
+  }
   | {
-      type: 'update';
-      kind: 'sprite';
-      id: PixiRendererObjectId;
-      props: Partial<PixiSpriteProps>;
-    }
+    type: 'update';
+    kind: 'sprite';
+    id: PixiRendererObjectId;
+    props: Partial<PixiSpriteProps>;
+  }
   | {
-      type: 'update';
-      kind: 'particleContainer';
-      id: PixiRendererObjectId;
-      props: Partial<PixiParticleContainerProps>;
-    }
+    type: 'update';
+    kind: 'particleContainer';
+    id: PixiRendererObjectId;
+    props: Partial<PixiParticleContainerProps>;
+  }
   | {
-      type: 'update';
-      kind: 'particle';
-      id: PixiRendererObjectId;
-      containerId: PixiRendererObjectId;
-      props: Partial<PixiParticleProps>;
-    }
+    type: 'update';
+    kind: 'particle';
+    id: PixiRendererObjectId;
+    containerId: PixiRendererObjectId;
+    props: Partial<PixiParticleProps>;
+  }
   | PixiUpdateGraphicCommand;
 
 export type PixiDestroyGraphicCommand =
   | {
-      type: 'destroy';
-      kind: 'lineGraphic';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'lineGraphic';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'rectangleGraphic';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'rectangleGraphic';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'squareGraphic';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'squareGraphic';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'circleGraphic';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'circleGraphic';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'ellipseGraphic';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'ellipseGraphic';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'polygonGraphic';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'polygonGraphic';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'bezierCurveGraphic';
-      id: PixiRendererObjectId;
-    };
+    type: 'destroy';
+    kind: 'bezierCurveGraphic';
+    id: PixiRendererObjectId;
+  };
 
 export type PixiDestroyCommand =
   | {
-      type: 'destroy';
-      kind: 'camera';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'camera';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'sprite';
-      id: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'sprite';
+    id: PixiRendererObjectId;
+  }
   | {
-      type: 'destroy';
-      kind: 'particleContainer';
-      id: PixiRendererObjectId;
-      destroyParticles?: boolean;
-    }
+    type: 'destroy';
+    kind: 'particleContainer';
+    id: PixiRendererObjectId;
+    destroyParticles?: boolean;
+  }
   | {
-      type: 'destroy';
-      kind: 'particle';
-      id: PixiRendererObjectId;
-      containerId: PixiRendererObjectId;
-    }
+    type: 'destroy';
+    kind: 'particle';
+    id: PixiRendererObjectId;
+    containerId: PixiRendererObjectId;
+  }
   | PixiDestroyGraphicCommand;
 
 export type PixiRendererCommand = PixiCreateCommand | PixiUpdateCommand | PixiDestroyCommand;
