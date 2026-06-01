@@ -7,6 +7,8 @@ export * from './ecs/components/RigidBody';
 export * from './ecs/components/CircleCollider';
 export * from './ecs/components/PolygonCollider';
 export * from './ecs/components/Graphic';
+export * from './ecs/components/Camera';
+export * from './ecs/components/Canvas';
 export * from './ecs/systems/PhysicsSystem';
 export * from './ecs/systems/RenderSystem';
 
@@ -30,6 +32,7 @@ export class GameEngine {
   static createWorldFromXml(xmlString: string): World {
     const world = new World();
     const worldData = XmlParser.parseWorld(xmlString);
+    world.data = worldData;
     
     // 1. 初始化系统流水线
     for (const sysConfig of worldData.config.systems) {

@@ -7,6 +7,7 @@ export interface GraphicComponent extends Component {
   fill?: PixiGraphicFillProps;
   stroke?: PixiGraphicStrokeProps;
   alpha?: number;
+  anchor?: { x: number; y: number };
   // 形状特定属性
   width?: number;
   height?: number;

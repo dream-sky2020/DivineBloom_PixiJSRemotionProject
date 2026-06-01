@@ -1,5 +1,5 @@
 import { System } from '../../types';
-import type { Entity, TransformComponent, SpriteComponent, GraphicComponent } from '../../types';
+import type { Entity, TransformComponent, SpriteComponent, GraphicComponent, CameraComponent } from '../../types';
 import { PixiFrameReconciler } from '../../../pixiJSRenderer/PixiFrameReconciler';
 import { PixiCommandProcessor } from '../../../pixiJSRenderer/PixiCommandProcessor';
 
@@ -19,6 +19,24 @@ export class EcsRenderSystem extends System {
 
   update(entities: Entity[], _deltaTime: number): void {
     this.reconciler.beginFrame();
+
+    // 处理相机 (单例模式，取第一个找到的相机)
+    for (const entity of entities) {
+      const camera = entity.components.get('Camera') as CameraComponent;
+      if (camera) {
+        this.reconciler.setObject({
+          id: 'camera', // 相机在渲染器中通常是单例，使用固定 ID
+          kind: 'camera',
+          props: {
+            x: camera.x,
+            y: camera.y,
+            z: camera.z,
+            focus: camera.focus
+          }
+        });
+        break;
+      }
+    }
 
     for (const entity of entities) {
       const transform = entity.components.get('Transform') as TransformComponent;
@@ -49,6 +67,8 @@ export class EcsRenderSystem extends System {
           }
         });
       } else if (graphic) {
+        const anchorX = graphic.anchor?.x ?? 0.5;
+        const anchorY = graphic.anchor?.y ?? 0.5;
         this.reconciler.setObject({
           id: entity.id.toString(),
           kind: graphic.kind as any,
@@ -65,8 +85,8 @@ export class EcsRenderSystem extends System {
             height: graphic.height,
             radius: graphic.radius,
             points: graphic.points,
-            anchorX: 0.5, // 默认居中
-            anchorY: 0.5
+            anchorX,
+            anchorY
           } as any
         });
       }

@@ -8,6 +8,8 @@ import type { RigidBodyComponent } from './ecs/components/RigidBody';
 import type { CircleColliderComponent } from './ecs/components/CircleCollider';
 import type { PolygonColliderComponent } from './ecs/components/PolygonCollider';
 import type { GraphicComponent } from './ecs/components/Graphic';
+import type { CameraComponent } from './ecs/components/Camera';
+import type { CanvasComponent } from './ecs/components/Canvas';
 
 export type { 
   TransformComponent, 
@@ -15,7 +17,9 @@ export type {
   RigidBodyComponent,
   CircleColliderComponent,
   PolygonColliderComponent,
-  GraphicComponent
+  GraphicComponent,
+  CameraComponent,
+  CanvasComponent
 };
 
 export type EntityId = string | number;
@@ -38,7 +42,8 @@ export type AnyComponent =
   | BoxColliderComponent
   | CircleColliderComponent
   | PolygonColliderComponent
-  | GraphicComponent;
+  | GraphicComponent
+  | CameraComponent;
 
 export interface Entity {
   id: EntityId;
@@ -61,5 +66,6 @@ export interface EngineConfig {
 
 export interface WorldData {
   config: EngineConfig;
+  canvas?: CanvasComponent;
   entities: Entity[];
 }

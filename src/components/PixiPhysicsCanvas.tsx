@@ -104,15 +104,15 @@ export function PixiPhysicsCanvas({
   const handleDestroy = useCallback(() => {
     const runtime =
       appRef.current &&
-      processorRef.current &&
-      reconcilerRef.current &&
-      physicsRef.current
+        processorRef.current &&
+        reconcilerRef.current &&
+        physicsRef.current
         ? {
-            app: appRef.current,
-            processor: processorRef.current,
-            reconciler: reconcilerRef.current,
-            physics: physicsRef.current,
-          }
+          app: appRef.current,
+          processor: processorRef.current,
+          reconciler: reconcilerRef.current,
+          physics: physicsRef.current,
+        }
         : null;
 
     if (runtime) {

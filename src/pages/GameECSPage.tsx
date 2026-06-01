@@ -12,6 +12,11 @@ export function GameECSPage() {
   const [status, setStatus] = useState('等待加载 XML 配置');
   const [world, setWorld] = useState<World | null>(null);
   const [xmlPath, setXmlPath] = useState<string | null>(null);
+  const [canvasConfig, setCanvasConfig] = useState({
+    width: 1280,
+    height: 720,
+    background: '#020817'
+  });
   const runtimeRef = useRef<PixiPhysicsRuntime | null>(null);
   const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -80,7 +85,7 @@ export function GameECSPage() {
       if (!response.ok) {
         throw new Error('读取文件失败，请检查路径是否正确');
       }
-      
+
       const result = await response.json();
       if (!result.ok) {
         throw new Error(result.error || '读取文件失败');
@@ -105,7 +110,7 @@ export function GameECSPage() {
       if (!response.ok) {
         throw new Error('无法从后端读取示例文件');
       }
-      
+
       const result = await response.json();
       if (!result.ok) {
         throw new Error(result.error || '读取文件失败');
@@ -124,13 +129,24 @@ export function GameECSPage() {
 
     try {
       const processor = runtimeRef.current.processor;
-      
+
       // 1. 注册系统工厂
       GameEngine.registerSystem('PhysicsSystem', () => new EcsPhysicsSystem({ x: 0, y: 0 }, 4));
       GameEngine.registerSystem('RenderSystem', () => new EcsRenderSystem(processor));
 
       // 2. 创建世界
       const newWorld = GameEngine.createWorldFromXml(xmlString);
+
+      // 3. 更新画布配置 (如果 XML 中有定义)
+      const canvas = newWorld.data?.canvas;
+      if (canvas) {
+        setCanvasConfig({
+          width: canvas.width,
+          height: canvas.height,
+          background: canvas.background || '#020817'
+        });
+      }
+
       setWorld(newWorld);
       setRunning(true);
       setStatus('场景已同步，模拟运行中');
@@ -145,7 +161,7 @@ export function GameECSPage() {
       if (running && world) {
         const deltaTime = lastTimeRef.current ? (time - lastTimeRef.current) / 1000 : 1 / 60;
         lastTimeRef.current = time;
-        
+
         // 更新 ECS 世界
         world.update(deltaTime);
       } else {
@@ -173,14 +189,23 @@ export function GameECSPage() {
       </section>
 
       <section className="stage-card">
-        <PixiPhysicsCanvas
-          width={1280}
-          height={720}
-          background="#020817"
-          onReady={handleRuntimeReady}
-          onDestroy={handleRuntimeDestroy}
+        <div
           className="pixi-host"
-        />
+          style={{
+            aspectRatio: `${canvasConfig.width} / ${canvasConfig.height}`,
+            maxWidth: canvasConfig.width > 1200 ? '100%' : `${canvasConfig.width}px`,
+            width: canvasConfig.width > canvasConfig.height ? '100%' : 'auto'
+          }}
+        >
+          <PixiPhysicsCanvas
+            key={`${canvasConfig.width}-${canvasConfig.height}-${canvasConfig.background}`}
+            width={canvasConfig.width}
+            height={canvasConfig.height}
+            background={canvasConfig.background}
+            onReady={handleRuntimeReady}
+            onDestroy={handleRuntimeDestroy}
+          />
+        </div>
       </section>
 
       <section className="controls">
@@ -189,9 +214,9 @@ export function GameECSPage() {
             选择 XML 文件
           </button>
 
-          <button 
-            className="record" 
-            onClick={() => void loadFromDisk()} 
+          <button
+            className="record"
+            onClick={() => void loadFromDisk()}
             disabled={!xmlPath}
             style={{ marginLeft: '12px' }}
           >
@@ -202,18 +227,18 @@ export function GameECSPage() {
             加载内置示例
           </button>
 
-          <button 
-            className="primary" 
-            onClick={() => setRunning(!running)} 
+          <button
+            className="primary"
+            onClick={() => setRunning(!running)}
             disabled={!world}
             style={{ marginLeft: '12px' }}
           >
             {running ? '暂停' : '继续'}
           </button>
 
-          <button 
-            className="secondary" 
-            onClick={() => { setWorld(null); setStatus('已重置'); }} 
+          <button
+            className="secondary"
+            onClick={() => { setWorld(null); setStatus('已重置'); }}
             disabled={!world}
             style={{ marginLeft: '12px' }}
           >

@@ -1,5 +1,5 @@
 <World>
-    <Canvas name="pseudo_3d_demo" width="800" height="600" background="#020817" />
+    <Canvas name="pseudo_3d_mobile_init" width="1080" height="1920" background="#020817" />
 
     <EngineConfig>
         <SystemPipeline>
@@ -7,24 +7,18 @@
         </SystemPipeline>
     </EngineConfig>
 
-    <!-- 
-        伪3D走廊设计说明：
-        现在使用 Camera 组件来控制全局视角。
-        z 轴控制推拉感，focus 控制投影强度。
-    -->
-
-    <!-- 摄像机控制 -->
+    <!-- Mobile portrait 1080 x 1920 -->
     <GameObject name="MainCamera" id="camera_main">
-        <Camera x="0" y="0" z="0" focus="400" />
+        <Camera x="0" y="0" z="0" focus="540" />
     </GameObject>
 
     <!-- 1. 远端背景墙 (尽头) -->
     <GameObject name="FarWall" id="env_bg">
-        <Transform position="400, 300, 0" />
+        <Transform position="540, 960, 0" />
         <Graphic
             kind="rectangleGraphic"
-            width="200"
-            height="150"
+            width="270"
+            height="480"
             fillColor="#18122b"
             fillAlpha="1.0"
         />
@@ -36,7 +30,7 @@
         <Graphic
             kind="polygonGraphic"
             anchor="0,0"
-            points="0,600 800,600 500,375 300,375"
+            points="0,1920 1080,1920 675,1200 405,1200"
             fillColor="#1f2f57"
             fillAlpha="1.0"
             strokeColor="#5f7cc5"
@@ -50,7 +44,7 @@
         <Graphic
             kind="polygonGraphic"
             anchor="0,0"
-            points="0,0 800,0 500,225 300,225"
+            points="0,0 1080,0 675,720 405,720"
             fillColor="#111a34"
             fillAlpha="1.0"
             strokeColor="#4d5f95"
@@ -64,7 +58,7 @@
         <Graphic
             kind="polygonGraphic"
             anchor="0,0"
-            points="0,0 300,225 300,375 0,600"
+            points="0,0 405,720 405,1200 0,1920"
             fillColor="#0f2744"
             fillAlpha="1.0"
             strokeColor="#55b8d9"
@@ -74,11 +68,11 @@
 
     <!-- 5. 右侧墙壁 (Right Wall) -->
     <GameObject name="RightWall" id="env_wall_r">
-        <Transform position="500, 0, 0" />
+        <Transform position="675, 0, 0" />
         <Graphic
             kind="polygonGraphic"
             anchor="0,0"
-            points="300,0 0,225 0,375 300,600"
+            points="405,0 0,720 0,1200 405,1920"
             fillColor="#3a224f"
             fillAlpha="1.0"
             strokeColor="#ff8f70"
@@ -87,10 +81,8 @@
     </GameObject>
 
     <!-- === 友军 (左侧走廊) === -->
-
-    <!-- 近处友军 -->
     <GameObject name="Ally_Near" id="ally_1">
-        <Transform position="180, 480, 0" scale="2.5, 2.5, 1" />
+        <Transform position="243, 1536, 0" scale="2.5, 2.5, 1" />
         <Graphic
             kind="circleGraphic"
             radius="20"
@@ -100,9 +92,8 @@
         />
     </GameObject>
 
-    <!-- 中间友军 -->
     <GameObject name="Ally_Mid" id="ally_2">
-        <Transform position="260, 380, 0" scale="1.4, 1.4, 1" />
+        <Transform position="351, 1216, 0" scale="1.4, 1.4, 1" />
         <Graphic
             kind="circleGraphic"
             radius="20"
@@ -111,9 +102,8 @@
         />
     </GameObject>
 
-    <!-- 远处友军 -->
     <GameObject name="Ally_Far" id="ally_3">
-        <Transform position="320, 330, 0" scale="0.7, 0.7, 1" />
+        <Transform position="432, 1056, 0" scale="0.7, 0.7, 1" />
         <Graphic
             kind="circleGraphic"
             radius="20"
@@ -123,10 +113,8 @@
     </GameObject>
 
     <!-- === 敌人 (右侧走廊) === -->
-
-    <!-- 近处敌人 -->
     <GameObject name="Enemy_Near" id="enemy_1">
-        <Transform position="620, 480, 0" scale="2.5, 2.5, 1" />
+        <Transform position="837, 1536, 0" scale="2.5, 2.5, 1" />
         <Graphic
             kind="polygonGraphic"
             points="0,-20 20,20 -20,20"
@@ -136,9 +124,8 @@
         />
     </GameObject>
 
-    <!-- 中间敌人 -->
     <GameObject name="Enemy_Mid" id="enemy_2">
-        <Transform position="540, 380, 0" scale="1.4, 1.4, 1" />
+        <Transform position="729, 1216, 0" scale="1.4, 1.4, 1" />
         <Graphic
             kind="polygonGraphic"
             points="0,-20 20,20 -20,20"
@@ -147,9 +134,8 @@
         />
     </GameObject>
 
-    <!-- 远处敌人 -->
     <GameObject name="Enemy_Far" id="enemy_3">
-        <Transform position="480, 330, 0" scale="0.7, 0.7, 1" />
+        <Transform position="648, 1056, 0" scale="0.7, 0.7, 1" />
         <Graphic
             kind="polygonGraphic"
             points="0,-20 20,20 -20,20"
@@ -157,5 +143,4 @@
             fillAlpha="0.5"
         />
     </GameObject>
-
 </World>

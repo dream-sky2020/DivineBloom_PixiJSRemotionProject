@@ -17,6 +17,7 @@
             <System name="RenderSystem" enabled="true" />
         </SystemPipeline>
     </EngineConfig>
+    <Canvas name="battle_scene" width="1280" height="720" background="#020817" />
     <!-- GameObject -->
 </World>
 
@@ -131,6 +132,28 @@
     width="20"                      <!-- [kind=rectangleGraphic 时必填] 宽度 -->
     height="20"                     <!-- [kind=rectangleGraphic 时必填] 高度 -->
     points="0,-10 10,10 -10,10"     <!-- [kind=polygonGraphic 时必填] 顶点列表 -->
+/>
+
+### 3.8 摄像机组件 (Camera)
+
+定义场景的观察视角。通常挂载在一个专门的 GameObject 上。
+
+<Camera 
+    x="0"                           <!-- [可选] 摄像机 X 轴偏移，默认 "0" -->
+    y="0"                           <!-- [可选] 摄像机 Y 轴偏移，默认 "0" -->
+    z="0"                           <!-- [可选] 摄像机 Z 轴偏移 (推进/拉远)，默认 "0" -->
+    focus="400"                     <!-- [可选] 焦点距离 (控制伪 3D 投影)，默认 "400" -->
+/>
+
+## 4. 画布配置 (Canvas)
+
+定义整个世界的渲染输出参数。它是 <World> 的直接子节点，不属于任何 GameObject。
+
+<Canvas 
+    name="scene_name"               <!-- [可选] 场景名称 -->
+    width="1920"                    <!-- [可选] 画布宽度，默认 "1920" -->
+    height="1080"                   <!-- [可选] 画布高度，默认 "1080" -->
+    background="#020817"            <!-- [可选] 背景颜色，默认 "#020817" -->
 />
 
 ## 示例

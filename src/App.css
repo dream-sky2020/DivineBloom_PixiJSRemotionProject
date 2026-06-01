@@ -22,10 +22,10 @@
   align-items: stretch;
 }
 
-.app-shell.full-width > .hero,
-.app-shell.full-width > .workspace-grid,
-.app-shell.full-width > .stage-card,
-.app-shell.full-width > .status {
+.app-shell.full-width>.hero,
+.app-shell.full-width>.workspace-grid,
+.app-shell.full-width>.stage-card,
+.app-shell.full-width>.status {
   width: 100%;
   max-width: none;
 }
@@ -76,16 +76,24 @@ h1 {
 .pixi-host {
   overflow: hidden;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  max-height: 75vh;
+  margin: 0 auto;
   border: 1px solid var(--light-slate);
   border-radius: 8px;
   background: var(--deep-black-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pixi-host canvas {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 auto;
 }
 
 .controls {

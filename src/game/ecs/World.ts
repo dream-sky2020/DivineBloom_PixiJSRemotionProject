@@ -1,9 +1,10 @@
 import { System } from '../types';
-import type { Entity, EntityId } from '../types';
+import type { Entity, EntityId, WorldData } from '../types';
 
 export class World {
   private entities: Map<EntityId, Entity> = new Map();
   private systems: System[] = [];
+  public data?: WorldData;
 
   addEntity(entity: Entity): void {
     this.entities.set(entity.id, entity);

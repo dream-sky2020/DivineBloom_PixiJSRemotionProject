@@ -8,6 +8,8 @@ import type {
   CircleColliderComponent,
   PolygonColliderComponent,
   GraphicComponent,
+  CameraComponent,
+  CanvasComponent,
   WorldData,
   EngineConfig,
   SystemConfig
@@ -25,6 +27,9 @@ export class XmlParser {
 
     // Parse EngineConfig
     const config = this.parseEngineConfig(worldElement);
+
+    // Parse Canvas
+    const canvas = this.parseCanvas(worldElement);
 
     // Parse GameObjects
     const entities: Entity[] = [];
@@ -53,7 +58,20 @@ export class XmlParser {
       entities.push(entity);
     }
 
-    return { config, entities };
+    return { config, canvas, entities };
+  }
+
+  private static parseCanvas(worldEl: Element): CanvasComponent | undefined {
+    const canvasEl = worldEl.getElementsByTagName('Canvas')[0];
+    if (!canvasEl) return undefined;
+
+    return {
+      type: 'Canvas',
+      name: canvasEl.getAttribute('name') || 'Untitled',
+      width: parseFloat(canvasEl.getAttribute('width') || '1920'),
+      height: parseFloat(canvasEl.getAttribute('height') || '1080'),
+      background: canvasEl.getAttribute('background') || undefined,
+    };
   }
 
   private static parseEngineConfig(worldEl: Element): EngineConfig {
@@ -95,6 +113,8 @@ export class XmlParser {
         return this.parsePolygonCollider(el);
       case 'Graphic':
         return this.parseGraphic(el);
+      case 'Camera':
+        return this.parseCamera(el);
       default:
         console.warn(`Unknown component type: ${type}`);
         return null;
@@ -141,6 +161,17 @@ export class XmlParser {
       height: parseFloat(el.getAttribute('height') || '0') || undefined,
       radius: parseFloat(el.getAttribute('radius') || '0') || undefined,
     };
+
+    const anchorStr = el.getAttribute('anchor');
+    if (anchorStr) {
+      const [ax, ay] = anchorStr.split(',').map((s) => parseFloat(s.trim()));
+      if (Number.isFinite(ax) || Number.isFinite(ay)) {
+        graphic.anchor = {
+          x: Number.isFinite(ax) ? ax : 0,
+          y: Number.isFinite(ay) ? ay : 0,
+        };
+      }
+    }
 
     const pointsStr = el.getAttribute('points');
     if (pointsStr) {
@@ -215,6 +246,16 @@ export class XmlParser {
         x: parseFloat(el.getAttribute('offsetX') || '0'),
         y: parseFloat(el.getAttribute('offsetY') || '0')
       }
+    };
+  }
+
+  private static parseCamera(el: Element): CameraComponent {
+    return {
+      type: 'Camera',
+      x: parseFloat(el.getAttribute('x') || '0'),
+      y: parseFloat(el.getAttribute('y') || '0'),
+      z: parseFloat(el.getAttribute('z') || '0'),
+      focus: parseFloat(el.getAttribute('focus') || '400'),
     };
   }
 }
