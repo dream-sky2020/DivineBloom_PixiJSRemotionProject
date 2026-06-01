@@ -17,6 +17,13 @@ export function AppSidebar() {
           <span className="nav-label">游戏模拟</span>
         </NavLink>
         <NavLink 
+          to="/game-ecs.html" 
+          className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+        >
+          <span className="nav-icon">ECS</span>
+          <span className="nav-label">ECS 引擎</span>
+        </NavLink>
+        <NavLink 
           to="/dsl-to-image.html" 
           className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
         >

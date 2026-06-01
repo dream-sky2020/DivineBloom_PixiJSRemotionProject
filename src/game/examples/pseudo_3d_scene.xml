@@ -1,0 +1,151 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <!-- 
+        伪3D走廊设计说明：
+        画布大小: 800x600
+        消失点 (Vanishing Point): 400, 300
+        远端矩形 (Far Plane): x[300, 500], y[225, 375] (大小 200x150)
+    -->
+
+    <!-- 1. 远端背景墙 (尽头) -->
+    <GameObject name="FarWall" id="env_bg">
+        <Transform position="400, 300, 0"/>
+        <Graphic 
+            kind="rectangleGraphic" 
+            width="200" 
+            height="150" 
+            fillColor="#020817" 
+            fillAlpha="1.0"
+        />
+    </GameObject>
+
+    <!-- 2. 地板 (Floor) -->
+    <GameObject name="Floor" id="env_floor">
+        <Transform position="0, 0, 0"/> <!-- 使用绝对坐标，避免 anchor 偏移干扰 -->
+        <Graphic 
+            kind="polygonGraphic" 
+            points="0,600 800,600 500,375 300,375" 
+            fillColor="#1f2937" 
+            fillAlpha="1.0"
+            strokeColor="#64748b"
+            strokeWidth="1"
+        />
+    </GameObject>
+
+    <!-- 3. 天花板 (Ceiling) -->
+    <GameObject name="Ceiling" id="env_ceiling">
+        <Transform position="0, 0, 0"/>
+        <Graphic 
+            kind="polygonGraphic" 
+            points="0,0 800,0 500,225 300,225" 
+            fillColor="#0f172a" 
+            fillAlpha="1.0"
+            strokeColor="#64748b"
+            strokeWidth="1"
+        />
+    </GameObject>
+
+    <!-- 4. 左侧墙壁 (Left Wall) -->
+    <GameObject name="LeftWall" id="env_wall_l">
+        <Transform position="0, 0, 0"/>
+        <Graphic 
+            kind="polygonGraphic" 
+            points="0,0 300,225 300,375 0,600" 
+            fillColor="#07111f" 
+            fillAlpha="1.0"
+            strokeColor="#64748b"
+            strokeWidth="1"
+        />
+    </GameObject>
+
+    <!-- 5. 右侧墙壁 (Right Wall) -->
+    <GameObject name="RightWall" id="env_wall_r">
+        <Transform position="0, 0, 0"/>
+        <Graphic 
+            kind="polygonGraphic" 
+            points="800,0 500,225 500,375 800,600" 
+            fillColor="#07111f" 
+            fillAlpha="1.0"
+            strokeColor="#64748b"
+            strokeWidth="1"
+        />
+    </GameObject>
+
+    <!-- === 友军 (左侧走廊) === -->
+    
+    <!-- 近处友军 -->
+    <GameObject name="Ally_Near" id="ally_1">
+        <Transform position="180, 480, 0" scale="2.5, 2.5, 1"/>
+        <Graphic 
+            kind="circleGraphic" 
+            radius="20" 
+            fillColor="#7ee7d9" 
+            strokeColor="#ffffff" 
+            strokeWidth="2"
+        />
+    </GameObject>
+
+    <!-- 中间友军 -->
+    <GameObject name="Ally_Mid" id="ally_2">
+        <Transform position="260, 380, 0" scale="1.4, 1.4, 1"/>
+        <Graphic 
+            kind="circleGraphic" 
+            radius="20" 
+            fillColor="#7ee7d9" 
+            fillAlpha="0.8"
+        />
+    </GameObject>
+
+    <!-- 远处友军 -->
+    <GameObject name="Ally_Far" id="ally_3">
+        <Transform position="320, 330, 0" scale="0.7, 0.7, 1"/>
+        <Graphic 
+            kind="circleGraphic" 
+            radius="20" 
+            fillColor="#7ee7d9" 
+            fillAlpha="0.5"
+        />
+    </GameObject>
+
+    <!-- === 敌人 (右侧走廊) === -->
+
+    <!-- 近处敌人 -->
+    <GameObject name="Enemy_Near" id="enemy_1">
+        <Transform position="620, 480, 0" scale="2.5, 2.5, 1"/>
+        <Graphic 
+            kind="polygonGraphic" 
+            points="0,-20 20,20 -20,20" 
+            fillColor="#ffce73" 
+            strokeColor="#ffffff" 
+            strokeWidth="2"
+        />
+    </GameObject>
+
+    <!-- 中间敌人 -->
+    <GameObject name="Enemy_Mid" id="enemy_2">
+        <Transform position="540, 380, 0" scale="1.4, 1.4, 1"/>
+        <Graphic 
+            kind="polygonGraphic" 
+            points="0,-20 20,20 -20,20" 
+            fillColor="#ffce73" 
+            fillAlpha="0.8"
+        />
+    </GameObject>
+
+    <!-- 远处敌人 -->
+    <GameObject name="Enemy_Far" id="enemy_3">
+        <Transform position="480, 330, 0" scale="0.7, 0.7, 1"/>
+        <Graphic 
+            kind="polygonGraphic" 
+            points="0,-20 20,20 -20,20" 
+            fillColor="#ffce73" 
+            fillAlpha="0.5"
+        />
+    </GameObject>
+
+</World>

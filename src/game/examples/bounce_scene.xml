@@ -1,0 +1,75 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <!-- 注册的系统名称必须与 GameEngine.registerSystem 保持一致 -->
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <!-- 静态边界 (墙壁) -->
+    <!-- 下墙 -->
+    <GameObject id="wall-bottom">
+        <Transform position="640, 770, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="1280" height="100" />
+    </GameObject>
+    <!-- 上墙 -->
+    <GameObject id="wall-top">
+        <Transform position="640, -50, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="1280" height="100" />
+    </GameObject>
+    <!-- 左墙 -->
+    <GameObject id="wall-left">
+        <Transform position="-50, 360, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="100" height="720" />
+    </GameObject>
+    <!-- 右墙 -->
+    <GameObject id="wall-right">
+        <Transform position="1330, 360, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="100" height="720" />
+    </GameObject>
+
+    <!-- 动态弹跳物体 -->
+    <!-- 圆形物体 -->
+    <GameObject id="obj-circle-01">
+        <Transform position="200, 200, 0" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.0" linearVelocity="200, 300" />
+        <CircleCollider radius="30" />
+        <Graphic kind="circleGraphic" radius="30" fillColor="#7ee7d9" fillAlpha="0.9" strokeColor="#ffffff" strokeWidth="2" strokeAlpha="0.5" />
+    </GameObject>
+
+    <GameObject id="obj-circle-02">
+        <Transform position="400, 300, 0" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.0" linearVelocity="-150, 250" />
+        <CircleCollider radius="40" />
+        <Graphic kind="circleGraphic" radius="40" fillColor="#ffce73" fillAlpha="0.9" strokeColor="#ffffff" strokeWidth="2" strokeAlpha="0.5" />
+    </GameObject>
+
+    <!-- 矩形物体 -->
+    <GameObject id="obj-rect-01">
+        <Transform position="600, 400, 0" rotation="0.78" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.0" linearVelocity="300, -200" />
+        <BoxCollider width="60" height="60" />
+        <Graphic kind="rectangleGraphic" width="60" height="60" fillColor="#7fa7ff" fillAlpha="0.9" strokeColor="#ffffff" strokeWidth="2" strokeAlpha="0.5" />
+    </GameObject>
+
+    <!-- 三角形 (多边形) -->
+    <GameObject id="obj-tri-01">
+        <Transform position="800, 200, 0" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.0" linearVelocity="-200, -300" />
+        <PolygonCollider points="0,-40 -40,40 40,40" />
+        <Graphic kind="polygonGraphic" points="0,-40 -40,40 40,40" fillColor="#ff7aa9" fillAlpha="0.9" strokeColor="#ffffff" strokeWidth="2" strokeAlpha="0.5" />
+    </GameObject>
+
+    <!-- 五边形 (多边形) -->
+    <GameObject id="obj-poly-01">
+        <Transform position="1000, 500, 0" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.0" linearVelocity="100, 400" />
+        <PolygonCollider points="0,-40 38,-12 24,32 -24,32 -38,-12" />
+        <Graphic kind="polygonGraphic" points="0,-40 38,-12 24,32 -24,32 -38,-12" fillColor="#b08cff" fillAlpha="0.9" strokeColor="#ffffff" strokeWidth="2" strokeAlpha="0.5" />
+    </GameObject>
+</World>

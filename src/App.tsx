@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import './App.css';
 import { AppSidebar } from './components/AppSidebar';
 import { GamePage } from './pages/GamePage';
+import { GameECSPage } from './pages/GameECSPage';
 import { ReplayToVideoPage } from './pages/ReplayToVideoPage';
 import { ImageAssetsPage } from './pages/ImageAssetsPage';
 import { AudioAssetsPage } from './pages/AudioAssetsPage';
@@ -16,6 +17,7 @@ function App() {
         <main className="content-area">
           <Routes>
             <Route path="/simulation.html" element={<GamePage />} />
+            <Route path="/game-ecs.html" element={<GameECSPage />} />
             <Route path="/dsl-to-image.html" element={<ReplayToVideoPage />} />
             <Route path="/image-assets.html" element={<ImageAssetsPage />} />
             <Route path="/audio-assets.html" element={<AudioAssetsPage />} />

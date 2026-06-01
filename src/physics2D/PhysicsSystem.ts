@@ -66,18 +66,20 @@ export class PhysicsSystem {
     }
   }
 
-  private createBody(id: string, x: number, y: number, isStatic: boolean) {
+  private createBody(id: string, x: number, y: number, isStatic: boolean, options: any = {}) {
     const body = this.world.createBody({
       type: isStatic ? 'static' : 'dynamic',
       position: planck.Vec2(x, y),
-      bullet: !isStatic, // 开启类似 CCD 的高速碰撞检测
+      bullet: options.bullet ?? !isStatic, // 开启类似 CCD 的高速碰撞检测
+      fixedRotation: options.fixedRotation ?? false,
+      gravityScale: options.gravityScale ?? 1.0,
     });
     this.bodies.set(id, body);
     return body;
   }
 
   createCircle(id: string, x: number, y: number, radius: number, isStatic = false, options: any = {}) {
-    const body = this.createBody(id, x, y, isStatic);
+    const body = this.createBody(id, x, y, isStatic, options);
     
     body.createFixture({
       shape: planck.Circle(radius),
@@ -91,7 +93,7 @@ export class PhysicsSystem {
   }
 
   createRectangle(id: string, x: number, y: number, width: number, height: number, isStatic = false, options: any = {}) {
-    const body = this.createBody(id, x, y, isStatic);
+    const body = this.createBody(id, x, y, isStatic, options);
     
     // Planck 的 Box 接收半宽和半高
     body.createFixture({
@@ -106,7 +108,7 @@ export class PhysicsSystem {
   }
 
   createTriangle(id: string, x: number, y: number, p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, isStatic = false, options: any = {}) {
-    const body = this.createBody(id, x, y, isStatic);
+    const body = this.createBody(id, x, y, isStatic, options);
     
     // Planck 的 Polygon 接收 Vec2 数组
     const vertices = [
@@ -127,7 +129,7 @@ export class PhysicsSystem {
   }
 
   createPolygon(id: string, x: number, y: number, points: {x: number, y: number}[], isStatic = false, options: any = {}) {
-    const body = this.createBody(id, x, y, isStatic);
+    const body = this.createBody(id, x, y, isStatic, options);
     
     const vertices = points.map(p => planck.Vec2(p.x, p.y));
     
