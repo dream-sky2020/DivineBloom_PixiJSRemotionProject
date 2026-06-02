@@ -1,0 +1,31 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="mobile_people_visual_prefabs" width="1080" height="1920" background="#020817" />
+
+    <PrefabLibrary>
+        <!-- 友军小人：圆形，白色描边，仅视觉 -->
+        <Prefab id="mobile_ally_visual" export="true">
+            <GameObject name="MobileAllyVisual">
+                <Transform position="0, 0, 0" scale="1, 1, 1" />
+                <Graphic
+                    kind="circleGraphic"
+                    radius="20"
+                    fillColor="#7ee7d9"
+                    fillAlpha="1.0"
+                    strokeColor="#ffffff"
+                    strokeWidth="2"
+                />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <!-- 预览实例：放在画布中心，便于直接测试 -->
+    <Instance prefab="mobile_ally_visual" id="mobile_ally_center">
+        <Transform position="540, 960, 0" scale="2.6, 2.6, 1" />
+    </Instance>
+</World>

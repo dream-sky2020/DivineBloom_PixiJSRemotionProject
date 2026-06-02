@@ -9,8 +9,10 @@ export * from './ecs/components/PolygonCollider';
 export * from './ecs/components/Graphic';
 export * from './ecs/components/Camera';
 export * from './ecs/components/Canvas';
+export * from './ecs/components/ParticleEmitter';
 export * from './ecs/systems/PhysicsSystem';
 export * from './ecs/systems/RenderSystem';
+export * from './ecs/systems/ParticleSystem';
 
 import { World } from './ecs/World';
 import { XmlParser } from './parser/XmlParser';
@@ -29,9 +31,9 @@ export class GameEngine {
     this.systemRegistry.set(name, factory);
   }
 
-  static createWorldFromXml(xmlString: string): World {
+  static async createWorldFromXml(xmlString: string): Promise<World> {
     const world = new World();
-    const worldData = XmlParser.parseWorld(xmlString);
+    const worldData = await XmlParser.parseWorld(xmlString);
     world.data = worldData;
     
     // 1. 初始化系统流水线

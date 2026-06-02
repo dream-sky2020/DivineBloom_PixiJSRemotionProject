@@ -1,0 +1,20 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="scene_fail" width="1280" height="720" background="#020817" />
+
+    <PrefabLibrary>
+        <!-- 失败：外部 World 有多个 Prefab 且都没有 export="true" -->
+        <Prefab id="enemy_from_world_fail" src="prefab_samples/exported_world_fail_multi_no_export.xml" />
+    </PrefabLibrary>
+
+    <Instance prefab="enemy_from_world_fail" id="enemy_fail_01">
+        <Transform position="640, 260, 0" />
+        <RigidBody linearVelocity="0, 0" />
+    </Instance>
+</World>

@@ -1,0 +1,42 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="prefab_export_ok" width="1280" height="720" background="#020817" />
+
+    <PrefabLibrary>
+        <Prefab id="enemy_main" export="true">
+            <GameObject name="EnemyMainTemplate">
+                <Transform position="0, 0, 0" />
+                <RigidBody type="dynamic" restitution="1.0" friction="0.0" />
+                <CircleCollider radius="26" />
+                <Graphic kind="circleGraphic" radius="26" fillColor="#7ee7d9" strokeColor="#ffffff" strokeWidth="2" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="enemy_variant">
+            <GameObject name="EnemyVariantTemplate">
+                <Transform position="0, 0, 0" />
+                <RigidBody type="dynamic" restitution="0.8" friction="0.2" />
+                <CircleCollider radius="20" />
+                <Graphic kind="circleGraphic" radius="20" fillColor="#f97316" strokeColor="#ffffff" strokeWidth="2" />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <GameObject id="preview_floor" name="PreviewFloor">
+        <Transform position="640, 700, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="1280" height="40" />
+        <Graphic kind="rectangleGraphic" width="1280" height="40" fillColor="#1e293b" />
+    </GameObject>
+
+    <Instance prefab="enemy_main" id="preview_enemy_01" name="PreviewEnemy01">
+        <Transform position="480, 300, 0" />
+        <RigidBody linearVelocity="120, 80" />
+    </Instance>
+</World>

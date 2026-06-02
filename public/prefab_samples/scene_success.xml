@@ -1,0 +1,33 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="scene_success" width="1280" height="720" background="#020817" />
+
+    <PrefabLibrary>
+        <!-- 成功：外部 World 中有且仅有一个 export="true" -->
+        <Prefab id="enemy_from_world_ok" src="prefab_samples/exported_world_ok.xml" />
+    </PrefabLibrary>
+
+    <GameObject id="floor_ok" name="FloorOk">
+        <Transform position="640, 700, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="1280" height="40" />
+        <Graphic kind="rectangleGraphic" width="1280" height="40" fillColor="#334155" />
+    </GameObject>
+
+    <Instance prefab="enemy_from_world_ok" id="enemy_ok_01">
+        <Transform position="320, 220, 0" />
+        <RigidBody linearVelocity="180, 140" />
+    </Instance>
+
+    <Instance prefab="enemy_from_world_ok" id="enemy_ok_02">
+        <Transform position="960, 220, 0" />
+        <RigidBody linearVelocity="-180, 140" />
+        <Graphic fillColor="#f59e0b" />
+    </Instance>
+</World>

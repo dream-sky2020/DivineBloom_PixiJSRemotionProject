@@ -8,6 +8,12 @@ import type {
   PolygonColliderComponent
 } from '../../types';
 import { PhysicsSystem as PhysicsEngine } from '../../../physics2D/PhysicsSystem';
+import {
+  createEntityMap,
+  resolveWorldTransform,
+  worldToLocalPosition,
+  type TransformCache,
+} from '../utils/transformHierarchy';
 
 /**
  * 物理系统 (ECS 桥接版)
@@ -37,6 +43,8 @@ export class EcsPhysicsSystem extends System {
 
   private syncEntitiesToEngine(entities: Entity[]): void {
     const currentEntityIds = new Set(entities.map(e => e.id));
+    const entityMap = createEntityMap(entities);
+    const transformCache: TransformCache = new Map();
 
     // 处理移除的实体
     for (const id of this.initializedEntities) {
@@ -54,14 +62,25 @@ export class EcsPhysicsSystem extends System {
       if (!rigidBody || !transform) continue;
 
       if (!this.initializedEntities.has(entity.id)) {
-        this.createPhysicsBody(entity, rigidBody, transform);
+        this.createPhysicsBody(entity, rigidBody, transform, entityMap, transformCache);
         this.initializedEntities.add(entity.id);
       }
     }
   }
 
-  private createPhysicsBody(entity: Entity, rb: RigidBodyComponent, tf: TransformComponent): void {
+  private createPhysicsBody(
+    entity: Entity,
+    rb: RigidBodyComponent,
+    tf: TransformComponent,
+    entityMap: Map<string, Entity>,
+    transformCache: TransformCache,
+  ): void {
     const id = entity.id.toString();
+    const worldTransform = resolveWorldTransform(entity, entityMap, transformCache) || {
+      position: { ...tf.position },
+      rotation: tf.rotation,
+      scale: { ...tf.scale },
+    };
     const isStatic = rb.bodyType === 'static';
     const options = {
       density: rb.density,
@@ -80,8 +99,8 @@ export class EcsPhysicsSystem extends System {
     if (boxCollider) {
       this.engine.createRectangle(
         id,
-        tf.position.x + boxCollider.offset.x,
-        tf.position.y + boxCollider.offset.y,
+        worldTransform.position.x + boxCollider.offset.x,
+        worldTransform.position.y + boxCollider.offset.y,
         boxCollider.width,
         boxCollider.height,
         isStatic,
@@ -90,8 +109,8 @@ export class EcsPhysicsSystem extends System {
     } else if (circleCollider) {
       this.engine.createCircle(
         id,
-        tf.position.x + circleCollider.offset.x,
-        tf.position.y + circleCollider.offset.y,
+        worldTransform.position.x + circleCollider.offset.x,
+        worldTransform.position.y + circleCollider.offset.y,
         circleCollider.radius,
         isStatic,
         options
@@ -99,15 +118,15 @@ export class EcsPhysicsSystem extends System {
     } else if (polygonCollider) {
       this.engine.createPolygon(
         id,
-        tf.position.x,
-        tf.position.y,
+        worldTransform.position.x,
+        worldTransform.position.y,
         polygonCollider.points,
         isStatic,
         options
       );
     } else {
       // 默认创建一个小的圆形
-      this.engine.createCircle(id, tf.position.x, tf.position.y, 10, isStatic, options);
+      this.engine.createCircle(id, worldTransform.position.x, worldTransform.position.y, 10, isStatic, options);
     }
 
     // 设置初始速度
@@ -117,6 +136,8 @@ export class EcsPhysicsSystem extends System {
   private syncEngineToEntities(entities: Entity[]): void {
     const states = this.engine.getAllStates();
     const stateMap = new Map(states.map(s => [s.id, s]));
+    const entityMap = createEntityMap(entities);
+    const transformCache: TransformCache = new Map();
 
     for (const entity of entities) {
       const state = stateMap.get(entity.id.toString());
@@ -125,9 +146,17 @@ export class EcsPhysicsSystem extends System {
         const rigidBody = entity.components.get('RigidBody') as RigidBodyComponent;
 
         if (transform) {
-          transform.position.x = state.x;
-          transform.position.y = state.y;
+          const local = worldToLocalPosition(
+            entity,
+            { x: state.x, y: state.y, z: transform.position.z },
+            entityMap,
+            transformCache,
+          );
+          transform.position.x = local.x;
+          transform.position.y = local.y;
+          transform.position.z = local.z;
           transform.rotation = state.rotation;
+          transformCache.delete(entity.id.toString());
         }
 
         // 也可以同步速度回 RigidBody 组件，如果需要的话

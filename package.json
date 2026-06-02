@@ -21,7 +21,6 @@
     "antd": "^6.4.3",
     "axios": "^1.16.1",
     "idb": "^8.0.3",
-    "pixi-projection": "^1.0.0",
     "pixi.js": "latest",
     "planck": "^1.5.0",
     "react": "latest",

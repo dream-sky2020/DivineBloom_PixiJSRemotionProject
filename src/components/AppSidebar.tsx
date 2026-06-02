@@ -58,6 +58,20 @@ export function AppSidebar() {
           <span className="nav-icon">PYT</span>
           <span className="nav-label">Python 工具</span>
         </NavLink>
+        <NavLink 
+          to="/pixi-particle-debug.html" 
+          className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+        >
+          <span className="nav-icon">PRT</span>
+          <span className="nav-label">粒子自检</span>
+        </NavLink>
+        <NavLink
+          to="/pixi-native-particle.html"
+          className={({ isActive }) => isActive ? 'nav-item active' : 'nav-item'}
+        >
+          <span className="nav-icon">PNV</span>
+          <span className="nav-label">原生粒子</span>
+        </NavLink>
       </nav>
     </header>
   );

@@ -1,0 +1,117 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="ParticleSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="particle_demo" width="1280" height="720" background="#020817" />
+
+    <!-- 左侧：纹理粒子 -->
+    <GameObject name="TextureEmitter" id="emitter_texture">
+        <Transform position="360, 360, 0" />
+        <ParticleEmitter
+            maxParticles="260"
+            emissionRate="55"
+            texture="particle_white.svg"
+            lifetimeMin="0.4"
+            lifetimeMax="1.2"
+            speedMin="70"
+            speedMax="180"
+            angle="-90"
+            spread="70"
+            startColor="#ffaa00"
+            endColor="#ff0000"
+            startSize="12"
+            endSize="3"
+            startAlpha="1.0"
+            endAlpha="0.0"
+            blendMode="add"
+            anchor="0.5,0.5"
+        />
+        <Graphic
+            kind="circleGraphic"
+            radius="8"
+            fillColor="#ffffff"
+            fillAlpha="0.9"
+            strokeColor="#38bdf8"
+            strokeWidth="2"
+        />
+    </GameObject>
+
+    <!-- 中间：favicon 纹理粒子 -->
+    <GameObject name="FaviconEmitter" id="emitter_favicon">
+        <Transform position="640, 360, 0" />
+        <ParticleEmitter
+            maxParticles="180"
+            emissionRate="35"
+            texture="favicon.svg"
+            lifetimeMin="0.5"
+            lifetimeMax="1.4"
+            speedMin="55"
+            speedMax="150"
+            angle="-90"
+            spread="55"
+            startColor="#ffffff"
+            endColor="#ffffff"
+            startSize="6"
+            endSize="2"
+            startAlpha="1.0"
+            endAlpha="0.0"
+            blendMode="normal"
+            anchor="0.5,0.5"
+        />
+        <Graphic
+            kind="circleGraphic"
+            radius="8"
+            fillColor="#ffffff"
+            fillAlpha="0.9"
+            strokeColor="#f59e0b"
+            strokeWidth="2"
+        />
+    </GameObject>
+
+    <!-- 右侧：favicon 纹理粒子 -->
+    <GameObject name="GraphicEmitter" id="emitter_graphic">
+        <Transform position="920, 360, 0" />
+        <ParticleEmitter
+            maxParticles="220"
+            emissionRate="45"
+            texture="favicon.svg"
+            lifetimeMin="0.6"
+            lifetimeMax="1.6"
+            speedMin="40"
+            speedMax="120"
+            angle="-90"
+            spread="40"
+            startColor="#ffffff"
+            endColor="#ffffff"
+            startSize="4"
+            endSize="1.2"
+            startAlpha="0.95"
+            endAlpha="0.0"
+            blendMode="normal"
+            anchor="0.5,0.5"
+        />
+        <Graphic
+            kind="circleGraphic"
+            radius="8"
+            fillColor="#ffffff"
+            fillAlpha="0.9"
+            strokeColor="#22d3ee"
+            strokeWidth="2"
+        />
+    </GameObject>
+
+    <!-- 说明标记 -->
+    <GameObject name="MarkerLeft" id="marker_left">
+        <Transform position="360, 640, 0" />
+        <Graphic kind="rectangleGraphic" width="220" height="24" fillColor="#1f2937" strokeColor="#64748b" strokeWidth="1" />
+    </GameObject>
+
+    <GameObject name="MarkerRight" id="marker_right">
+        <Transform position="920, 640, 0" />
+        <Graphic kind="rectangleGraphic" width="220" height="24" fillColor="#1f2937" strokeColor="#64748b" strokeWidth="1" />
+    </GameObject>
+</World>

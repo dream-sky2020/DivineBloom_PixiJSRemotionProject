@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { PixiPhysicsCanvas, type PixiPhysicsRuntime } from '../components/PixiPhysicsCanvas';
-import { GameEngine, EcsPhysicsSystem, EcsRenderSystem } from '../game';
+import { GameEngine, EcsPhysicsSystem, EcsRenderSystem, EcsParticleSystem } from '../game';
 import type { World } from '../game/ecs/World';
 import { toast } from '../components/Toast';
 import { loadLastEcsXmlPath, saveLastEcsXmlPath } from '../store/ecsStore';
@@ -50,6 +50,17 @@ export function GameECSPage() {
     }
   }, []);
 
+  const clearCurrentScene = useCallback(() => {
+    const runtime = runtimeRef.current;
+    if (!runtime) return;
+
+    // 切换 XML 前先清空 Pixi 渲染对象，避免旧场景残留
+    runtime.processor.clear();
+    setRunning(false);
+    setWorld(null);
+    lastTimeRef.current = 0;
+  }, []);
+
   const pickFile = async () => {
     try {
       const response = await fetch(`${FILE_SERVER_URL}/file/pick`);
@@ -91,7 +102,7 @@ export function GameECSPage() {
         throw new Error(result.error || '读取文件失败');
       }
 
-      initWorld(result.content);
+      await initWorld(result.content);
       toast.success('场景已从磁盘同步更新');
     } catch (error) {
       console.error('从磁盘加载失败:', error);
@@ -116,7 +127,7 @@ export function GameECSPage() {
         throw new Error(result.error || '读取文件失败');
       }
 
-      initWorld(result.content);
+      await initWorld(result.content);
       toast.success('示例场景加载成功');
     } catch (error) {
       console.error('加载示例失败:', error);
@@ -124,18 +135,20 @@ export function GameECSPage() {
     }
   };
 
-  const initWorld = (xmlString: string) => {
+  const initWorld = useCallback(async (xmlString: string) => {
     if (!runtimeRef.current) return;
 
     try {
       const processor = runtimeRef.current.processor;
+      clearCurrentScene();
 
       // 1. 注册系统工厂
       GameEngine.registerSystem('PhysicsSystem', () => new EcsPhysicsSystem({ x: 0, y: 0 }, 4));
       GameEngine.registerSystem('RenderSystem', () => new EcsRenderSystem(processor));
+      GameEngine.registerSystem('ParticleSystem', () => new EcsParticleSystem(processor));
 
       // 2. 创建世界
-      const newWorld = GameEngine.createWorldFromXml(xmlString);
+      const newWorld = await GameEngine.createWorldFromXml(xmlString);
 
       // 3. 更新画布配置 (如果 XML 中有定义)
       const canvas = newWorld.data?.canvas;
@@ -154,7 +167,7 @@ export function GameECSPage() {
       console.error('初始化 ECS 世界失败:', error);
       toast.error('XML 解析或初始化失败，请检查格式');
     }
-  };
+  }, [clearCurrentScene]);
 
   useEffect(() => {
     const tick = (time: number) => {
@@ -238,7 +251,10 @@ export function GameECSPage() {
 
           <button
             className="secondary"
-            onClick={() => { setWorld(null); setStatus('已重置'); }}
+            onClick={() => {
+              clearCurrentScene();
+              setStatus('已重置');
+            }}
             disabled={!world}
             style={{ marginLeft: '12px' }}
           >

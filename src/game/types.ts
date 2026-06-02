@@ -10,6 +10,7 @@ import type { PolygonColliderComponent } from './ecs/components/PolygonCollider'
 import type { GraphicComponent } from './ecs/components/Graphic';
 import type { CameraComponent } from './ecs/components/Camera';
 import type { CanvasComponent } from './ecs/components/Canvas';
+import type { ParticleEmitterComponent } from './ecs/components/ParticleEmitter';
 
 export type { 
   TransformComponent, 
@@ -19,7 +20,8 @@ export type {
   PolygonColliderComponent,
   GraphicComponent,
   CameraComponent,
-  CanvasComponent
+  CanvasComponent,
+  ParticleEmitterComponent
 };
 
 export type EntityId = string | number;
@@ -43,7 +45,8 @@ export type AnyComponent =
   | CircleColliderComponent
   | PolygonColliderComponent
   | GraphicComponent
-  | CameraComponent;
+  | CameraComponent
+  | ParticleEmitterComponent;
 
 export interface Entity {
   id: EntityId;

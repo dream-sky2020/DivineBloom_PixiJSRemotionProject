@@ -2,6 +2,7 @@ import { System } from '../../types';
 import type { Entity, TransformComponent, SpriteComponent, GraphicComponent, CameraComponent } from '../../types';
 import { PixiFrameReconciler } from '../../../pixiJSRenderer/PixiFrameReconciler';
 import { PixiCommandProcessor } from '../../../pixiJSRenderer/PixiCommandProcessor';
+import { createEntityMap, resolveWorldTransform, type TransformCache } from '../utils/transformHierarchy';
 
 /**
  * 渲染系统 (ECS 桥接版)
@@ -19,6 +20,8 @@ export class EcsRenderSystem extends System {
 
   update(entities: Entity[], _deltaTime: number): void {
     this.reconciler.beginFrame();
+    const entityMap = createEntityMap(entities);
+    const transformCache: TransformCache = new Map();
 
     // 处理相机 (单例模式，取第一个找到的相机)
     for (const entity of entities) {
@@ -41,6 +44,8 @@ export class EcsRenderSystem extends System {
     for (const entity of entities) {
       const transform = entity.components.get('Transform') as TransformComponent;
       if (!transform) continue;
+      const worldTransform = resolveWorldTransform(entity, entityMap, transformCache);
+      if (!worldTransform) continue;
 
       const sprite = entity.components.get('Sprite') as SpriteComponent;
       const graphic = entity.components.get('Graphic') as GraphicComponent;
@@ -51,12 +56,12 @@ export class EcsRenderSystem extends System {
           kind: 'sprite',
           props: {
             texture: sprite.texture,
-            x: transform.position.x,
-            y: transform.position.y,
-            z: transform.position.z,
-            rotation: transform.rotation,
-            scaleX: transform.scale.x,
-            scaleY: transform.scale.y,
+            x: worldTransform.position.x,
+            y: worldTransform.position.y,
+            z: worldTransform.position.z,
+            rotation: worldTransform.rotation,
+            scaleX: worldTransform.scale.x,
+            scaleY: worldTransform.scale.y,
             anchorX: sprite.anchor.x,
             anchorY: sprite.anchor.y,
             alpha: sprite.alpha,
@@ -73,11 +78,11 @@ export class EcsRenderSystem extends System {
           id: entity.id.toString(),
           kind: graphic.kind as any,
           props: {
-            x: transform.position.x,
-            y: transform.position.y,
-            rotation: transform.rotation,
-            scaleX: transform.scale.x,
-            scaleY: transform.scale.y,
+            x: worldTransform.position.x,
+            y: worldTransform.position.y,
+            rotation: worldTransform.rotation,
+            scaleX: worldTransform.scale.x,
+            scaleY: worldTransform.scale.y,
             alpha: graphic.alpha ?? 1,
             stroke: graphic.stroke,
             fill: graphic.fill,

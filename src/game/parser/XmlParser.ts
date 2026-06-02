@@ -9,14 +9,27 @@ import type {
   PolygonColliderComponent,
   GraphicComponent,
   CameraComponent,
+  ParticleEmitterComponent,
   CanvasComponent,
   WorldData,
   EngineConfig,
   SystemConfig
 } from '../types';
 
+interface PrefabDefinition {
+  id: string;
+  extendsId?: string;
+  gameObjectEl: Element;
+}
+
+interface ResolvedPrefabTemplate {
+  id: string;
+  name?: string;
+  components: Map<string, Element>;
+}
+
 export class XmlParser {
-  static parseWorld(xmlString: string): WorldData {
+  static async parseWorld(xmlString: string): Promise<WorldData> {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
     const worldElement = xmlDoc.getElementsByTagName('World')[0];
@@ -31,38 +44,38 @@ export class XmlParser {
     // Parse Canvas
     const canvas = this.parseCanvas(worldElement);
 
-    // Parse GameObjects
+    // Parse Prefab library
+    const prefabRegistry = await this.parsePrefabLibrary(worldElement);
+    const resolvedPrefabCache = new Map<string, ResolvedPrefabTemplate>();
+
+    // Parse scene entities from direct World children
     const entities: Entity[] = [];
-    const gameObjectElements = worldElement.getElementsByTagName('GameObject');
+    const existingEntityIds = new Set<string>();
+    let fallbackIdCounter = 0;
 
-    for (let i = 0; i < gameObjectElements.length; i++) {
-      const el = gameObjectElements[i];
-      const id = el.getAttribute('id') || `entity_${i}`;
-      const name = el.getAttribute('name') || undefined;
-      
-      const entity: Entity = {
-        id,
-        name,
-        components: new Map()
-      };
-
-      // Parse components
-      for (let j = 0; j < el.children.length; j++) {
-        const child = el.children[j];
-        const component = this.parseComponent(child);
-        if (component) {
-          entity.components.set(component.type, component);
-        }
+    for (const child of this.getDirectChildren(worldElement)) {
+      if (child.tagName === 'GameObject') {
+        const entity = this.parseGameObjectElement(child, `entity_${fallbackIdCounter++}`);
+        this.appendEntity(entities, existingEntityIds, entity);
+        continue;
       }
 
-      entities.push(entity);
+      if (child.tagName === 'Instance') {
+        const entity = this.parseInstanceElement(
+          child,
+          prefabRegistry,
+          resolvedPrefabCache,
+          `entity_${fallbackIdCounter++}`,
+        );
+        this.appendEntity(entities, existingEntityIds, entity);
+      }
     }
 
     return { config, canvas, entities };
   }
 
   private static parseCanvas(worldEl: Element): CanvasComponent | undefined {
-    const canvasEl = worldEl.getElementsByTagName('Canvas')[0];
+    const canvasEl = this.getDirectChildByTag(worldEl, 'Canvas');
     if (!canvasEl) return undefined;
 
     return {
@@ -75,15 +88,14 @@ export class XmlParser {
   }
 
   private static parseEngineConfig(worldEl: Element): EngineConfig {
-    const configEl = worldEl.getElementsByTagName('EngineConfig')[0];
+    const configEl = this.getDirectChildByTag(worldEl, 'EngineConfig');
     const systems: SystemConfig[] = [];
 
     if (configEl) {
-      const pipelineEl = configEl.getElementsByTagName('SystemPipeline')[0];
+      const pipelineEl = this.getDirectChildByTag(configEl, 'SystemPipeline');
       if (pipelineEl) {
-        const systemEls = pipelineEl.getElementsByTagName('System');
-        for (let i = 0; i < systemEls.length; i++) {
-          const el = systemEls[i];
+        for (const el of this.getDirectChildren(pipelineEl)) {
+          if (el.tagName !== 'System') continue;
           systems.push({
             name: el.getAttribute('name') || '',
             enabled: el.getAttribute('enabled') !== 'false'
@@ -93,6 +105,358 @@ export class XmlParser {
     }
 
     return { systems };
+  }
+
+  private static async parsePrefabLibrary(worldEl: Element): Promise<Map<string, PrefabDefinition>> {
+    const libraryEl = this.getDirectChildByTag(worldEl, 'PrefabLibrary');
+    const prefabs = new Map<string, PrefabDefinition>();
+
+    if (!libraryEl) return prefabs;
+
+    for (const prefabEl of this.getDirectChildren(libraryEl)) {
+      if (prefabEl.tagName !== 'Prefab') continue;
+
+      const declaredId = prefabEl.getAttribute('id')?.trim();
+      const src = prefabEl.getAttribute('src')?.trim();
+
+      let extendsId = prefabEl.getAttribute('extends')?.trim() || undefined;
+      let gameObjectEl = this.getDirectChildByTag(prefabEl, 'GameObject');
+      let resolvedId = declaredId;
+
+      if (src) {
+        const loaded = await this.loadPrefabDefinitionFromPublic(src);
+        resolvedId = resolvedId || loaded.id;
+        extendsId = extendsId || loaded.extendsId;
+        gameObjectEl = loaded.gameObjectEl;
+      }
+
+      if (!resolvedId) {
+        throw new Error('Invalid XML: <Prefab> is missing required attribute "id"');
+      }
+      if (!gameObjectEl) {
+        throw new Error(`Invalid XML: Prefab "${resolvedId}" must contain one <GameObject> child`);
+      }
+      if (prefabs.has(resolvedId)) {
+        throw new Error(`Invalid XML: Duplicate prefab id "${resolvedId}"`);
+      }
+
+      prefabs.set(resolvedId, {
+        id: resolvedId,
+        extendsId,
+        gameObjectEl,
+      });
+    }
+
+    return prefabs;
+  }
+
+  private static async loadPrefabDefinitionFromPublic(src: string): Promise<PrefabDefinition> {
+    const normalizedSrc = this.normalizePublicPrefabPath(src);
+
+    let response: Response;
+    try {
+      response = await fetch(normalizedSrc);
+    } catch (error) {
+      throw new Error(`Invalid XML: Failed to load prefab file "${src}" from public`);
+    }
+
+    if (!response.ok) {
+      throw new Error(`Invalid XML: Failed to load prefab file "${src}" from public`);
+    }
+
+    const xmlText = await response.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+    const parseError = xmlDoc.querySelector('parsererror');
+    if (parseError) {
+      throw new Error(`Invalid XML: Prefab file "${src}" has invalid XML format`);
+    }
+
+    const prefabRoot = xmlDoc.documentElement;
+    if (!prefabRoot) {
+      throw new Error(`Invalid XML: Prefab file "${src}" is empty`);
+    }
+
+    if (prefabRoot.tagName === 'Prefab') {
+      const id = prefabRoot.getAttribute('id')?.trim();
+      const gameObjectEl = this.getDirectChildByTag(prefabRoot, 'GameObject');
+      if (!gameObjectEl) {
+        throw new Error(`Invalid XML: Prefab file "${src}" must contain one <GameObject>`);
+      }
+      return {
+        id: id || '',
+        extendsId: prefabRoot.getAttribute('extends')?.trim() || undefined,
+        gameObjectEl,
+      };
+    }
+
+    if (prefabRoot.tagName === 'GameObject') {
+      return {
+        id: '',
+        extendsId: undefined,
+        gameObjectEl: prefabRoot,
+      };
+    }
+
+    if (prefabRoot.tagName === 'PrefabLibrary') {
+      const prefabEls = this.getDirectChildren(prefabRoot).filter((child) => child.tagName === 'Prefab');
+      if (prefabEls.length === 0) {
+        throw new Error(`Invalid XML: Prefab file "${src}" has no <Prefab> definition`);
+      }
+      const selectedPrefab = this.selectExportedPrefab(prefabEls, src);
+      const gameObjectEl = this.getDirectChildByTag(selectedPrefab, 'GameObject');
+      if (!gameObjectEl) {
+        throw new Error(`Invalid XML: Prefab file "${src}" has <Prefab> without <GameObject>`);
+      }
+      return {
+        id: selectedPrefab.getAttribute('id')?.trim() || '',
+        extendsId: selectedPrefab.getAttribute('extends')?.trim() || undefined,
+        gameObjectEl,
+      };
+    }
+
+    if (prefabRoot.tagName === 'World') {
+      const externalLibrary = this.getDirectChildByTag(prefabRoot, 'PrefabLibrary');
+      if (!externalLibrary) {
+        throw new Error(`Invalid XML: World prefab file "${src}" must contain <PrefabLibrary>`);
+      }
+
+      const prefabEls = this.getDirectChildren(externalLibrary).filter((child) => child.tagName === 'Prefab');
+      if (prefabEls.length === 0) {
+        throw new Error(`Invalid XML: World prefab file "${src}" has no <Prefab> definition`);
+      }
+
+      const selectedPrefab = this.selectExportedPrefab(prefabEls, src);
+      const gameObjectEl = this.getDirectChildByTag(selectedPrefab, 'GameObject');
+      if (!gameObjectEl) {
+        throw new Error(`Invalid XML: World prefab file "${src}" has exported <Prefab> without <GameObject>`);
+      }
+
+      return {
+        id: selectedPrefab.getAttribute('id')?.trim() || '',
+        extendsId: selectedPrefab.getAttribute('extends')?.trim() || undefined,
+        gameObjectEl,
+      };
+    }
+
+    throw new Error(`Invalid XML: Prefab file "${src}" must use <Prefab>, <PrefabLibrary>, <World> or <GameObject> root`);
+  }
+
+  private static selectExportedPrefab(prefabEls: Element[], src: string): Element {
+    const exportedPrefabs = prefabEls.filter((prefabEl) => prefabEl.getAttribute('export') === 'true');
+
+    if (exportedPrefabs.length > 1) {
+      throw new Error(`Invalid XML: Prefab file "${src}" has multiple <Prefab export="true"> definitions`);
+    }
+
+    if (exportedPrefabs.length === 1) {
+      return exportedPrefabs[0];
+    }
+
+    if (prefabEls.length === 1) {
+      return prefabEls[0];
+    }
+
+    throw new Error(
+      `Invalid XML: Prefab file "${src}" has multiple <Prefab> definitions but none marked with export="true"`,
+    );
+  }
+
+  private static normalizePublicPrefabPath(src: string): string {
+    const trimmed = src.trim();
+    if (!trimmed) {
+      throw new Error('Invalid XML: <Prefab src> cannot be empty');
+    }
+    if (trimmed.includes('..')) {
+      throw new Error(`Invalid XML: Prefab src "${src}" cannot contain ".."`);
+    }
+
+    let normalized = trimmed.replace(/\\/g, '/');
+    if (normalized.startsWith('./')) {
+      normalized = normalized.slice(2);
+    }
+    if (normalized.startsWith('public/')) {
+      normalized = normalized.slice('public/'.length);
+    }
+    if (!normalized.startsWith('/')) {
+      normalized = `/${normalized}`;
+    }
+    return normalized;
+  }
+
+  private static parseGameObjectElement(el: Element, fallbackId: string): Entity {
+    const id = el.getAttribute('id') || fallbackId;
+    const name = el.getAttribute('name') || undefined;
+    const components = this.parseComponentsFromElement(el);
+
+    return {
+      id,
+      name,
+      components,
+    };
+  }
+
+  private static parseInstanceElement(
+    instanceEl: Element,
+    prefabRegistry: Map<string, PrefabDefinition>,
+    resolvedPrefabCache: Map<string, ResolvedPrefabTemplate>,
+    fallbackId: string,
+  ): Entity {
+    const prefabId = instanceEl.getAttribute('prefab')?.trim();
+    if (!prefabId) {
+      throw new Error('Invalid XML: <Instance> is missing required attribute "prefab"');
+    }
+
+    const resolvedPrefab = this.resolvePrefabTemplate(
+      prefabId,
+      prefabRegistry,
+      resolvedPrefabCache,
+      new Set<string>(),
+    );
+
+    const id = instanceEl.getAttribute('id') || fallbackId;
+    const name = instanceEl.getAttribute('name') || resolvedPrefab.name || undefined;
+
+    const mergedComponentEls = this.cloneComponentElementMap(resolvedPrefab.components);
+    for (const overrideEl of this.getDirectChildren(instanceEl)) {
+      const type = overrideEl.tagName;
+      const baseEl = mergedComponentEls.get(type);
+      mergedComponentEls.set(type, this.mergeComponentElements(baseEl, overrideEl));
+    }
+
+    const components = this.parseComponentsFromMap(mergedComponentEls);
+    return { id, name, components };
+  }
+
+  private static resolvePrefabTemplate(
+    prefabId: string,
+    prefabRegistry: Map<string, PrefabDefinition>,
+    resolvedPrefabCache: Map<string, ResolvedPrefabTemplate>,
+    resolvingStack: Set<string>,
+  ): ResolvedPrefabTemplate {
+    const cached = resolvedPrefabCache.get(prefabId);
+    if (cached) {
+      return this.cloneResolvedTemplate(cached);
+    }
+
+    const prefab = prefabRegistry.get(prefabId);
+    if (!prefab) {
+      throw new Error(`Invalid XML: Prefab "${prefabId}" does not exist`);
+    }
+
+    if (resolvingStack.has(prefabId)) {
+      throw new Error(`Invalid XML: Circular prefab inheritance detected at "${prefabId}"`);
+    }
+
+    resolvingStack.add(prefabId);
+
+    let mergedComponents = new Map<string, Element>();
+    let templateName: string | undefined;
+
+    if (prefab.extendsId) {
+      const baseTemplate = this.resolvePrefabTemplate(
+        prefab.extendsId,
+        prefabRegistry,
+        resolvedPrefabCache,
+        resolvingStack,
+      );
+      mergedComponents = this.cloneComponentElementMap(baseTemplate.components);
+      templateName = baseTemplate.name;
+    }
+
+    const ownName = prefab.gameObjectEl.getAttribute('name') || undefined;
+    templateName = ownName || templateName;
+
+    const ownComponents = this.collectComponentElements(prefab.gameObjectEl);
+    for (const [type, ownEl] of ownComponents.entries()) {
+      const baseEl = mergedComponents.get(type);
+      mergedComponents.set(type, this.mergeComponentElements(baseEl, ownEl));
+    }
+
+    resolvingStack.delete(prefabId);
+
+    const resolved: ResolvedPrefabTemplate = {
+      id: prefabId,
+      name: templateName,
+      components: mergedComponents,
+    };
+
+    resolvedPrefabCache.set(prefabId, this.cloneResolvedTemplate(resolved));
+    return this.cloneResolvedTemplate(resolved);
+  }
+
+  private static collectComponentElements(parent: Element): Map<string, Element> {
+    const map = new Map<string, Element>();
+
+    for (const child of this.getDirectChildren(parent)) {
+      map.set(child.tagName, child);
+    }
+
+    return map;
+  }
+
+  private static parseComponentsFromElement(parent: Element): Map<string, AnyComponent> {
+    return this.parseComponentsFromMap(this.collectComponentElements(parent));
+  }
+
+  private static parseComponentsFromMap(componentEls: Map<string, Element>): Map<string, AnyComponent> {
+    const components = new Map<string, AnyComponent>();
+
+    for (const componentEl of componentEls.values()) {
+      const component = this.parseComponent(componentEl);
+      if (component) {
+        components.set(component.type, component);
+      }
+    }
+
+    return components;
+  }
+
+  private static appendEntity(entities: Entity[], existingEntityIds: Set<string>, entity: Entity): void {
+    const normalizedId = String(entity.id);
+    if (existingEntityIds.has(normalizedId)) {
+      throw new Error(`Invalid XML: Duplicate entity id "${normalizedId}"`);
+    }
+    existingEntityIds.add(normalizedId);
+    entities.push(entity);
+  }
+
+  private static mergeComponentElements(baseEl: Element | undefined, overrideEl: Element): Element {
+    if (!baseEl) {
+      return overrideEl.cloneNode(true) as Element;
+    }
+
+    const merged = baseEl.cloneNode(true) as Element;
+    for (let i = 0; i < overrideEl.attributes.length; i++) {
+      const attr = overrideEl.attributes.item(i);
+      if (!attr) continue;
+      merged.setAttribute(attr.name, attr.value);
+    }
+    return merged;
+  }
+
+  private static cloneComponentElementMap(source: Map<string, Element>): Map<string, Element> {
+    const cloned = new Map<string, Element>();
+    for (const [type, element] of source.entries()) {
+      cloned.set(type, element.cloneNode(true) as Element);
+    }
+    return cloned;
+  }
+
+  private static cloneResolvedTemplate(source: ResolvedPrefabTemplate): ResolvedPrefabTemplate {
+    return {
+      id: source.id,
+      name: source.name,
+      components: this.cloneComponentElementMap(source.components),
+    };
+  }
+
+  private static getDirectChildren(parent: Element): Element[] {
+    return Array.from(parent.children) as Element[];
+  }
+
+  private static getDirectChildByTag(parent: Element, tagName: string): Element | undefined {
+    return this.getDirectChildren(parent).find((child) => child.tagName === tagName);
   }
 
   private static parseComponent(el: Element): AnyComponent | null {
@@ -115,6 +479,8 @@ export class XmlParser {
         return this.parseGraphic(el);
       case 'Camera':
         return this.parseCamera(el);
+      case 'ParticleEmitter':
+        return this.parseParticleEmitter(el);
       default:
         console.warn(`Unknown component type: ${type}`);
         return null;
@@ -186,6 +552,7 @@ export class XmlParser {
 
   private static parseTransform(el: Element): TransformComponent {
     const posStr = el.getAttribute('position') || '0, 0, 0';
+    const parent = el.getAttribute('parent') || undefined;
     const rotStr = el.getAttribute('rotation') || '0';
     const scaleStr = el.getAttribute('scale') || '1, 1, 1';
 
@@ -195,6 +562,7 @@ export class XmlParser {
     return {
       type: 'Transform',
       position: { x: px, y: py, z: pz || 0 },
+      parent,
       rotation: (parseFloat(rotStr) || 0) * (Math.PI / 180), // 转换为弧度
       scale: { x: sx, y: sy, z: sz || 1 }
     };
@@ -258,4 +626,38 @@ export class XmlParser {
       focus: parseFloat(el.getAttribute('focus') || '400'),
     };
   }
+
+  private static parseParticleEmitter(el: Element): ParticleEmitterComponent {
+    const texturePath = el.getAttribute('texture');
+    const graphicKind = el.getAttribute('graphicKind') as 'circleGraphic' | 'squareGraphic' | null;
+    return {
+      type: 'ParticleEmitter',
+      maxParticles: parseInt(el.getAttribute('maxParticles') || '200', 10),
+      emissionRate: parseFloat(el.getAttribute('emissionRate') || '30'),
+      texture: texturePath ? { kind: 'image', image: texturePath } : undefined,
+      graphicKind: graphicKind || undefined,
+      lifetimeMin: parseFloat(el.getAttribute('lifetimeMin') || '0.5'),
+      lifetimeMax: parseFloat(el.getAttribute('lifetimeMax') || '1.5'),
+      speedMin: parseFloat(el.getAttribute('speedMin') || '50'),
+      speedMax: parseFloat(el.getAttribute('speedMax') || '120'),
+      angle: parseFloat(el.getAttribute('angle') || '-90'),
+      spread: parseFloat(el.getAttribute('spread') || '45'),
+      startColor: el.getAttribute('startColor') || '#ffaa00',
+      endColor: el.getAttribute('endColor') || '#ff0000',
+      startSize: parseFloat(el.getAttribute('startSize') || '1.5'),
+      endSize: parseFloat(el.getAttribute('endSize') || '0.2'),
+      startAlpha: parseFloat(el.getAttribute('startAlpha') || '1'),
+      endAlpha: parseFloat(el.getAttribute('endAlpha') || '0'),
+      blendMode: (el.getAttribute('blendMode') as any) || 'add',
+      anchor: parseAnchor(el.getAttribute('anchor') || '0.5, 0.5'),
+    };
+  }
+}
+
+function parseAnchor(anchorStr: string): { x: number; y: number } {
+  const [x, y] = anchorStr.split(',').map((s) => parseFloat(s.trim()));
+  return {
+    x: Number.isFinite(x) ? x : 0.5,
+    y: Number.isFinite(y) ? y : 0.5,
+  };
 }

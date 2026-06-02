@@ -1,0 +1,30 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="prefab_export_fail" width="1280" height="720" background="#020817" />
+
+    <PrefabLibrary>
+        <Prefab id="enemy_alpha">
+            <GameObject name="EnemyAlphaTemplate">
+                <Transform position="0, 0, 0" />
+                <RigidBody type="dynamic" restitution="1.0" friction="0.0" />
+                <CircleCollider radius="22" />
+                <Graphic kind="circleGraphic" radius="22" fillColor="#38bdf8" strokeColor="#ffffff" strokeWidth="2" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="enemy_beta">
+            <GameObject name="EnemyBetaTemplate">
+                <Transform position="0, 0, 0" />
+                <RigidBody type="dynamic" restitution="1.0" friction="0.0" />
+                <CircleCollider radius="22" />
+                <Graphic kind="circleGraphic" radius="22" fillColor="#f43f5e" strokeColor="#ffffff" strokeWidth="2" />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+</World>

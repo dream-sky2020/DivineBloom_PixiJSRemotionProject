@@ -1,0 +1,92 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="parent_child_transform_demo" width="1280" height="720" background="#020817" />
+
+    <!-- 边界：用于让父实体在场景内弹跳移动 -->
+    <GameObject name="Floor" id="wall_bottom">
+        <Transform position="640, 700, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="1280" height="40" />
+        <Graphic kind="rectangleGraphic" width="1280" height="40" fillColor="#1e293b" />
+    </GameObject>
+
+    <GameObject name="Ceiling" id="wall_top">
+        <Transform position="640, 20, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="1280" height="40" />
+        <Graphic kind="rectangleGraphic" width="1280" height="40" fillColor="#1e293b" />
+    </GameObject>
+
+    <GameObject name="LeftWall" id="wall_left">
+        <Transform position="20, 360, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="40" height="720" />
+        <Graphic kind="rectangleGraphic" width="40" height="720" fillColor="#1e293b" />
+    </GameObject>
+
+    <GameObject name="RightWall" id="wall_right">
+        <Transform position="1260, 360, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="40" height="720" />
+        <Graphic kind="rectangleGraphic" width="40" height="720" fillColor="#1e293b" />
+    </GameObject>
+
+    <!-- 父实体：车身（动态刚体） -->
+    <GameObject name="CarBody" id="car_body">
+        <Transform position="640, 220, 0" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.1" linearVelocity="160, 120" />
+        <BoxCollider width="180" height="70" />
+        <Graphic
+            kind="rectangleGraphic"
+            width="180"
+            height="70"
+            fillColor="#38bdf8"
+            strokeColor="#ffffff"
+            strokeWidth="2"
+        />
+    </GameObject>
+
+    <!-- 子实体：4 个车轮（position 为相对 car_body 的局部坐标） -->
+    <GameObject name="WheelFL" id="wheel_fl">
+        <Transform position="-55, 38, 0" parent="car_body" />
+        <Graphic kind="circleGraphic" radius="16" fillColor="#111827" strokeColor="#ffffff" strokeWidth="2" />
+    </GameObject>
+
+    <GameObject name="WheelFR" id="wheel_fr">
+        <Transform position="55, 38, 0" parent="car_body" />
+        <Graphic kind="circleGraphic" radius="16" fillColor="#111827" strokeColor="#ffffff" strokeWidth="2" />
+    </GameObject>
+
+    <GameObject name="WheelRL" id="wheel_rl">
+        <Transform position="-55, -38, 0" parent="car_body" />
+        <Graphic kind="circleGraphic" radius="16" fillColor="#111827" strokeColor="#ffffff" strokeWidth="2" />
+    </GameObject>
+
+    <GameObject name="WheelRR" id="wheel_rr">
+        <Transform position="55, -38, 0" parent="car_body" />
+        <Graphic kind="circleGraphic" radius="16" fillColor="#111827" strokeColor="#ffffff" strokeWidth="2" />
+    </GameObject>
+
+    <!-- 二级子节点：先挂在 car_body，再挂子节点 -->
+    <GameObject name="FlagPole" id="flag_pole">
+        <Transform position="0, -60, 0" parent="car_body" />
+        <Graphic kind="rectangleGraphic" width="6" height="40" fillColor="#94a3b8" />
+    </GameObject>
+
+    <GameObject name="Flag" id="flag">
+        <Transform position="18, -12, 0" parent="flag_pole" />
+        <Graphic
+            kind="polygonGraphic"
+            points="0,0 34,10 0,20"
+            fillColor="#f97316"
+            strokeColor="#ffffff"
+            strokeWidth="2"
+        />
+    </GameObject>
+</World>

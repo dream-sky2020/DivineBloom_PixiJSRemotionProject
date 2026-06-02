@@ -3,6 +3,7 @@ import {
   Assets,
   Container,
   Graphics,
+  Particle,
   ParticleContainer,
   Sprite,
   Spritesheet,
@@ -84,7 +85,7 @@ export class PixiCommandProcessor {
   private readonly pool: PixiRendererObjectPool = {
     sprites: createPoolBucket<PixiSpritePoolEntry, Sprite>(),
     particleContainers: createPoolBucket<PixiParticleContainerPoolEntry, ParticleContainer>(),
-    particleSprites: createPoolBucket<PixiParticlePoolEntry, Sprite>(),
+    particleSprites: createPoolBucket<PixiParticlePoolEntry, Particle>(),
     graphics: createPoolBucket<PixiGraphicPoolEntry, Graphics>(),
   };
 
@@ -133,7 +134,7 @@ export class PixiCommandProcessor {
   public destroy() {
     this.clear();
     destroyIdleObjects(this.pool.sprites, (sprite) => sprite.destroy({ texture: true }));
-    destroyIdleObjects(this.pool.particleSprites, (sprite) => sprite.destroy({ texture: true }));
+    destroyIdleObjects(this.pool.particleSprites, () => {});
     destroyIdleObjects(this.pool.particleContainers, (container) => container.destroy({ children: true }));
     destroyIdleObjects(this.pool.graphics, (graphics) => graphics.destroy({ texture: true }));
 
@@ -275,7 +276,15 @@ export class PixiCommandProcessor {
       return;
     }
 
-    const container = this.pool.particleContainers.idle.pop() ?? new ParticleContainer();
+    const container = this.pool.particleContainers.idle.pop() ?? new ParticleContainer({
+      dynamicProperties: {
+        position: true,
+        rotation: true,
+        vertex: true,
+        uvs: true,
+        color: true,
+      },
+    });
     const entry: PixiParticleContainerPoolEntry = {
       id,
       kind: 'particleContainer',
@@ -305,16 +314,16 @@ export class PixiCommandProcessor {
       return;
     }
 
-    const sprite = this.pool.particleSprites.idle.pop() ?? new Sprite(Texture.EMPTY);
+    const particle = this.pool.particleSprites.idle.pop() ?? new Particle(Texture.EMPTY);
     const entry: PixiParticlePoolEntry = {
       id,
       kind: 'particle',
       containerId,
-      instance: sprite,
+      instance: particle,
       props,
     };
     container.particles.set(id, entry);
-    container.instance.addChild(sprite);
+    container.instance.addParticle(particle);
     this.applyParticleProps(entry);
   }
 
@@ -373,7 +382,7 @@ export class PixiCommandProcessor {
     }
 
     container.particles.delete(id);
-    entry.instance.removeFromParent();
+    container.instance.removeParticle(entry.instance);
     entry.instance.texture = Texture.EMPTY;
     this.pool.particleSprites.idle.push(entry.instance);
   }
@@ -430,22 +439,40 @@ export class PixiCommandProcessor {
   private applyParticleProps(entry: PixiParticlePoolEntry) {
     const { instance, props } = entry;
     const container = this.pool.particleContainers.active.get(entry.containerId);
-    if (props.atlasFrame && container?.props.atlas) {
-      this.applyTexture({ kind: 'atlasFrame', atlas: container.props.atlas, atlasFrame: props.atlasFrame }, (texture) => {
+    if (props.texture) {
+      this.applyTexture(props.texture, (texture) => {
+        const liveContainer = this.pool.particleContainers.active.get(entry.containerId);
         if (
-          container.particles.get(entry.id) === entry &&
+          liveContainer?.particles.get(entry.id) === entry &&
+          entry.props.texture === props.texture
+        ) {
+          entry.texture = texture;
+          instance.texture = texture;
+          liveContainer.instance.texture = texture;
+          liveContainer.instance.update();
+        }
+      });
+    } else if (props.atlasFrame && container?.props.atlas) {
+      this.applyTexture({ kind: 'atlasFrame', atlas: container.props.atlas, atlasFrame: props.atlasFrame }, (texture) => {
+        const liveContainer = this.pool.particleContainers.active.get(entry.containerId);
+        if (
+          liveContainer?.particles.get(entry.id) === entry &&
           entry.props.atlasFrame === props.atlasFrame
         ) {
           entry.texture = texture;
           instance.texture = texture;
+          liveContainer.instance.texture = texture;
+          liveContainer.instance.update();
         }
       });
     }
 
     instance.x = props.x ?? 0;
     instance.y = props.y ?? 0;
-    instance.anchor.set(props.anchorX ?? 0, props.anchorY ?? 0);
-    instance.scale.set(props.scaleX ?? 1, props.scaleY ?? 1);
+    instance.anchorX = props.anchorX ?? 0;
+    instance.anchorY = props.anchorY ?? 0;
+    instance.scaleX = props.scaleX ?? 1;
+    instance.scaleY = props.scaleY ?? 1;
     instance.rotation = props.rotation ?? 0;
     instance.alpha = props.alpha ?? 1;
     if (props.tint !== undefined) {
@@ -798,7 +825,21 @@ function clampNumber(value: number, min: number, max: number) {
 }
 
 function normalizeAssetUrl(url: string) {
-  return encodeURI(url);
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return trimmed;
+  }
+
+  // Public 目录资源默认按站点根路径读取，避免路由子路径下相对地址 404。
+  const isAbsoluteLike =
+    /^([a-zA-Z][a-zA-Z0-9+\-.]*:)?\/\//.test(trimmed) ||
+    trimmed.startsWith('/') ||
+    trimmed.startsWith('./') ||
+    trimmed.startsWith('../') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:');
+  const normalized = isAbsoluteLike ? trimmed : `/${trimmed}`;
+  return encodeURI(normalized);
 }
 
 function destroyIdleObjects<TReusableInstance>(

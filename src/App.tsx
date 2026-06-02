@@ -8,6 +8,8 @@ import { ImageAssetsPage } from './pages/ImageAssetsPage';
 import { AudioAssetsPage } from './pages/AudioAssetsPage';
 import { BezierEditorPage } from './pages/BezierEditorPage';
 import { PythonToolsPage } from './pages/PythonToolsPage';
+import { PixiParticleDebugPage } from './pages/PixiParticleDebugPage';
+import { PixiNativeParticlePage } from './pages/PixiNativeParticlePage';
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
             <Route path="/audio-assets.html" element={<AudioAssetsPage />} />
             <Route path="/bezier-editor.html" element={<BezierEditorPage />} />
             <Route path="/python-tools.html" element={<PythonToolsPage />} />
+            <Route path="/pixi-particle-debug.html" element={<PixiParticleDebugPage />} />
+            <Route path="/pixi-native-particle.html" element={<PixiNativeParticlePage />} />
             <Route path="/" element={<Navigate to="/simulation.html" replace />} />
           </Routes>
         </main>

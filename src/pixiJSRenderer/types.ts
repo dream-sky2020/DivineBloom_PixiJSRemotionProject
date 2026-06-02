@@ -1,4 +1,4 @@
-import type { Container, Graphics, ParticleContainer, Sprite, Texture } from 'pixi.js';
+import type { Container, Graphics, Particle, ParticleContainer, Sprite, Texture } from 'pixi.js';
 
 export type BlendMode = 'none' | 'normal' | 'add' | 'multiply' | 'subtract' | 'screen';
 
@@ -65,6 +65,7 @@ export interface PixiParticleContainerProps {
 }
 
 export interface PixiParticleProps {
+  texture?: PixiTextureSource;
   atlasFrame?: string;
   x?: number;
   y?: number;
@@ -237,7 +238,7 @@ export type PixiSpritePoolEntry = PixiObjectPoolEntry<Sprite, 'sprite', PixiSpri
   texture?: Texture;
 };
 
-export type PixiParticlePoolEntry = PixiObjectPoolEntry<Sprite, 'particle', PixiParticleProps> & {
+export type PixiParticlePoolEntry = PixiObjectPoolEntry<Particle, 'particle', PixiParticleProps> & {
   containerId: PixiRendererObjectId;
   texture?: Texture;
 };
@@ -310,7 +311,7 @@ export interface PixiRendererObjectPool {
   camera?: PixiCameraPoolEntry;
   sprites: PixiPoolBucket<PixiSpritePoolEntry, Sprite>;
   particleContainers: PixiPoolBucket<PixiParticleContainerPoolEntry, ParticleContainer>;
-  particleSprites: PixiPoolBucket<PixiParticlePoolEntry, Sprite>;
+  particleSprites: PixiPoolBucket<PixiParticlePoolEntry, Particle>;
   graphics: PixiPoolBucket<PixiGraphicPoolEntry, Graphics>;
 }
 

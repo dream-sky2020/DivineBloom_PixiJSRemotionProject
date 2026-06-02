@@ -1,0 +1,31 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="mobile_enemy_visual_prefabs" width="1080" height="1920" background="#020817" />
+
+    <PrefabLibrary>
+        <!-- 敌军小人：三角形，白色描边，仅视觉 -->
+        <Prefab id="mobile_enemy_visual" export="true">
+            <GameObject name="MobileEnemyVisual">
+                <Transform position="0, 0, 0" scale="1, 1, 1" />
+                <Graphic
+                    kind="polygonGraphic"
+                    points="0,-20 20,20 -20,20"
+                    fillColor="#ffce73"
+                    fillAlpha="1.0"
+                    strokeColor="#ffffff"
+                    strokeWidth="2"
+                />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <!-- 预览实例：放在画布中心，便于直接测试 -->
+    <Instance prefab="mobile_enemy_visual" id="mobile_enemy_center">
+        <Transform position="540, 960, 0" scale="2.6, 2.6, 1" />
+    </Instance>
+</World>

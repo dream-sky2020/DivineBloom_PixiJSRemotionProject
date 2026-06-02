@@ -13,12 +13,62 @@
             <System name="InputSystem" enabled="true" />
             <System name="AISystem" enabled="true" />
             <System name="PhysicsSystem" enabled="true" />
+            <System name="ParticleSystem" enabled="true" />
             <System name="AnimationSystem" enabled="false" />
             <System name="RenderSystem" enabled="true" />
         </SystemPipeline>
     </EngineConfig>
     <Canvas name="battle_scene" width="1280" height="720" background="#020817" />
     <!-- GameObject -->
+</World>
+
+### 示例（Prefab 最小可运行）
+
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="prefab_demo" width="1280" height="720" background="#020817" />
+
+    <PrefabLibrary>
+        <Prefab id="bouncing_circle">
+            <GameObject name="BouncingCircleTemplate">
+                <Transform position="0, 0, 0" />
+                <RigidBody type="dynamic" restitution="1.0" friction="0.0" />
+                <CircleCollider radius="30" />
+                <Graphic
+                    kind="circleGraphic"
+                    radius="30"
+                    fillColor="#7ee7d9"
+                    fillAlpha="1.0"
+                    strokeColor="#ffffff"
+                    strokeWidth="2"
+                />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <GameObject name="Floor" id="wall-bottom">
+        <Transform position="640, 700, 0" />
+        <RigidBody type="static" />
+        <BoxCollider width="1280" height="40" />
+        <Graphic kind="rectangleGraphic" width="1280" height="40" fillColor="#1e293b" />
+    </GameObject>
+
+    <Instance prefab="bouncing_circle" id="obj-circle-01" name="BallA">
+        <Transform position="300, 220, 0" />
+        <RigidBody linearVelocity="220, 120" />
+    </Instance>
+
+    <Instance prefab="bouncing_circle" id="obj-circle-02" name="BallB">
+        <Transform position="900, 220, 0" />
+        <RigidBody linearVelocity="-220, 120" />
+        <Graphic fillColor="#f97316" />
+    </Instance>
 </World>
 
 ## 2. 引擎配置 (EngineConfig)
@@ -33,6 +83,9 @@
     name="PhysicsSystem"            <!-- [必填] 系统名称 (需先在 GameEngine 中注册) -->
     enabled="true"                  <!-- [可选] 是否启用，默认 "true" -->
 />
+
+粒子系统建议顺序：`PhysicsSystem -> ParticleSystem -> RenderSystem`。
+其中 `ParticleSystem` 会将发射器生成的 `ParticleData[]` 批处理为 Pixi 粒子命令。
 
 ## 3. 游戏对象 (GameObject)
 
@@ -55,9 +108,22 @@
 
 <Transform 
     position="10, 20, 0"            <!-- [可选] x, y, z 坐标，默认 "0, 0, 0" -->
+    parent="1001"                   <!-- [可选] 父实体 ID。填写后 position 解释为相对父 Transform 的局部坐标 -->
     rotation="45"                   <!-- [可选] 旋转角度（度），默认 "0"。解析器会自动转换为弧度 -->
     scale="1, 1, 1"                 <!-- [可选] x, y, z 缩放，默认 "1, 1, 1" -->
 />
+
+父子关系示例（无需嵌套 XML）：
+
+<GameObject name="Car" id="1001">
+    <Transform position="100, 100, 0" />
+    <RigidBody type="dynamic" />
+</GameObject>
+
+<GameObject name="Wheel" id="1002">
+    <Transform position="20, -10, 0" parent="1001" />
+    <Sprite texture="wheel.png" />
+</GameObject>
 
 ### 3.2 精灵组件 (Sprite)
 
@@ -145,6 +211,31 @@
     focus="400"                     <!-- [可选] 焦点距离 (控制伪 3D 投影)，默认 "400" -->
 />
 
+### 3.9 粒子发射器组件 (ParticleEmitter)
+
+定义一个粒子发射器。系统每帧会把粒子数据写入 `ParticleData[]`，再批量同步到 Pixi 粒子容器。
+
+<ParticleEmitter
+    maxParticles="200"              <!-- [可选] 粒子上限，默认 "200" -->
+    emissionRate="30"               <!-- [可选] 每秒发射数量，默认 "30" -->
+    texture="spark.png"             <!-- [可选] 粒子纹理路径（推荐）。未提供时可配合 graphicKind 使用纯色点粒子 -->
+    graphicKind="circleGraphic"     <!-- [可选] 简单图形模式：circleGraphic / squareGraphic -->
+    lifetimeMin="0.5"               <!-- [可选] 最小生命周期（秒），默认 "0.5" -->
+    lifetimeMax="1.5"               <!-- [可选] 最大生命周期（秒），默认 "1.5" -->
+    speedMin="50"                   <!-- [可选] 最小速度，默认 "50" -->
+    speedMax="120"                  <!-- [可选] 最大速度，默认 "120" -->
+    angle="-90"                     <!-- [可选] 发射主方向（度），默认 "-90" -->
+    spread="45"                     <!-- [可选] 扩散角（度），默认 "45" -->
+    startColor="#ffaa00"            <!-- [可选] 起始颜色，默认 "#ffaa00" -->
+    endColor="#ff0000"              <!-- [可选] 结束颜色，默认 "#ff0000" -->
+    startSize="1.5"                 <!-- [可选] 起始缩放，默认 "1.5" -->
+    endSize="0.2"                   <!-- [可选] 结束缩放，默认 "0.2" -->
+    startAlpha="1.0"                <!-- [可选] 起始透明度，默认 "1.0" -->
+    endAlpha="0.0"                  <!-- [可选] 结束透明度，默认 "0.0" -->
+    blendMode="add"                 <!-- [可选] 混合模式，默认 "add" -->
+    anchor="0.5, 0.5"               <!-- [可选] 粒子锚点，默认 "0.5,0.5" -->
+/>
+
 ## 4. 画布配置 (Canvas)
 
 定义整个世界的渲染输出参数。它是 <World> 的直接子节点，不属于任何 GameObject。
@@ -155,6 +246,140 @@
     height="1080"                   <!-- [可选] 画布高度，默认 "1080" -->
     background="#020817"            <!-- [可选] 背景颜色，默认 "#020817" -->
 />
+
+## 5. 预制体 (Prefab) [扩展格式]
+
+用于复用常见实体结构（例如：弹跳球、敌人单位、静态墙体）。
+该格式是对现有 DSL 的向后兼容扩展：不使用 Prefab 时，原有 GameObject 写法保持不变。
+
+### 5.1 预制体库 (PrefabLibrary)
+
+预制体定义容器，作为 <World> 的直接子节点。
+支持两种写法：
+1) 内联写法（在当前 XML 内写完整 GameObject）
+2) 跨文件写法（仅写 public 下相对路径，解析器自动加载）
+
+<PrefabLibrary>
+    <!-- 内联写法 -->
+    <Prefab id="bouncing_circle">
+        <GameObject name="CircleTemplate">
+            <!-- Components -->
+        </GameObject>
+    </Prefab>
+
+    <!-- 跨文件写法：src 为 public 目录下的相对路径 -->
+    <Prefab id="enemy_unit" src="prefabs/enemy_unit.xml" />
+    <Prefab id="wall_base" src="public/prefabs/wall_base.xml" />
+</PrefabLibrary>
+
+<Prefab
+    id="ally_unit"                  <!-- [可选] 不写时可使用外部文件中的 id -->
+    src="prefabs/ally_unit.xml"     <!-- [可选] public 下相对路径 -->
+    extends="unit_base"             <!-- [可选] 继承的父预制体 ID -->
+>
+    <!-- 内联模式下写 <GameObject>；使用 src 时可省略 -->
+</Prefab>
+
+### 5.2 外部预制体文件格式 (public/*)
+
+当使用 src 跨文件引用时，外部文件允许以下根节点之一：
+
+1) <Prefab> 根
+
+public/prefabs/enemy_unit.xml
+<Prefab id="enemy_unit">
+    <GameObject name="EnemyTemplate">
+        <!-- Components -->
+    </GameObject>
+</Prefab>
+
+2) <GameObject> 根（最简文件）
+
+public/prefabs/simple_wall.xml
+<GameObject name="WallTemplate">
+    <!-- Components -->
+</GameObject>
+
+3) <PrefabLibrary> 根
+
+public/prefabs/group.xml
+<PrefabLibrary>
+    <Prefab id="first_prefab" export="true">
+        <GameObject>
+            <!-- Components -->
+        </GameObject>
+    </Prefab>
+    <Prefab id="other_prefab">
+        <GameObject>
+            <!-- Components -->
+        </GameObject>
+    </Prefab>
+</PrefabLibrary>
+
+4) <World> 根（可用于复杂预览与测试）
+
+public/prefabs/enemy_pack.xml
+<World>
+    <EngineConfig>...</EngineConfig>
+    <Canvas ... />
+    <PrefabLibrary>
+        <Prefab id="enemy_main" export="true">
+            <GameObject>
+                <!-- Components -->
+            </GameObject>
+        </Prefab>
+        <Prefab id="enemy_variant">
+            <GameObject>
+                <!-- Components -->
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <!-- 本文件内可写完整测试场景 -->
+    <Instance prefab="enemy_main" id="preview_enemy_01" />
+</World>
+
+#### 5.2.1 跨文件导出选择规则
+
+当 src 文件包含多个 Prefab（例如根为 <PrefabLibrary> 或 <World>）时，按以下顺序选择被引用目标：
+
+1) 优先使用带 `export="true"` 的 Prefab（建议且应保持一个文件最多一个）。
+2) 若一个都没标：
+   - 可选策略 B（兼容）：若只有一个 Prefab，自动使用它；
+   - 否则报错（避免歧义）。
+3) 若 `export="true"` 超过一个，必须报错。
+
+### 5.3 预制体实例 (Instance)
+
+在场景中实例化预制体。Instance 作为 <World> 的直接子节点。
+
+<Instance
+    prefab="bouncing_circle"        <!-- [必填] 引用的预制体 ID -->
+    id="obj-circle-01"              <!-- [必填] 实例实体 ID（全局唯一） -->
+    name="BallA"                    <!-- [可选] 实例名称 -->
+>
+    <!-- [可选] 覆盖模板中的组件属性 -->
+    <Transform position="200, 200, 0" />
+    <RigidBody linearVelocity="200, 300" />
+</Instance>
+
+### 5.4 覆盖与合并规则
+
+1) 合并顺序：模板组件 -> 实例覆盖组件，后者优先。
+2) 组件键按 type 唯一：同一实体中每种组件类型最多一个。
+3) 建议在模板中不写 GameObject.id，由 Instance.id 作为最终实体 ID。
+4) 解析器需做深拷贝，避免多个实例共享同一数组/对象引用（如 Polygon points）。
+5) 当 prefab 不存在、id 重复、组件格式非法时，解析应报错并中断加载。
+
+### 5.5 推荐放置顺序
+
+<World>
+    <EngineConfig>...</EngineConfig>
+    <Canvas ... />
+    <PrefabLibrary>...</PrefabLibrary>
+    <Instance ... />
+    <GameObject ... />              <!-- 仍可与 Instance 混用 -->
+</World>
 
 ## 示例
 
