@@ -13,6 +13,7 @@ type NativeParticle = {
   alphaEnd: number;
   tintStart: number;
   tintEnd: number;
+  isNumber?: boolean;
 };
 type EmitterOptions = {
   texture: Texture;
@@ -38,8 +39,11 @@ export function PixiNativeParticlePage() {
   const particlesRef = useRef<NativeParticle[]>([]);
   const whiteTextureRef = useRef<Texture | null>(null);
   const faviconTextureRef = useRef<Texture | null>(null);
+  const digitTexturesRef = useRef<Texture[] | null>(null);
   const whiteEmitAccumulatorRef = useRef(0);
   const faviconEmitAccumulatorRef = useRef(0);
+  const digitEmitAccumulatorRef = useRef(0);
+  const numberCounterRef = useRef(0);
   const runningRef = useRef(true);
   const [running, setRunning] = useState(true);
   const [activeCount, setActiveCount] = useState(0);
@@ -74,18 +78,29 @@ export function PixiNativeParticlePage() {
       containerRef.current = particleLayer;
       app.stage.addChild(particleLayer);
 
-      const [whiteTexture, faviconTexture] = await Promise.all([
+      const [whiteTexture, faviconTexture, ...digitTextures] = await Promise.all([
         Assets.load<Texture>('/particle_white.svg'),
         Assets.load<Texture>('/favicon.svg'),
+        Assets.load<Texture>('/digit/digit_0.svg'),
+        Assets.load<Texture>('/digit/digit_1.svg'),
+        Assets.load<Texture>('/digit/digit_2.svg'),
+        Assets.load<Texture>('/digit/digit_3.svg'),
+        Assets.load<Texture>('/digit/digit_4.svg'),
+        Assets.load<Texture>('/digit/digit_5.svg'),
+        Assets.load<Texture>('/digit/digit_6.svg'),
+        Assets.load<Texture>('/digit/digit_7.svg'),
+        Assets.load<Texture>('/digit/digit_8.svg'),
+        Assets.load<Texture>('/digit/digit_9.svg'),
       ]);
       whiteTextureRef.current = whiteTexture;
       faviconTextureRef.current = faviconTexture;
+      digitTexturesRef.current = digitTextures;
 
       const tick = (ticker: { deltaMS: number }) => {
         if (!runningRef.current) return;
         const deltaTime = Math.min(0.05, Math.max(0.001, ticker.deltaMS / 1000));
         if (whiteTextureRef.current) {
-          stepParticles(deltaTime, particleLayer, particlesRef.current, whiteEmitAccumulatorRef, {
+          spawnParticles(deltaTime, particleLayer, particlesRef.current, whiteEmitAccumulatorRef, {
             texture: whiteTextureRef.current,
             emissionRate: 90,
             originX: 460,
@@ -99,7 +114,7 @@ export function PixiNativeParticlePage() {
           });
         }
         if (faviconTextureRef.current) {
-          stepParticles(deltaTime, particleLayer, particlesRef.current, faviconEmitAccumulatorRef, {
+          spawnParticles(deltaTime, particleLayer, particlesRef.current, faviconEmitAccumulatorRef, {
             texture: faviconTextureRef.current,
             emissionRate: 65,
             originX: 820,
@@ -112,6 +127,29 @@ export function PixiNativeParticlePage() {
             sizeEndMax: 1.6,
           });
         }
+        if (digitTexturesRef.current) {
+          spawnNumberParticles(
+            deltaTime,
+            particleLayer,
+            particlesRef.current,
+            digitEmitAccumulatorRef,
+            numberCounterRef,
+            digitTexturesRef.current,
+            {
+              emissionRate: 20,
+              originX: 1020,
+              originY: HEIGHT * 0.54,
+              tintStart: 0xffffff,
+              tintEnd: 0xffffff,
+              sizeStartMin: 0.45,
+              sizeStartMax: 0.7,
+              sizeEndMin: 0.2,
+              sizeEndMax: 0.35,
+            },
+          );
+        }
+
+        updateParticles(deltaTime, particleLayer, particlesRef.current);
         setActiveCount(particlesRef.current.length);
       };
 
@@ -136,8 +174,11 @@ export function PixiNativeParticlePage() {
       containerRef.current = null;
       whiteTextureRef.current = null;
       faviconTextureRef.current = null;
+      digitTexturesRef.current = null;
       whiteEmitAccumulatorRef.current = 0;
       faviconEmitAccumulatorRef.current = 0;
+      digitEmitAccumulatorRef.current = 0;
+      numberCounterRef.current = 0;
       setActiveCount(0);
 
       if (appInstance?.renderer) {
@@ -183,6 +224,8 @@ export function PixiNativeParticlePage() {
               particlesRef.current = [];
               whiteEmitAccumulatorRef.current = 0;
               faviconEmitAccumulatorRef.current = 0;
+              digitEmitAccumulatorRef.current = 0;
+              numberCounterRef.current = 0;
               setActiveCount(0);
             }}
           >
@@ -196,7 +239,7 @@ export function PixiNativeParticlePage() {
   );
 }
 
-function stepParticles(
+function spawnParticles(
   deltaTime: number,
   layer: Container,
   particles: NativeParticle[],
@@ -231,7 +274,9 @@ function stepParticles(
       tintEnd: options.tintEnd,
     });
   }
+}
 
+function updateParticles(deltaTime: number, layer: Container, particles: NativeParticle[]) {
   for (let i = particles.length - 1; i >= 0; i--) {
     const particle = particles[i];
     particle.age += deltaTime;
@@ -242,13 +287,117 @@ function stepParticles(
       continue;
     }
 
-    particle.sprite.x += particle.vx * deltaTime;
-    particle.sprite.y += particle.vy * deltaTime;
     const t = Math.min(1, particle.age / particle.lifetime);
-    const size = lerp(particle.sizeStart, particle.sizeEnd, t);
-    particle.sprite.scale.set(size, size);
-    particle.sprite.alpha = lerp(particle.alphaStart, particle.alphaEnd, t);
+
+    if (particle.isNumber) {
+      // 1. 移动：开始移动很快，但是后面就快速变慢最后数字不再移动
+      // 使用基于 t 的衰减来实现“急停”效果，在生命周期的 40% 处完全停止
+      const stopProgress = 0.4;
+      if (t < stopProgress) {
+        // 速度随时间呈平方衰减，产生急刹车感
+        const speedFactor = Math.pow(1 - t / stopProgress, 2);
+        particle.sprite.x += particle.vx * speedFactor * deltaTime;
+        particle.sprite.y += particle.vy * speedFactor * deltaTime;
+      }
+
+      // 2. 大小：在 50% 的生命周期内增长到最大
+      const sizeT = Math.min(1, t / 0.5);
+      const size = lerp(particle.sizeStart, particle.sizeEnd, sizeT);
+      particle.sprite.scale.set(size, size);
+
+      // 3. 渐变消失：在 80% 生命周期后才开始渐变消失，中间留出 50%-80% 的完全静止停留时间
+      if (t > 0.8) {
+        const alphaT = (t - 0.8) / 0.2;
+        particle.sprite.alpha = lerp(1, 0, alphaT);
+      } else {
+        particle.sprite.alpha = 1;
+      }
+    } else {
+      // 其他粒子的原始逻辑
+      particle.sprite.x += particle.vx * deltaTime;
+      particle.sprite.y += particle.vy * deltaTime;
+      const size = lerp(particle.sizeStart, particle.sizeEnd, t);
+      particle.sprite.scale.set(size, size);
+      particle.sprite.alpha = lerp(particle.alphaStart, particle.alphaEnd, t);
+    }
     particle.sprite.tint = lerpColor(particle.tintStart, particle.tintEnd, t);
+  }
+}
+
+type NumberEmitterOptions = {
+  emissionRate: number;
+  originX: number;
+  originY: number;
+  tintStart: number;
+  tintEnd: number;
+  sizeStartMin: number;
+  sizeStartMax: number;
+  sizeEndMin: number;
+  sizeEndMax: number;
+};
+
+function spawnNumberParticles(
+  deltaTime: number,
+  layer: Container,
+  particles: NativeParticle[],
+  emitAccumulatorRef: { current: number },
+  numberCounterRef: { current: number },
+  digitTextures: Texture[],
+  options: NumberEmitterOptions,
+) {
+  emitAccumulatorRef.current += deltaTime * options.emissionRate;
+  const spawnCount = Math.floor(emitAccumulatorRef.current);
+  emitAccumulatorRef.current -= spawnCount;
+
+  for (let i = 0; i < spawnCount; i++) {
+    const numberValue = numberCounterRef.current;
+    const digits = String(numberValue).split('');
+    numberCounterRef.current = (numberCounterRef.current + 1) % 1000;
+    const angle = ((-90 + randomRange(-35, 35)) * Math.PI) / 180;
+
+    // 开始移动很快
+    const speed = randomRange(600, 1000);
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+
+    const lifetime = randomRange(2.5, 3.5);
+
+    // 数字越大，数字最后的大小也越大
+    // 基础缩放从 1.2 开始，最大到 2.8，确保即使是数字 0 也有足够的体积感
+    const scaleFactor = 1.2 + (numberValue / 999) * 1.6;
+    const sizeEnd = options.sizeEndMax * scaleFactor;
+    // 初始大小也稍微调大一点，从最终大小的 40% 开始增长
+    const sizeStart = sizeEnd * 0.4;
+
+    for (let digitIndex = 0; digitIndex < digits.length; digitIndex++) {
+      if (particles.length >= MAX_PARTICLES) return;
+      const digit = Number.parseInt(digits[digitIndex] ?? '0', 10);
+      const texture = digitTextures[digit];
+      if (!texture) continue;
+
+      // 根据缩放调整间距，将 14 调小可以让数字更靠近
+      const digitOffset = (digitIndex - (digits.length - 1) / 2) * (10 * scaleFactor);
+      const sprite = new Sprite(texture);
+      sprite.x = options.originX + digitOffset;
+      sprite.y = options.originY;
+      sprite.anchor.set(0.5, 0.5);
+      layer.addChild(sprite);
+
+      particles.push({
+        sprite,
+        vx,
+        vy,
+        age: 0,
+        lifetime,
+        sizeStart,
+        sizeEnd,
+        alphaStart: 1,
+        alphaEnd: 0,
+        tintStart: options.tintStart,
+        tintEnd: options.tintEnd,
+        isNumber: true,
+      });
+    }
   }
 }
 
