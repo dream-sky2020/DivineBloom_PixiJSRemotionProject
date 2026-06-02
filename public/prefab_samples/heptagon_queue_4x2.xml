@@ -1,0 +1,46 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="heptagon_queue_4x2" width="1080" height="1920" background="#020817" />
+
+    <PrefabLibrary>
+        <!-- 使用 heptagon_45.svg 的视觉预制体 -->
+        <Prefab id="heptagon_sprite_visual" export="true">
+            <GameObject name="HeptagonSpriteVisual">
+                <Transform position="0, 0, 0" scale="1, 1, 1" />
+                <Sprite texture="heptagon_45.svg" anchor="0.5, 0.5" alpha="1" />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <!-- 4x2 图形队列（4列2行） -->
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r1_c1">
+        <Transform position="330, 860, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r1_c2">
+        <Transform position="470, 860, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r1_c3">
+        <Transform position="610, 860, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r1_c4">
+        <Transform position="750, 860, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r2_c1">
+        <Transform position="330, 1040, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r2_c2">
+        <Transform position="470, 1040, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r2_c3">
+        <Transform position="610, 1040, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+    <Instance prefab="heptagon_sprite_visual" id="heptagon_q_r2_c4">
+        <Transform position="750, 1040, 0" scale="2.2, 2.2, 1" />
+    </Instance>
+</World>

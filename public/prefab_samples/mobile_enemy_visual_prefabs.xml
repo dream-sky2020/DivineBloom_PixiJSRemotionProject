@@ -8,13 +8,13 @@
     <Canvas name="mobile_enemy_visual_prefabs" width="1080" height="1920" background="#020817" />
 
     <PrefabLibrary>
-        <!-- 敌军小人：三角形，白色描边，仅视觉 -->
+        <!-- 敌军小人：正七边形（旋转45°），白色描边，仅视觉 -->
         <Prefab id="mobile_enemy_visual" export="true">
             <GameObject name="MobileEnemyVisual">
-                <Transform position="0, 0, 0" scale="1, 1, 1" />
+                <Transform position="0, 0, 0" scale="1, 1, 1" rotation="45" />
                 <Graphic
                     kind="polygonGraphic"
-                    points="0,-20 20,20 -20,20"
+                    points="0,-20 15.6,-12.5 19.5,4.5 8.7,18 -8.7,18 -19.5,4.5 -15.6,-12.5"
                     fillColor="#ffce73"
                     fillAlpha="1.0"
                     strokeColor="#ffffff"
