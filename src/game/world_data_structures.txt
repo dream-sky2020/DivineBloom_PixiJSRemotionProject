@@ -87,6 +87,160 @@
 粒子系统建议顺序：`PhysicsSystem -> ParticleSystem -> RenderSystem`。
 其中 `ParticleSystem` 会将发射器生成的 `ParticleData[]` 批处理为 Pixi 粒子命令。
 
+当工程启用输入-信号驱动时，建议顺序：
+`InputSystem -> EventDispatchSystem -> Gameplay/AI/Physics -> RenderSystem`。
+
+### 2.2 事件总线配置 (EventBus)
+
+用于声明“允许发布/订阅的事件集合”以及 payload 结构约束。
+推荐作为 `<EngineConfig>` 的直接子节点，作为项目级基线。
+
+```xml
+<EventBus
+    mode="strict"
+    unknownEvent="error"
+    maxQueuePerFrame="2048"
+>
+    <EventCatalog>
+        <Event id="core.scene.loaded" channel="lifecycle" sticky="true">
+            <Payload>
+                <Field name="sceneName" type="string" required="true" />
+            </Payload>
+        </Event>
+
+        <Event id="combat.damage.applied" channel="combat">
+            <Payload>
+                <Field name="sourceId" type="entityId" required="true" />
+                <Field name="targetId" type="entityId" required="true" />
+                <Field name="amount" type="number" required="true" />
+                <Field name="crit" type="boolean" required="false" default="false" />
+            </Payload>
+        </Event>
+    </EventCatalog>
+</EventBus>
+```
+
+字段说明：
+
+- `mode`：`[可选]` 校验模式，支持 `strict` / `loose`，默认 `strict`。
+  - `strict`：事件定义不合法即报错并中断加载（如 `Event.id` 重复、字段类型非法、payload 结构错误）。
+  - `loose`：记录警告并跳过非法定义，其余合法事件继续注册；适合编辑期预览，不建议用于正式构建。
+- `unknownEvent`：`[可选]` 未注册事件处理，支持 `error` / `warn` / `ignore`，默认 `error`。
+- `maxQueuePerFrame`：`[可选]` 单帧事件队列上限，默认 `2048`。
+- `Event.id`：`[必填]` 事件唯一标识。建议使用 `domain.subdomain.action`（如 `combat.damage.applied`）。
+- `Event.channel`：`[可选]` 事件逻辑频道（用于调试/分流），默认 `default`。
+  - 语义：用于给事件打“分类标签”，便于日志过滤、统计监控与中间件分流；不参与事件唯一性判定。
+  - 适用：事件量较大或系统较多时，按 `combat|ui|input|network|lifecycle` 分组管理。
+  - 不建议：把 `channel` 当作订阅主键；业务订阅应以 `Event.id` 为准。
+- `Event.sticky`：`[可选]` 是否粘性事件（新订阅者可收到最后一次状态），默认 `false`。
+  - 语义：事件总线会缓存该事件“最后一次 payload”；后续新订阅者在订阅瞬间会立即收到一次回放。
+  - 适用：状态型事件（如 `core.scene.loaded`、`network.connected`）。
+  - 不建议：瞬时动作事件（如 `input.jump.triggered`、`combat.damage.applied`），避免晚订阅导致误触发。
+- `Field.name`：`[必填]` payload 字段名。
+- `Field.type`：`[必填]` 字段类型，建议 `string|int|number|boolean|entityId|vector2|vector3`。
+- `Field.required`：`[可选]` 是否必填，默认 `false`。
+- `Field.default`：`[可选]` 缺省值；仅在 `required="false"` 时建议使用。
+
+### 2.3 输入配置 (InputConfig)
+
+定义输入设备策略、动作集合与底层绑定。输入系统只负责产出 Action 状态，不直接耦合业务逻辑。
+职责边界：本节只定义“设备 -> Action”的映射，不定义业务事件触发时机。
+
+```xml
+<InputConfig mode="strict" devicePolicy="keyboard,mouse,gamepad" deadzone="0.15">
+    <ActionMaps active="gameplay">
+        <ActionMap id="gameplay" enabled="true">
+            <Action id="move" type="axis2" />
+            <Action id="jump" type="button" />
+            <Action id="skill.primary" type="button" />
+            <Action id="camera.zoom" type="axis1" />
+        </ActionMap>
+
+        <ActionMap id="ui" enabled="true">
+            <Action id="ui.confirm" type="button" />
+            <Action id="ui.cancel" type="button" />
+            <Action id="ui.navigate" type="axis2" />
+        </ActionMap>
+    </ActionMaps>
+
+    <Bindings>
+        <Binding action="move" map="gameplay" kind="2dComposite">
+            <Part name="up" path="Keyboard/W" />
+            <Part name="down" path="Keyboard/S" />
+            <Part name="left" path="Keyboard/A" />
+            <Part name="right" path="Keyboard/D" />
+        </Binding>
+        <Binding action="move" map="gameplay" path="Gamepad/LeftStick" />
+
+        <Binding action="jump" map="gameplay" path="Keyboard/Space" />
+        <Binding action="jump" map="gameplay" path="Gamepad/South" />
+        <Binding action="skill.primary" map="gameplay" path="Mouse/LeftButton" />
+        <Binding action="camera.zoom" map="gameplay" path="Mouse/WheelY" processor="scale(0.1)" />
+
+        <Binding action="ui.confirm" map="ui" path="Keyboard/Enter" />
+        <Binding action="ui.cancel" map="ui" path="Keyboard/Escape" />
+    </Bindings>
+</InputConfig>
+```
+
+字段说明：
+
+- `mode`：`[可选]` 输入配置校验模式，支持 `strict` / `loose`，默认 `strict`。
+  - `strict`：配置不合法即报错并中断加载（如 action 不存在、ActionMap 不存在、2dComposite 缺 Part、枚举非法）。
+  - `loose`：记录警告并跳过非法项，其他合法配置继续生效。
+- `devicePolicy`：`[可选]` 允许设备集合，逗号分隔，默认 `keyboard,mouse`。
+- `deadzone`：`[可选]` 全局死区，默认 `0.15`。
+- `ActionMap.id`：`[必填]` 动作映射表 ID（如 `gameplay`、`ui`）。
+- `ActionMap.enabled`：`[可选]` 是否启用该映射表，默认 `true`。
+- `Action.id`：`[必填]` 动作 ID（语义化意图，不写业务实现）。
+- `Action.type`：`[必填]` 动作类型，支持 `button|axis1|axis2`。
+- `Binding.action`：`[必填]` 目标动作 ID。
+- `Binding.map`：`[可选]` 目标动作表；为空时使用 `ActionMaps.active`。
+- `Binding.path`：`[可选]` 单输入路径（如 `Keyboard/Space`、`Gamepad/LeftStick`）。
+- `Binding.kind`：`[可选]` 绑定模式。`2dComposite` 表示由多个 Part 组成二维轴。
+- `Binding.processor`：`[可选]` 输入后处理器表达式（如 `scale(0.1)`）。
+- `Part.name`：`[必填]` 复合轴方向名，建议 `up/down/left/right`。
+- `Part.path`：`[必填]` 方向输入路径。
+
+### 2.4 输入到信号映射 (InputToSignalMap)
+
+用于将 `Action` 的阶段变化统一映射为 `EventBus` 事件。推荐作为 `<EngineConfig>` 直接子节点。
+职责边界：业务事件触发时机只在本节通过 `Route.phase` 定义，避免与 `InputConfig` 重复。
+
+```xml
+<InputToSignalMap defaultMap="gameplay">
+    <Route action="move" phase="changed" emit="input.move.changed" throttleMs="16">
+        <Payload>
+            <Set key="axis" from="ctx.value" />
+            <Set key="device" from="ctx.device" />
+            <Set key="entityId" value="$player" />
+        </Payload>
+    </Route>
+
+    <Route action="jump" phase="pressed" emit="input.jump.triggered">
+        <Payload>
+            <Set key="device" from="ctx.device" />
+            <Set key="entityId" value="$player" />
+        </Payload>
+    </Route>
+
+    <Route action="skill.primary" phase="pressed" emit="combat.skill.primary.requested" />
+    <Route action="ui.confirm" map="ui" phase="pressed" emit="ui.confirm.requested" />
+</InputToSignalMap>
+```
+
+字段说明：
+
+- `defaultMap`：`[可选]` 默认动作表 ID（Route 未写 map 时使用）。
+- `Route.action`：`[必填]` 来源动作 ID。
+- `Route.map`：`[可选]` 来源动作表 ID。
+- `Route.phase`：`[必填]` 动作阶段，支持 `pressed|released|held|changed`。
+- `Route.emit`：`[必填]` 目标事件 ID（需在 EventBus 中注册，strict 下必须存在）。
+- `Route.throttleMs`：`[可选]` 节流间隔（毫秒），常用于 `axis` / `changed` 类持续输入。
+- `Set.key`：`[必填]` 输出 payload 键名。
+- `Set.from`：`[可选]` 从输入上下文取值，常见 `ctx.action|ctx.value|ctx.device|ctx.path|ctx.time`。
+- `Set.value`：`[可选]` 写入常量值（如 `$player`）。
+
 ## 3. 游戏对象 (GameObject)
 
 代表 ECS 中的一个实体 (Entity)。它本身不包含逻辑，只作为组件的容器。
@@ -302,6 +456,8 @@
     speedScale="1.0"
     direction="forward"
     loopOverride=""
+    fallbackLabel="idle"
+    actions="setLabel,playOnce,pause,resume,setSpeed,setLoopOverride"
 />
 ```
 
@@ -313,6 +469,18 @@
 - `speedScale`：`[可选]` 全局播放速度倍率，默认 `"1.0"`。
 - `direction`：`[可选]` 播放方向，`forward` / `backward`，默认 `forward`。
 - `loopOverride`：`[可选]` 循环覆盖值（`true` / `false`）。为空时沿用标签 `loop` 配置。
+- `fallbackLabel`：`[可选]` 用于 `playOnce` 动作的回退标签。非循环播放结束后会切回该标签。
+- `actions`：`[可选]` 允许被 `SignalBindings` 调用的动作白名单，逗号分隔。
+  不填写时默认允许：`setLabel,playOnce,pause,resume,setSpeed,setLoopOverride`。
+
+支持动作（与当前实现对齐）：
+
+- `setLabel`：切换到指定标签。常用参数：`label`、`restart`（可选）、`keepPlaying`（可选）。
+- `playOnce`：从 0 帧播放一次并强制 `loopOverride=false`。常用参数：`label`、`fallbackLabel`（可选）。
+- `pause`：暂停播放（`playing=false`）。
+- `resume`：继续播放（`playing=true`）。
+- `setSpeed`：设置 `speedScale`。常用参数：`speed`。
+- `setLoopOverride`：设置循环覆盖。常用参数：`loop`（`true` / `false`；不传表示清空覆盖）。
 
 组合示例：
 
@@ -331,7 +499,99 @@
         </Label>
     </Animations>
 
-    <AnimationController currentLabel="idle" playing="true" />
+    <AnimationController
+        currentLabel="idle"
+        playing="true"
+        fallbackLabel="idle"
+        actions="setLabel,playOnce,pause,resume,setSpeed,setLoopOverride"
+    />
+</GameObject>
+```
+
+### 3.12 信号绑定组件 (SignalBindings)
+
+定义实体如何消费事件并触发 Controller 动作。  
+职责边界：本组件只描述“事件 -> 动作”的规则，不负责输入采样（`InputConfig`）和输入转事件（`InputToSignalMap`）。
+
+```xml
+<SignalBindings>
+    <On event="input.move.changed" target="AnimationController" action="setLabel" priority="10">
+        <When expr="payload.axis && (payload.axis.x !== 0 || payload.axis.y !== 0)" />
+        <Args label="run" restart="false" />
+    </On>
+
+    <On event="input.move.changed" target="AnimationController" action="setLabel" priority="5">
+        <When expr="payload.axis && payload.axis.x === 0 && payload.axis.y === 0" />
+        <Args label="idle" />
+    </On>
+
+    <On event="input.jump.triggered" target="AnimationController" action="playOnce" priority="100">
+        <Args label="jump" fallbackLabel="idle" />
+    </On>
+</SignalBindings>
+```
+
+字段说明：
+
+- `On.event`：`[必填]` 监听的事件 ID（如 `input.jump.triggered`）。
+- `On.target`：`[必填]` 目标组件名。当前实现仅支持 `AnimationController`。
+- `On.action`：`[必填]` 目标组件动作名（需在目标组件 `actions` 白名单内）。
+- `On.priority`：`[可选]` 规则优先级，数字越大越先执行，默认 `0`。
+- `When.expr`：`[可选]` 触发条件表达式；返回 `true` 才执行动作。
+- `Args`：`[可选]` 动作参数容器。其所有属性都会作为参数传入动作。
+
+`When` / `Args` 上下文约定（当前实现）：
+
+- `When.expr` 可读取 `payload` 与 `self`：
+  - `payload`：事件载荷；
+  - `self`：当前实体对象（可用 `self.id`）。
+- `Args` 属性值支持 primitive 自动解析：
+  - `"true"/"false"` -> boolean；
+  - 数字字符串 -> number；
+  - 其他 -> string。
+- `Args` 中若写 `payload.xxx` 字符串，将按路径从 payload 读取值；
+  例如：`<Args speed="payload.value" />`。
+- `Args` 中若写 `self.id`，会映射为当前实体 ID。
+
+执行顺序建议：
+
+1) `InputSystem` 读取输入并更新 Action 状态；  
+2) `InputToSignalMap` 按 `Route.phase` 产出事件；  
+3) `SignalBindings` 消费事件并触发 Controller action；  
+4) 各业务系统（如 `AnimationSystem`）在下一步根据 Controller 状态生效。
+
+组合示例（输入 -> 事件 -> 动画动作）：
+
+```xml
+<GameObject name="Hero" id="hero_01">
+    <Animations defaultLabel="idle">
+        <Label name="idle" duration="20" loop="true">
+            <Track prop="sprite.alpha" interpolation="linear" valueMode="absolute">
+                <Key frame="0" value="1.0" />
+                <Key frame="10" value="0.85" />
+                <Key frame="20" value="1.0" />
+            </Track>
+        </Label>
+        <Label name="jump" duration="14" loop="false">
+            <Track prop="sprite.alpha" interpolation="hold" valueMode="absolute">
+                <Key frame="0" value="1.0" />
+                <Key frame="14" value="1.0" />
+            </Track>
+        </Label>
+    </Animations>
+
+    <AnimationController
+        currentLabel="idle"
+        playing="true"
+        fallbackLabel="idle"
+        actions="setLabel,playOnce"
+    />
+
+    <SignalBindings>
+        <On event="input.jump.triggered" target="AnimationController" action="playOnce">
+            <Args label="jump" fallbackLabel="idle" />
+        </On>
+    </SignalBindings>
 </GameObject>
 ```
 

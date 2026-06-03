@@ -16,6 +16,7 @@ export * from './ecs/systems/PhysicsSystem';
 export * from './ecs/systems/RenderSystem';
 export * from './ecs/systems/ParticleSystem';
 export * from './ecs/systems/AnimationSystem';
+export * from './ecs/systems/InputSystem';
 
 import { World } from './ecs/World';
 import { XmlParser } from './parser/XmlParser';
@@ -44,7 +45,11 @@ export class GameEngine {
       if (sysConfig.enabled) {
         const factory = this.systemRegistry.get(sysConfig.name);
         if (factory) {
-          world.addSystem(factory());
+          const system = factory();
+          if (typeof system.configure === 'function') {
+            system.configure(worldData.config);
+          }
+          world.addSystem(system);
         } else {
           console.warn(`System not registered: ${sysConfig.name}`);
         }

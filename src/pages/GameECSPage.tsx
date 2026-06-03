@@ -1,6 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { PixiPhysicsCanvas, type PixiPhysicsRuntime } from '../components/PixiPhysicsCanvas';
-import { GameEngine, EcsPhysicsSystem, EcsRenderSystem, EcsParticleSystem, EcsAnimationSystem } from '../game';
+import {
+  GameEngine,
+  EcsPhysicsSystem,
+  EcsRenderSystem,
+  EcsParticleSystem,
+  EcsAnimationSystem,
+  EcsInputSystem,
+} from '../game';
 import type { World } from '../game/ecs/World';
 import { toast } from '../components/Toast';
 import { loadLastEcsXmlPath, saveLastEcsXmlPath } from '../store/ecsStore';
@@ -147,6 +154,7 @@ export function GameECSPage() {
       GameEngine.registerSystem('RenderSystem', () => new EcsRenderSystem(processor));
       GameEngine.registerSystem('ParticleSystem', () => new EcsParticleSystem(processor));
       GameEngine.registerSystem('AnimationSystem', () => new EcsAnimationSystem());
+      GameEngine.registerSystem('InputSystem', () => new EcsInputSystem());
 
       // 2. 创建世界
       const newWorld = await GameEngine.createWorldFromXml(xmlString);

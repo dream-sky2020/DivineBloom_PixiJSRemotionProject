@@ -1,9 +1,28 @@
 <World>
     <EngineConfig>
         <SystemPipeline>
+            <System name="InputSystem" enabled="true" />
             <System name="AnimationSystem" enabled="true" />
             <System name="RenderSystem" enabled="true" />
         </SystemPipeline>
+
+        <InputConfig mode="strict" devicePolicy="keyboard">
+            <ActionMaps active="gameplay">
+                <ActionMap id="gameplay" enabled="true">
+                    <Action id="rotate.start" type="button" />
+                    <Action id="rotate.stop" type="button" />
+                </ActionMap>
+            </ActionMaps>
+            <Bindings>
+                <Binding action="rotate.start" map="gameplay" path="Keyboard/R" />
+                <Binding action="rotate.stop" map="gameplay" path="Keyboard/P" />
+            </Bindings>
+        </InputConfig>
+
+        <InputToSignalMap defaultMap="gameplay">
+            <Route action="rotate.start" phase="pressed" emit="input.rotate.start" />
+            <Route action="rotate.stop" phase="pressed" emit="input.rotate.stop" />
+        </InputToSignalMap>
     </EngineConfig>
 
     <Canvas name="pixi_particle_debug_ecs_scene" width="1280" height="720" background="#08111f" />
@@ -109,9 +128,17 @@
                             <Key frame="30" value="0.98" />
                             <Key frame="60" value="0.95" />
                         </Track>
+                        <Track prop="transform.rotation" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="60" value="6.283185307179586" />
+                        </Track>
                     </Label>
                 </Animations>
-                <AnimationController currentLabel="idle" playing="true" />
+                <AnimationController currentLabel="idle" playing="false" />
+                <SignalBindings>
+                    <On event="input.rotate.start" target="AnimationController" action="resume" />
+                    <On event="input.rotate.stop" target="AnimationController" action="pause" />
+                </SignalBindings>
             </GameObject>
         </Prefab>
 
@@ -205,9 +232,17 @@
                             <Key frame="30" value="0.81" />
                             <Key frame="60" value="0.78" />
                         </Track>
+                        <Track prop="transform.rotation" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="60" value="6.283185307179586" />
+                        </Track>
                     </Label>
                 </Animations>
-                <AnimationController currentLabel="idle" playing="true" />
+                <AnimationController currentLabel="idle" playing="false" />
+                <SignalBindings>
+                    <On event="input.rotate.start" target="AnimationController" action="resume" />
+                    <On event="input.rotate.stop" target="AnimationController" action="pause" />
+                </SignalBindings>
             </GameObject>
         </Prefab>
 
@@ -311,9 +346,17 @@
                             <Key frame="30" value="1.19" />
                             <Key frame="60" value="1.15" />
                         </Track>
+                        <Track prop="transform.rotation" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="60" value="6.283185307179586" />
+                        </Track>
                     </Label>
                 </Animations>
-                <AnimationController currentLabel="idle" playing="true" />
+                <AnimationController currentLabel="idle" playing="false" />
+                <SignalBindings>
+                    <On event="input.rotate.start" target="AnimationController" action="resume" />
+                    <On event="input.rotate.stop" target="AnimationController" action="pause" />
+                </SignalBindings>
             </GameObject>
         </Prefab>
 
@@ -417,9 +460,17 @@
                             <Key frame="30" value="1.43" />
                             <Key frame="60" value="1.38" />
                         </Track>
+                        <Track prop="transform.rotation" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="60" value="6.283185307179586" />
+                        </Track>
                     </Label>
                 </Animations>
-                <AnimationController currentLabel="idle" playing="true" />
+                <AnimationController currentLabel="idle" playing="false" />
+                <SignalBindings>
+                    <On event="input.rotate.start" target="AnimationController" action="resume" />
+                    <On event="input.rotate.stop" target="AnimationController" action="pause" />
+                </SignalBindings>
             </GameObject>
         </Prefab>
     </PrefabLibrary>

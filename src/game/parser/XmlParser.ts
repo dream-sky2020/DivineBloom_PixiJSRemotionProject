@@ -12,6 +12,17 @@ import type {
   ParticleEmitterComponent,
   AnimationsComponent,
   AnimationControllerComponent,
+  AnimationActionName,
+  InputActionDefinition,
+  InputActionMapDefinition,
+  InputBindingDefinition,
+  InputBindingPartDefinition,
+  InputConfig,
+  InputRouteDefinition,
+  InputRouteSetDefinition,
+  InputToSignalMapConfig,
+  InputRoutePhase,
+  SignalBindingsComponent,
   CanvasComponent,
   WorldData,
   EngineConfig,
@@ -92,6 +103,8 @@ export class XmlParser {
   private static parseEngineConfig(worldEl: Element): EngineConfig {
     const configEl = this.getDirectChildByTag(worldEl, 'EngineConfig');
     const systems: SystemConfig[] = [];
+    let inputConfig: InputConfig | undefined;
+    let inputToSignalMap: InputToSignalMapConfig | undefined;
 
     if (configEl) {
       const pipelineEl = this.getDirectChildByTag(configEl, 'SystemPipeline');
@@ -104,9 +117,139 @@ export class XmlParser {
           });
         }
       }
+
+      inputConfig = this.parseInputConfig(configEl);
+      inputToSignalMap = this.parseInputToSignalMap(configEl);
     }
 
-    return { systems };
+    return { systems, inputConfig, inputToSignalMap };
+  }
+
+  private static parseInputConfig(configEl: Element): InputConfig | undefined {
+    const inputEl = this.getDirectChildByTag(configEl, 'InputConfig');
+    if (!inputEl) return undefined;
+
+    const modeAttr = (inputEl.getAttribute('mode') || 'strict').trim().toLowerCase();
+    const mode: 'strict' | 'loose' = modeAttr === 'loose' ? 'loose' : 'strict';
+    const devicePolicy = (inputEl.getAttribute('devicePolicy') || 'keyboard,mouse')
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    const deadzone = parseFloat(inputEl.getAttribute('deadzone') || '0.15');
+
+    const actionMaps: InputActionMapDefinition[] = [];
+    const actionMapsEl = this.getDirectChildByTag(inputEl, 'ActionMaps');
+    const activeMap = actionMapsEl?.getAttribute('active')?.trim() || undefined;
+    if (actionMapsEl) {
+      for (const mapEl of this.getDirectChildren(actionMapsEl)) {
+        if (mapEl.tagName !== 'ActionMap') continue;
+        const mapId = (mapEl.getAttribute('id') || '').trim();
+        if (!mapId) continue;
+        const actions: InputActionDefinition[] = [];
+        for (const actionEl of this.getDirectChildren(mapEl)) {
+          if (actionEl.tagName !== 'Action') continue;
+          const actionId = (actionEl.getAttribute('id') || '').trim();
+          if (!actionId) continue;
+          const actionTypeRaw = (actionEl.getAttribute('type') || 'button').trim();
+          const actionType =
+            actionTypeRaw === 'axis1' || actionTypeRaw === 'axis2' ? actionTypeRaw : 'button';
+          actions.push({
+            id: actionId,
+            type: actionType,
+          });
+        }
+        actionMaps.push({
+          id: mapId,
+          enabled: mapEl.getAttribute('enabled') !== 'false',
+          actions,
+        });
+      }
+    }
+
+    const bindings: InputBindingDefinition[] = [];
+    const bindingsEl = this.getDirectChildByTag(inputEl, 'Bindings');
+    if (bindingsEl) {
+      for (const bindingEl of this.getDirectChildren(bindingsEl)) {
+        if (bindingEl.tagName !== 'Binding') continue;
+        const action = (bindingEl.getAttribute('action') || '').trim();
+        if (!action) continue;
+        const parts: InputBindingPartDefinition[] = [];
+        for (const partEl of this.getDirectChildren(bindingEl)) {
+          if (partEl.tagName !== 'Part') continue;
+          const partName = (partEl.getAttribute('name') || '').trim();
+          const partPath = (partEl.getAttribute('path') || '').trim();
+          if (!partName || !partPath) continue;
+          parts.push({ name: partName, path: partPath });
+        }
+
+        const kindAttr = (bindingEl.getAttribute('kind') || '').trim();
+        const kind = kindAttr === '2dComposite' ? '2dComposite' : undefined;
+
+        bindings.push({
+          action,
+          map: bindingEl.getAttribute('map')?.trim() || undefined,
+          path: bindingEl.getAttribute('path')?.trim() || undefined,
+          kind,
+          processor: bindingEl.getAttribute('processor')?.trim() || undefined,
+          parts,
+        });
+      }
+    }
+
+    return {
+      mode,
+      devicePolicy,
+      deadzone: Number.isFinite(deadzone) ? deadzone : 0.15,
+      activeMap,
+      actionMaps,
+      bindings,
+    };
+  }
+
+  private static parseInputToSignalMap(configEl: Element): InputToSignalMapConfig | undefined {
+    const mapEl = this.getDirectChildByTag(configEl, 'InputToSignalMap');
+    if (!mapEl) return undefined;
+
+    const routes: InputRouteDefinition[] = [];
+    for (const routeEl of this.getDirectChildren(mapEl)) {
+      if (routeEl.tagName !== 'Route') continue;
+      const action = (routeEl.getAttribute('action') || '').trim();
+      const emit = (routeEl.getAttribute('emit') || '').trim();
+      const phaseRaw = (routeEl.getAttribute('phase') || 'pressed').trim().toLowerCase();
+      const phase: InputRoutePhase = isInputRoutePhase(phaseRaw) ? phaseRaw : 'pressed';
+      if (!action || !emit) continue;
+
+      const sets: InputRouteSetDefinition[] = [];
+      const payloadEl = this.getDirectChildByTag(routeEl, 'Payload');
+      if (payloadEl) {
+        for (const setEl of this.getDirectChildren(payloadEl)) {
+          if (setEl.tagName !== 'Set') continue;
+          const key = (setEl.getAttribute('key') || '').trim();
+          if (!key) continue;
+          const from = setEl.getAttribute('from')?.trim() || undefined;
+          const valueAttr = setEl.getAttribute('value');
+          sets.push({
+            key,
+            from,
+            value: valueAttr === null ? undefined : parseLoosePrimitive(valueAttr),
+          });
+        }
+      }
+
+      routes.push({
+        action,
+        map: routeEl.getAttribute('map')?.trim() || undefined,
+        phase,
+        emit,
+        throttleMs: parseInt(routeEl.getAttribute('throttleMs') || '0', 10) || 0,
+        sets,
+      });
+    }
+
+    return {
+      defaultMap: mapEl.getAttribute('defaultMap')?.trim() || undefined,
+      routes,
+    };
   }
 
   private static async parsePrefabLibrary(worldEl: Element): Promise<Map<string, PrefabDefinition>> {
@@ -487,6 +630,8 @@ export class XmlParser {
         return this.parseAnimations(el);
       case 'AnimationController':
         return this.parseAnimationController(el);
+      case 'SignalBindings':
+        return this.parseSignalBindings(el);
       default:
         console.warn(`Unknown component type: ${type}`);
         return null;
@@ -719,6 +864,14 @@ export class XmlParser {
   }
 
   private static parseAnimationController(el: Element): AnimationControllerComponent {
+    const actionsAttr = (el.getAttribute('actions') || '').trim();
+    const allowedActions = actionsAttr
+      ? actionsAttr
+          .split(',')
+          .map((item) => item.trim())
+          .filter(isAnimationActionName)
+      : undefined;
+
     return {
       type: 'AnimationController',
       playing: el.getAttribute('playing') !== 'false',
@@ -727,6 +880,49 @@ export class XmlParser {
       speedScale: parseFloat(el.getAttribute('speedScale') || '1'),
       direction: (el.getAttribute('direction') === 'backward' ? 'backward' : 'forward'),
       loopOverride: parseOptionalBoolean(el.getAttribute('loopOverride')),
+      fallbackLabel: el.getAttribute('fallbackLabel')?.trim() || undefined,
+      allowedActions:
+        allowedActions && allowedActions.length > 0
+          ? allowedActions
+          : ['setLabel', 'playOnce', 'pause', 'resume', 'setSpeed', 'setLoopOverride'],
+    };
+  }
+
+  private static parseSignalBindings(el: Element): SignalBindingsComponent {
+    const rules: SignalBindingsComponent['rules'] = [];
+
+    for (const onEl of this.getDirectChildren(el)) {
+      if (onEl.tagName !== 'On') continue;
+      const event = (onEl.getAttribute('event') || '').trim();
+      const target = (onEl.getAttribute('target') || '').trim();
+      const action = (onEl.getAttribute('action') || '').trim();
+      if (!event || !target || !action) continue;
+
+      const whenEl = this.getDirectChildByTag(onEl, 'When');
+      const argsEl = this.getDirectChildByTag(onEl, 'Args');
+      const args: Record<string, string | number | boolean> = {};
+      if (argsEl) {
+        for (let i = 0; i < argsEl.attributes.length; i++) {
+          const attr = argsEl.attributes.item(i);
+          if (!attr) continue;
+          args[attr.name] = parseLoosePrimitive(attr.value);
+        }
+      }
+
+      rules.push({
+        event,
+        target,
+        action,
+        when: whenEl?.getAttribute('expr')?.trim() || undefined,
+        args,
+        priority: parseInt(onEl.getAttribute('priority') || '0', 10) || 0,
+      });
+    }
+
+    rules.sort((left, right) => right.priority - left.priority);
+    return {
+      type: 'SignalBindings',
+      rules,
     };
   }
 }
@@ -756,4 +952,29 @@ function parseAnimationValue(value: string): number | string | boolean {
     return parseFloat(normalized);
   }
   return value;
+}
+
+function parseLoosePrimitive(value: string): string | number | boolean {
+  const normalized = value.trim();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(normalized)) {
+    return parseFloat(normalized);
+  }
+  return value;
+}
+
+function isInputRoutePhase(value: string): value is InputRoutePhase {
+  return value === 'pressed' || value === 'released' || value === 'held' || value === 'changed';
+}
+
+function isAnimationActionName(value: string): value is AnimationActionName {
+  return (
+    value === 'setLabel' ||
+    value === 'playOnce' ||
+    value === 'pause' ||
+    value === 'resume' ||
+    value === 'setSpeed' ||
+    value === 'setLoopOverride'
+  );
 }

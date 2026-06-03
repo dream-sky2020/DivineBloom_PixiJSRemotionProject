@@ -58,6 +58,23 @@ export class EcsAnimationSystem extends System {
           frameDelta * directionSign * Math.max(0, controller.speedScale) * Math.max(0, label.speed);
         const loop = controller.loopOverride ?? label.loop;
         controller.localFrame = normalizeFrame(nextFrame, label.duration, loop);
+        if (!loop && isAnimationEnded(controller.localFrame, label.duration, controller.direction)) {
+          controller.playing = false;
+          if (controller.fallbackLabel && controller.currentLabel !== controller.fallbackLabel) {
+            controller.currentLabel = controller.fallbackLabel;
+            controller.localFrame = 0;
+            controller.playing = true;
+            controller.loopOverride = undefined;
+            controller.fallbackLabel = undefined;
+            const fallback = resolveLabel(animations, controller);
+            if (fallback) {
+              runtime.activeLabel = fallback.name;
+              runtime.relativeBaseByTrack = captureRelativeBaselines(entity, fallback);
+              applyLabelToEntity(entity, fallback, controller.localFrame, runtime);
+              continue;
+            }
+          }
+        }
       } else {
         controller.localFrame = normalizeFrame(controller.localFrame, label.duration, true);
       }
@@ -359,6 +376,14 @@ function normalizeFrame(frame: number, duration: number, loop: boolean): number 
     return ((frame % safeDuration) + safeDuration) % safeDuration;
   }
   return clamp(frame, 0, safeDuration);
+}
+
+function isAnimationEnded(frame: number, duration: number, direction: AnimationDirection): boolean {
+  if (duration <= 0) return true;
+  if (direction === 'backward') {
+    return frame <= 0;
+  }
+  return frame >= duration;
 }
 
 function clamp(value: number, min: number, max: number): number {
