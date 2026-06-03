@@ -99,10 +99,6 @@
                             <Key frame="45" value="4" />
                             <Key frame="60" value="0" />
                         </Track>
-                        <Track prop="transform.rotation" interpolation="linear">
-                            <Key frame="0" value="0.00" />
-                            <Key frame="60" value="0.72" />
-                        </Track>
                         <Track prop="transform.scale.x" interpolation="linear">
                             <Key frame="0" value="0.95" />
                             <Key frame="30" value="0.98" />
@@ -112,6 +108,208 @@
                             <Key frame="0" value="0.95" />
                             <Key frame="30" value="0.98" />
                             <Key frame="60" value="0.95" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="far_glow">
+            <GameObject name="FarGlowPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="52" fillColor="#226dbf" fillAlpha="0.16" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.58">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-2.8" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="2.8" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="52" />
+                            <Key frame="30" value="53.5" />
+                            <Key frame="60" value="52" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="far_plate">
+            <GameObject name="FarPlatePrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="36" fillColor="#c9d8ee" fillAlpha="0.62" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.58">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-2.8" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="2.8" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="36" />
+                            <Key frame="30" value="37.2" />
+                            <Key frame="60" value="36" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="far_inner">
+            <GameObject name="FarInnerPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="27" fillColor="#0d1a2f" fillAlpha="0.88" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.58">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-2.8" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="2.8" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="far_icon">
+            <GameObject name="FarIconPrefab">
+                <Transform position="0, 0, 0" />
+                <Sprite texture="heptagon_45.svg" layer="80" anchor="0.5, 0.5" alpha="0.72" tint="#5f7899" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.58">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-2.8" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="2.8" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="transform.scale.x" interpolation="linear">
+                            <Key frame="0" value="0.78" />
+                            <Key frame="30" value="0.81" />
+                            <Key frame="60" value="0.78" />
+                        </Track>
+                        <Track prop="transform.scale.y" interpolation="linear">
+                            <Key frame="0" value="0.78" />
+                            <Key frame="30" value="0.81" />
+                            <Key frame="60" value="0.78" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="mid_glow">
+            <GameObject name="MidGlowPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="72" fillColor="#55b8dc" fillAlpha="0.24" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.90">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-5.2" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="5.2" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="72" />
+                            <Key frame="30" value="74.5" />
+                            <Key frame="60" value="72" />
+                        </Track>
+                        <Track prop="graphic.fill.alpha" interpolation="linear">
+                            <Key frame="0" value="0.24" />
+                            <Key frame="30" value="0.29" />
+                            <Key frame="60" value="0.24" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="mid_plate">
+            <GameObject name="MidPlatePrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="52" fillColor="#e4effd" fillAlpha="0.82" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.90">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-5.2" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="5.2" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="52" />
+                            <Key frame="30" value="54" />
+                            <Key frame="60" value="52" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="mid_inner">
+            <GameObject name="MidInnerPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="39" fillColor="#091525" fillAlpha="0.93" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.90">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-5.2" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="5.2" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="39" />
+                            <Key frame="30" value="40.5" />
+                            <Key frame="60" value="39" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="mid_icon">
+            <GameObject name="MidIconPrefab">
+                <Transform position="0, 0, 0" />
+                <Sprite texture="heptagon_45.svg" layer="165" anchor="0.5, 0.5" alpha="0.92" tint="#b6c6dc" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.90">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-5.2" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="5.2" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="transform.scale.x" interpolation="linear">
+                            <Key frame="0" value="1.15" />
+                            <Key frame="30" value="1.19" />
+                            <Key frame="60" value="1.15" />
+                        </Track>
+                        <Track prop="transform.scale.y" interpolation="linear">
+                            <Key frame="0" value="1.15" />
+                            <Key frame="30" value="1.19" />
+                            <Key frame="60" value="1.15" />
                         </Track>
                     </Label>
                 </Animations>
@@ -209,10 +407,6 @@
                             <Key frame="45" value="6.5" />
                             <Key frame="60" value="0" />
                         </Track>
-                        <Track prop="transform.rotation" interpolation="linear">
-                            <Key frame="0" value="0.03" />
-                            <Key frame="60" value="0.95" />
-                        </Track>
                         <Track prop="transform.scale.x" interpolation="linear">
                             <Key frame="0" value="1.38" />
                             <Key frame="30" value="1.43" />
@@ -240,6 +434,27 @@
         <Graphic kind="ellipseGraphic" radiusX="499" radiusY="101" fillColor="#122238" fillAlpha="0.40" />
     </GameObject>
 
+    <!-- Far row -->
+    <Instance prefab="far_glow" id="far_0_glow"><Transform position="333, 182, 0" /><AnimationController localFrame="30" /></Instance>
+    <Instance prefab="far_plate" id="far_0_plate"><Transform position="333, 182, 0" /><AnimationController localFrame="30" /></Instance>
+    <Instance prefab="far_inner" id="far_0_inner"><Transform position="333, 182, 0" /><AnimationController localFrame="30" /></Instance>
+    <Instance prefab="far_icon" id="far_0_icon"><Transform position="333, 182, 0" /><AnimationController localFrame="30" /></Instance>
+
+    <Instance prefab="far_glow" id="far_1_glow"><Transform position="538, 182, 0" /><AnimationController localFrame="36" /></Instance>
+    <Instance prefab="far_plate" id="far_1_plate"><Transform position="538, 182, 0" /><AnimationController localFrame="36" /></Instance>
+    <Instance prefab="far_inner" id="far_1_inner"><Transform position="538, 182, 0" /><AnimationController localFrame="36" /></Instance>
+    <Instance prefab="far_icon" id="far_1_icon"><Transform position="538, 182, 0" /><AnimationController localFrame="36" /></Instance>
+
+    <Instance prefab="far_glow" id="far_2_glow"><Transform position="742, 182, 0" /><AnimationController localFrame="42" /></Instance>
+    <Instance prefab="far_plate" id="far_2_plate"><Transform position="742, 182, 0" /><AnimationController localFrame="42" /></Instance>
+    <Instance prefab="far_inner" id="far_2_inner"><Transform position="742, 182, 0" /><AnimationController localFrame="42" /></Instance>
+    <Instance prefab="far_icon" id="far_2_icon"><Transform position="742, 182, 0" /><AnimationController localFrame="42" /></Instance>
+
+    <Instance prefab="far_glow" id="far_3_glow"><Transform position="947, 182, 0" /><AnimationController localFrame="48" /></Instance>
+    <Instance prefab="far_plate" id="far_3_plate"><Transform position="947, 182, 0" /><AnimationController localFrame="48" /></Instance>
+    <Instance prefab="far_inner" id="far_3_inner"><Transform position="947, 182, 0" /><AnimationController localFrame="48" /></Instance>
+    <Instance prefab="far_icon" id="far_3_icon"><Transform position="947, 182, 0" /><AnimationController localFrame="48" /></Instance>
+
     <!-- Back row -->
     <Instance prefab="back_glow" id="back_0_glow"><Transform position="333, 245, 0" /><AnimationController localFrame="0" /></Instance>
     <Instance prefab="back_plate" id="back_0_plate"><Transform position="333, 245, 0" /><AnimationController localFrame="0" /></Instance>
@@ -260,6 +475,27 @@
     <Instance prefab="back_plate" id="back_3_plate"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
     <Instance prefab="back_inner" id="back_3_inner"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
     <Instance prefab="back_icon" id="back_3_icon"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
+
+    <!-- Middle row -->
+    <Instance prefab="mid_glow" id="mid_0_glow"><Transform position="333, 328, 0" /><AnimationController localFrame="2" /></Instance>
+    <Instance prefab="mid_plate" id="mid_0_plate"><Transform position="333, 328, 0" /><AnimationController localFrame="2" /></Instance>
+    <Instance prefab="mid_inner" id="mid_0_inner"><Transform position="333, 328, 0" /><AnimationController localFrame="2" /></Instance>
+    <Instance prefab="mid_icon" id="mid_0_icon"><Transform position="333, 328, 0" /><AnimationController localFrame="2" /></Instance>
+
+    <Instance prefab="mid_glow" id="mid_1_glow"><Transform position="538, 328, 0" /><AnimationController localFrame="10" /></Instance>
+    <Instance prefab="mid_plate" id="mid_1_plate"><Transform position="538, 328, 0" /><AnimationController localFrame="10" /></Instance>
+    <Instance prefab="mid_inner" id="mid_1_inner"><Transform position="538, 328, 0" /><AnimationController localFrame="10" /></Instance>
+    <Instance prefab="mid_icon" id="mid_1_icon"><Transform position="538, 328, 0" /><AnimationController localFrame="10" /></Instance>
+
+    <Instance prefab="mid_glow" id="mid_2_glow"><Transform position="742, 328, 0" /><AnimationController localFrame="18" /></Instance>
+    <Instance prefab="mid_plate" id="mid_2_plate"><Transform position="742, 328, 0" /><AnimationController localFrame="18" /></Instance>
+    <Instance prefab="mid_inner" id="mid_2_inner"><Transform position="742, 328, 0" /><AnimationController localFrame="18" /></Instance>
+    <Instance prefab="mid_icon" id="mid_2_icon"><Transform position="742, 328, 0" /><AnimationController localFrame="18" /></Instance>
+
+    <Instance prefab="mid_glow" id="mid_3_glow"><Transform position="947, 328, 0" /><AnimationController localFrame="26" /></Instance>
+    <Instance prefab="mid_plate" id="mid_3_plate"><Transform position="947, 328, 0" /><AnimationController localFrame="26" /></Instance>
+    <Instance prefab="mid_inner" id="mid_3_inner"><Transform position="947, 328, 0" /><AnimationController localFrame="26" /></Instance>
+    <Instance prefab="mid_icon" id="mid_3_icon"><Transform position="947, 328, 0" /><AnimationController localFrame="26" /></Instance>
 
     <!-- Front row -->
     <Instance prefab="front_glow" id="front_0_glow"><Transform position="333, 410, 0" /><AnimationController localFrame="4" /></Instance>
