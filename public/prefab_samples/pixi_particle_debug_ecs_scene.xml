@@ -1,0 +1,284 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="AnimationSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <Canvas name="pixi_particle_debug_ecs_scene" width="1280" height="720" background="#08111f" />
+
+    <PrefabLibrary>
+        <Prefab id="back_glow">
+            <GameObject name="BackGlowPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="62" fillColor="#2c83d7" fillAlpha="0.20" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.72">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-4" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="4" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="62" />
+                            <Key frame="30" value="64" />
+                            <Key frame="60" value="62" />
+                        </Track>
+                        <Track prop="graphic.fill.alpha" interpolation="linear">
+                            <Key frame="0" value="0.20" />
+                            <Key frame="30" value="0.26" />
+                            <Key frame="60" value="0.20" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="back_plate">
+            <GameObject name="BackPlatePrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="44" fillColor="#d7e3f5" fillAlpha="0.70" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.72">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-4" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="4" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="44" />
+                            <Key frame="30" value="46" />
+                            <Key frame="60" value="44" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="back_inner">
+            <GameObject name="BackInnerPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="33" fillColor="#0b1526" fillAlpha="0.90" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.72">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-4" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="4" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="33" />
+                            <Key frame="30" value="34.5" />
+                            <Key frame="60" value="33" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="back_icon">
+            <GameObject name="BackIconPrefab">
+                <Transform position="0, 0, 0" />
+                <Sprite texture="heptagon_45.svg" layer="110" anchor="0.5, 0.5" alpha="0.82" tint="#7a8faa" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="0.72">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-4" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="4" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="transform.rotation" interpolation="linear">
+                            <Key frame="0" value="0.00" />
+                            <Key frame="60" value="0.72" />
+                        </Track>
+                        <Track prop="transform.scale.x" interpolation="linear">
+                            <Key frame="0" value="0.95" />
+                            <Key frame="30" value="0.98" />
+                            <Key frame="60" value="0.95" />
+                        </Track>
+                        <Track prop="transform.scale.y" interpolation="linear">
+                            <Key frame="0" value="0.95" />
+                            <Key frame="30" value="0.98" />
+                            <Key frame="60" value="0.95" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="front_glow">
+            <GameObject name="FrontGlowPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="84" fillColor="#7ee7d9" fillAlpha="0.28" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="1.08">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-6.5" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="6.5" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="84" />
+                            <Key frame="30" value="87" />
+                            <Key frame="60" value="84" />
+                        </Track>
+                        <Track prop="graphic.fill.alpha" interpolation="linear">
+                            <Key frame="0" value="0.28" />
+                            <Key frame="30" value="0.33" />
+                            <Key frame="60" value="0.28" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="front_plate">
+            <GameObject name="FrontPlatePrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="60" fillColor="#eaf4ff" fillAlpha="0.92" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="1.08">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-6.5" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="6.5" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="60" />
+                            <Key frame="30" value="62" />
+                            <Key frame="60" value="60" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="front_inner">
+            <GameObject name="FrontInnerPrefab">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="45" fillColor="#071322" fillAlpha="0.95" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="1.08">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-6.5" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="6.5" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="graphic.radius" interpolation="linear">
+                            <Key frame="0" value="45" />
+                            <Key frame="30" value="47" />
+                            <Key frame="60" value="45" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="front_icon">
+            <GameObject name="FrontIconPrefab">
+                <Transform position="0, 0, 0" />
+                <Sprite texture="heptagon_45.svg" layer="220" anchor="0.5, 0.5" alpha="1.0" tint="#ffd85c" />
+                <Animations defaultLabel="idle">
+                    <Label name="idle" duration="60" loop="true" speed="1.08">
+                        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+                            <Key frame="0" value="0" />
+                            <Key frame="15" value="-6.5" />
+                            <Key frame="30" value="0" />
+                            <Key frame="45" value="6.5" />
+                            <Key frame="60" value="0" />
+                        </Track>
+                        <Track prop="transform.rotation" interpolation="linear">
+                            <Key frame="0" value="0.03" />
+                            <Key frame="60" value="0.95" />
+                        </Track>
+                        <Track prop="transform.scale.x" interpolation="linear">
+                            <Key frame="0" value="1.38" />
+                            <Key frame="30" value="1.43" />
+                            <Key frame="60" value="1.38" />
+                        </Track>
+                        <Track prop="transform.scale.y" interpolation="linear">
+                            <Key frame="0" value="1.38" />
+                            <Key frame="30" value="1.43" />
+                            <Key frame="60" value="1.38" />
+                        </Track>
+                    </Label>
+                </Animations>
+                <AnimationController currentLabel="idle" playing="true" />
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <GameObject name="BattleUiBackground" id="ui_bg">
+        <Transform position="640, 360, 0" />
+        <Graphic kind="rectangleGraphic" width="1280" height="720" fillColor="#08111f" fillAlpha="1.0" />
+    </GameObject>
+
+    <GameObject name="BattleUiHorizon" id="ui_horizon">
+        <Transform position="640, 374, 0" />
+        <Graphic kind="ellipseGraphic" radiusX="499" radiusY="101" fillColor="#122238" fillAlpha="0.40" />
+    </GameObject>
+
+    <!-- Back row -->
+    <Instance prefab="back_glow" id="back_0_glow"><Transform position="333, 245, 0" /><AnimationController localFrame="0" /></Instance>
+    <Instance prefab="back_plate" id="back_0_plate"><Transform position="333, 245, 0" /><AnimationController localFrame="0" /></Instance>
+    <Instance prefab="back_inner" id="back_0_inner"><Transform position="333, 245, 0" /><AnimationController localFrame="0" /></Instance>
+    <Instance prefab="back_icon" id="back_0_icon"><Transform position="333, 245, 0" /><AnimationController localFrame="0" /></Instance>
+
+    <Instance prefab="back_glow" id="back_1_glow"><Transform position="538, 245, 0" /><AnimationController localFrame="8" /></Instance>
+    <Instance prefab="back_plate" id="back_1_plate"><Transform position="538, 245, 0" /><AnimationController localFrame="8" /></Instance>
+    <Instance prefab="back_inner" id="back_1_inner"><Transform position="538, 245, 0" /><AnimationController localFrame="8" /></Instance>
+    <Instance prefab="back_icon" id="back_1_icon"><Transform position="538, 245, 0" /><AnimationController localFrame="8" /></Instance>
+
+    <Instance prefab="back_glow" id="back_2_glow"><Transform position="742, 245, 0" /><AnimationController localFrame="16" /></Instance>
+    <Instance prefab="back_plate" id="back_2_plate"><Transform position="742, 245, 0" /><AnimationController localFrame="16" /></Instance>
+    <Instance prefab="back_inner" id="back_2_inner"><Transform position="742, 245, 0" /><AnimationController localFrame="16" /></Instance>
+    <Instance prefab="back_icon" id="back_2_icon"><Transform position="742, 245, 0" /><AnimationController localFrame="16" /></Instance>
+
+    <Instance prefab="back_glow" id="back_3_glow"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
+    <Instance prefab="back_plate" id="back_3_plate"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
+    <Instance prefab="back_inner" id="back_3_inner"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
+    <Instance prefab="back_icon" id="back_3_icon"><Transform position="947, 245, 0" /><AnimationController localFrame="24" /></Instance>
+
+    <!-- Front row -->
+    <Instance prefab="front_glow" id="front_0_glow"><Transform position="333, 410, 0" /><AnimationController localFrame="4" /></Instance>
+    <Instance prefab="front_plate" id="front_0_plate"><Transform position="333, 410, 0" /><AnimationController localFrame="4" /></Instance>
+    <Instance prefab="front_inner" id="front_0_inner"><Transform position="333, 410, 0" /><AnimationController localFrame="4" /></Instance>
+    <Instance prefab="front_icon" id="front_0_icon"><Transform position="333, 410, 0" /><AnimationController localFrame="4" /></Instance>
+
+    <Instance prefab="front_glow" id="front_1_glow"><Transform position="538, 410, 0" /><AnimationController localFrame="12" /></Instance>
+    <Instance prefab="front_plate" id="front_1_plate"><Transform position="538, 410, 0" /><AnimationController localFrame="12" /></Instance>
+    <Instance prefab="front_inner" id="front_1_inner"><Transform position="538, 410, 0" /><AnimationController localFrame="12" /></Instance>
+    <Instance prefab="front_icon" id="front_1_icon"><Transform position="538, 410, 0" /><AnimationController localFrame="12" /></Instance>
+
+    <Instance prefab="front_glow" id="front_2_glow"><Transform position="742, 410, 0" /><AnimationController localFrame="20" /></Instance>
+    <Instance prefab="front_plate" id="front_2_plate"><Transform position="742, 410, 0" /><AnimationController localFrame="20" /></Instance>
+    <Instance prefab="front_inner" id="front_2_inner"><Transform position="742, 410, 0" /><AnimationController localFrame="20" /></Instance>
+    <Instance prefab="front_icon" id="front_2_icon"><Transform position="742, 410, 0" /><AnimationController localFrame="20" /></Instance>
+
+    <Instance prefab="front_glow" id="front_3_glow"><Transform position="947, 410, 0" /><AnimationController localFrame="28" /></Instance>
+    <Instance prefab="front_plate" id="front_3_plate"><Transform position="947, 410, 0" /><AnimationController localFrame="28" /></Instance>
+    <Instance prefab="front_inner" id="front_3_inner"><Transform position="947, 410, 0" /><AnimationController localFrame="28" /></Instance>
+    <Instance prefab="front_icon" id="front_3_icon"><Transform position="947, 410, 0" /><AnimationController localFrame="28" /></Instance>
+</World>

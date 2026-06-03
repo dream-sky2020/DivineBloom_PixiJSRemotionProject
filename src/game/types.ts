@@ -11,6 +11,8 @@ import type { GraphicComponent } from './ecs/components/Graphic';
 import type { CameraComponent } from './ecs/components/Camera';
 import type { CanvasComponent } from './ecs/components/Canvas';
 import type { ParticleEmitterComponent } from './ecs/components/ParticleEmitter';
+import type { AnimationsComponent } from './ecs/components/Animations';
+import type { AnimationControllerComponent } from './ecs/components/AnimationController';
 
 export type { 
   TransformComponent, 
@@ -21,7 +23,9 @@ export type {
   GraphicComponent,
   CameraComponent,
   CanvasComponent,
-  ParticleEmitterComponent
+  ParticleEmitterComponent,
+  AnimationsComponent,
+  AnimationControllerComponent,
 };
 
 export type EntityId = string | number;
@@ -46,7 +50,9 @@ export type AnyComponent =
   | PolygonColliderComponent
   | GraphicComponent
   | CameraComponent
-  | ParticleEmitterComponent;
+  | ParticleEmitterComponent
+  | AnimationsComponent
+  | AnimationControllerComponent;
 
 export interface Entity {
   id: EntityId;

@@ -10,9 +10,12 @@ export * from './ecs/components/Graphic';
 export * from './ecs/components/Camera';
 export * from './ecs/components/Canvas';
 export * from './ecs/components/ParticleEmitter';
+export * from './ecs/components/Animations';
+export * from './ecs/components/AnimationController';
 export * from './ecs/systems/PhysicsSystem';
 export * from './ecs/systems/RenderSystem';
 export * from './ecs/systems/ParticleSystem';
+export * from './ecs/systems/AnimationSystem';
 
 import { World } from './ecs/World';
 import { XmlParser } from './parser/XmlParser';

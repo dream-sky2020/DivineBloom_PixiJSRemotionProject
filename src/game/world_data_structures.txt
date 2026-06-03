@@ -236,6 +236,105 @@
     anchor="0.5, 0.5"               <!-- [可选] 粒子锚点，默认 "0.5,0.5" -->
 />
 
+### 3.10 动画资产组件 (Animations)
+
+定义实体可播放的 XML 动画资产（标签集合 / Clip 集合）。
+该组件只描述动画数据本身，不包含运行时播放状态。
+
+建议与 `AnimationController` 组件配合使用，并在 `SystemPipeline` 中启用 `AnimationSystem`。
+
+```xml
+<Animations defaultLabel="idle">
+    <Label name="idle" duration="30" loop="true" speed="1.0">
+        <Track prop="sprite.textureFrame" interpolation="hold">
+            <Key frame="0" value="idle_01" />
+            <Key frame="10" value="idle_02" />
+        </Track>
+        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+            <Key frame="0" value="0" />
+            <Key frame="15" value="-6" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+            <Key frame="30" value="0" />
+        </Track>
+    </Label>
+
+    <Label name="attack" duration="18" loop="false">
+        <Track prop="sprite.textureFrame" interpolation="hold">
+            <Key frame="0" value="atk_01" />
+            <Key frame="6" value="atk_02" />
+            <Key frame="12" value="atk_03" />
+        </Track>
+    </Label>
+</Animations>
+```
+
+字段说明：
+
+- `defaultLabel`：`[可选]` 默认播放标签名。未提供时可由 `AnimationController.currentLabel` 决定。
+- `Label.name`：`[必填]` 标签名（全组件内唯一）。
+- `Label.duration`：`[必填]` 动画长度（帧）。
+- `Label.loop`：`[可选]` 是否循环，默认 `"true"`。
+- `Label.speed`：`[可选]` 标签内默认速率倍率，默认 `"1.0"`。
+- `Track.prop`：`[必填]` 目标属性路径（建议使用组件语义路径，如 `transform.position.x`、`sprite.alpha`）。
+- `Track.interpolation`：`[可选]` 插值方式，支持 `hold` / `linear`，默认 `hold`。
+- `Track.valueMode`：`[可选]` 数值语义，支持 `absolute` / `relative`，默认 `absolute`。
+- `Key.frame`：`[必填]` 关键帧号，需升序且在 `[0, duration]` 范围内。
+- `Key.value`：`[必填]` 关键帧值（number/string/boolean，按 `prop` 类型解析）。
+- `Key.easing`：`[可选]` 该关键帧到下一关键帧的缓动曲线。支持 `cubic-bezier(x1, y1, x2, y2)`，例如 `cubic-bezier(0.25, 0.10, 0.25, 1.00)`；不填写表示无曲线（按 `Track.interpolation` 直接插值/保持）。
+- `Key.easing` 建议仅用于数值属性轨道，且通常配合 `Track.interpolation="linear"` 使用。
+
+`Track.valueMode` 语义说明（用于区分绝对值/相对值）：
+
+- `absolute`：`Key.value` 为目标属性的绝对值。例如 `transform.position.y=360`。
+- `relative`：`Key.value` 为相对偏移量（delta），每帧结果 = `标签开始时的基准值 + 采样值`。
+- `relative` 模式下不应做“逐帧累加”；否则会出现 y 持续漂移。
+- 建议：位移动画（如 bob 上下浮动）使用 `relative`；明确落点动画使用 `absolute`。
+
+### 3.11 动画控制组件 (AnimationController)
+
+定义实体动画的运行时控制状态（当前标签、播放帧、倍速、暂停等）。
+该组件不保存轨道资产，只消费 `Animations` 中的标签数据。
+
+```xml
+<AnimationController
+    playing="true"
+    currentLabel="idle"
+    localFrame="0"
+    speedScale="1.0"
+    direction="forward"
+    loopOverride=""
+/>
+```
+
+字段说明：
+
+- `playing`：`[可选]` 是否播放中，默认 `"true"`。
+- `currentLabel`：`[可选]` 当前播放标签；未提供时回退到 `Animations.defaultLabel`。
+- `localFrame`：`[可选]` 当前标签内帧游标，默认 `"0"`。
+- `speedScale`：`[可选]` 全局播放速度倍率，默认 `"1.0"`。
+- `direction`：`[可选]` 播放方向，`forward` / `backward`，默认 `forward`。
+- `loopOverride`：`[可选]` 循环覆盖值（`true` / `false`）。为空时沿用标签 `loop` 配置。
+
+组合示例：
+
+```xml
+<GameObject name="Hero" id="hero_01">
+    <Transform position="640, 360, 0" />
+    <Sprite texture="hero_idle_01.png" layer="2" anchor="0.5, 0.5" />
+
+    <Animations defaultLabel="idle">
+        <Label name="idle" duration="20" loop="true">
+            <Track prop="sprite.alpha" interpolation="linear" valueMode="absolute">
+                <Key frame="0" value="1.0" />
+                <Key frame="10" value="0.85" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+                <Key frame="20" value="1.0" />
+            </Track>
+        </Label>
+    </Animations>
+
+    <AnimationController currentLabel="idle" playing="true" />
+</GameObject>
+```
+
 ## 4. 画布配置 (Canvas)
 
 定义整个世界的渲染输出参数。它是 <World> 的直接子节点，不属于任何 GameObject。

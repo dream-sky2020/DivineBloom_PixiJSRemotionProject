@@ -10,6 +10,8 @@ import type {
   GraphicComponent,
   CameraComponent,
   ParticleEmitterComponent,
+  AnimationsComponent,
+  AnimationControllerComponent,
   CanvasComponent,
   WorldData,
   EngineConfig,
@@ -481,6 +483,10 @@ export class XmlParser {
         return this.parseCamera(el);
       case 'ParticleEmitter':
         return this.parseParticleEmitter(el);
+      case 'Animations':
+        return this.parseAnimations(el);
+      case 'AnimationController':
+        return this.parseAnimationController(el);
       default:
         console.warn(`Unknown component type: ${type}`);
         return null;
@@ -652,6 +658,77 @@ export class XmlParser {
       anchor: parseAnchor(el.getAttribute('anchor') || '0.5, 0.5'),
     };
   }
+
+  private static parseAnimations(el: Element): AnimationsComponent {
+    const labels: AnimationsComponent['labels'] = {};
+    for (const labelEl of this.getDirectChildren(el)) {
+      if (labelEl.tagName !== 'Label') continue;
+      const name = (labelEl.getAttribute('name') || '').trim();
+      if (!name) continue;
+
+      const tracks = [];
+      for (const trackEl of this.getDirectChildren(labelEl)) {
+        if (trackEl.tagName !== 'Track') continue;
+        const prop = (trackEl.getAttribute('prop') || '').trim();
+        if (!prop) continue;
+        const interpolationAttr = (trackEl.getAttribute('interpolation') || 'hold').toLowerCase();
+        const interpolation: 'hold' | 'linear' =
+          interpolationAttr === 'linear' ? 'linear' : 'hold';
+        const valueModeAttr = (trackEl.getAttribute('valueMode') || 'absolute').toLowerCase();
+        const valueMode: 'absolute' | 'relative' =
+          valueModeAttr === 'relative' ? 'relative' : 'absolute';
+        const keys = [];
+
+        for (const keyEl of this.getDirectChildren(trackEl)) {
+          if (keyEl.tagName !== 'Key') continue;
+          const frame = parseFloat(keyEl.getAttribute('frame') || '0');
+          const valueRaw = keyEl.getAttribute('value');
+          if (valueRaw === null) continue;
+          const easing = keyEl.getAttribute('easing')?.trim();
+          keys.push({
+            frame: Number.isFinite(frame) ? frame : 0,
+            value: parseAnimationValue(valueRaw),
+            easing: easing || undefined,
+          });
+        }
+
+        keys.sort((left, right) => left.frame - right.frame);
+        tracks.push({
+          prop,
+          interpolation,
+          valueMode,
+          keys,
+        });
+      }
+
+      labels[name] = {
+        name,
+        duration: parseFloat(labelEl.getAttribute('duration') || '0'),
+        loop: labelEl.getAttribute('loop') !== 'false',
+        speed: parseFloat(labelEl.getAttribute('speed') || '1'),
+        tracks,
+      };
+    }
+
+    const defaultLabel = el.getAttribute('defaultLabel')?.trim() || undefined;
+    return {
+      type: 'Animations',
+      defaultLabel,
+      labels,
+    };
+  }
+
+  private static parseAnimationController(el: Element): AnimationControllerComponent {
+    return {
+      type: 'AnimationController',
+      playing: el.getAttribute('playing') !== 'false',
+      currentLabel: el.getAttribute('currentLabel')?.trim() || undefined,
+      localFrame: parseFloat(el.getAttribute('localFrame') || '0'),
+      speedScale: parseFloat(el.getAttribute('speedScale') || '1'),
+      direction: (el.getAttribute('direction') === 'backward' ? 'backward' : 'forward'),
+      loopOverride: parseOptionalBoolean(el.getAttribute('loopOverride')),
+    };
+  }
 }
 
 function parseAnchor(anchorStr: string): { x: number; y: number } {
@@ -660,4 +737,23 @@ function parseAnchor(anchorStr: string): { x: number; y: number } {
     x: Number.isFinite(x) ? x : 0.5,
     y: Number.isFinite(y) ? y : 0.5,
   };
+}
+
+function parseOptionalBoolean(value: string | null): boolean | undefined {
+  if (value === null) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return undefined;
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  return undefined;
+}
+
+function parseAnimationValue(value: string): number | string | boolean {
+  const normalized = value.trim();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(normalized)) {
+    return parseFloat(normalized);
+  }
+  return value;
 }

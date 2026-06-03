@@ -1,52 +1,47 @@
 import { useEffect, useRef, useState } from 'react';
 import { Application, Assets, Container, Sprite, Texture } from 'pixi.js';
 
-type NativeParticle = {
-  sprite: Sprite;
-  vx: number;
-  vy: number;
-  age: number;
-  lifetime: number;
-  sizeStart: number;
-  sizeEnd: number;
-  alphaStart: number;
-  alphaEnd: number;
-  tintStart: number;
-  tintEnd: number;
-  isNumber?: boolean;
-};
-type EmitterOptions = {
-  texture: Texture;
-  emissionRate: number;
-  originX: number;
-  originY: number;
-  tintStart: number;
-  tintEnd: number;
-  sizeStartMin: number;
-  sizeStartMax: number;
-  sizeEndMin: number;
-  sizeEndMax: number;
-};
-
 const WIDTH = 1280;
 const HEIGHT = 720;
-const MAX_PARTICLES = 450;
+const NODE_TEXTURE_PATH = '/heptagon_45.svg';
+const CIRCLE_TEXTURE_PATH = '/particle_white.svg';
+const NODE_COLUMNS = 4;
+
+type DepthNodeVisual = {
+  root: Container;
+  glow: Sprite;
+  plate: Sprite;
+  inner: Sprite;
+  icon: Sprite;
+  baseX: number;
+  baseY: number;
+  baseScale: number;
+  bobAmplitude: number;
+  bobSpeed: number;
+  phase: number;
+  glowAlphaBase: number;
+};
+
+type BattlePalette = {
+  darkNavy: number;
+  darkSlate: number;
+  deepBlackBlue: number;
+  cyan: number;
+  blue: number;
+  whiteBlue: number;
+  paleBlue: number;
+  darkerNavy: number;
+  yellow: number;
+  grayBlue: number;
+};
 
 export function PixiNativeParticlePage() {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const appRef = useRef<Application | null>(null);
-  const containerRef = useRef<Container | null>(null);
-  const particlesRef = useRef<NativeParticle[]>([]);
-  const whiteTextureRef = useRef<Texture | null>(null);
-  const faviconTextureRef = useRef<Texture | null>(null);
-  const digitTexturesRef = useRef<Texture[] | null>(null);
-  const whiteEmitAccumulatorRef = useRef(0);
-  const faviconEmitAccumulatorRef = useRef(0);
-  const digitEmitAccumulatorRef = useRef(0);
-  const numberCounterRef = useRef(0);
   const runningRef = useRef(true);
+  const sceneRootRef = useRef<Container | null>(null);
+  const nodesRef = useRef<DepthNodeVisual[]>([]);
   const [running, setRunning] = useState(true);
-  const [activeCount, setActiveCount] = useState(0);
 
   useEffect(() => {
     runningRef.current = running;
@@ -74,115 +69,42 @@ export function PixiNativeParticlePage() {
       }
 
       host.appendChild(app.canvas);
-      const particleLayer = new Container();
-      containerRef.current = particleLayer;
-      app.stage.addChild(particleLayer);
+      app.stage.sortableChildren = true;
 
-      const [whiteTexture, faviconTexture, ...digitTextures] = await Promise.all([
-        Assets.load<Texture>('/particle_white.svg'),
-        Assets.load<Texture>('/favicon.svg'),
-        Assets.load<Texture>('/digit/digit_0.svg'),
-        Assets.load<Texture>('/digit/digit_1.svg'),
-        Assets.load<Texture>('/digit/digit_2.svg'),
-        Assets.load<Texture>('/digit/digit_3.svg'),
-        Assets.load<Texture>('/digit/digit_4.svg'),
-        Assets.load<Texture>('/digit/digit_5.svg'),
-        Assets.load<Texture>('/digit/digit_6.svg'),
-        Assets.load<Texture>('/digit/digit_7.svg'),
-        Assets.load<Texture>('/digit/digit_8.svg'),
-        Assets.load<Texture>('/digit/digit_9.svg'),
+      const [heptagonTexture, circleTexture] = await Promise.all([
+        Assets.load<Texture>(NODE_TEXTURE_PATH),
+        Assets.load<Texture>(CIRCLE_TEXTURE_PATH),
       ]);
-      whiteTextureRef.current = whiteTexture;
-      faviconTextureRef.current = faviconTexture;
-      digitTexturesRef.current = digitTextures;
 
-      const tick = (ticker: { deltaMS: number }) => {
+      if (disposed) return;
+
+      const palette = resolveBattlePalette();
+      const sceneRoot = new Container();
+      sceneRootRef.current = sceneRoot;
+      app.stage.addChild(sceneRoot);
+
+      renderBackground(sceneRoot, palette);
+      nodesRef.current = createDepthNodes(sceneRoot, heptagonTexture, circleTexture, palette);
+
+      let elapsed = 0;
+      app.ticker.add((ticker) => {
         if (!runningRef.current) return;
-        const deltaTime = Math.min(0.05, Math.max(0.001, ticker.deltaMS / 1000));
-        if (whiteTextureRef.current) {
-          spawnParticles(deltaTime, particleLayer, particlesRef.current, whiteEmitAccumulatorRef, {
-            texture: whiteTextureRef.current,
-            emissionRate: 90,
-            originX: 460,
-            originY: HEIGHT * 0.5,
-            tintStart: parseHex('#ffb347'),
-            tintEnd: parseHex('#ff3b30'),
-            sizeStartMin: 8,
-            sizeStartMax: 14,
-            sizeEndMin: 1.5,
-            sizeEndMax: 3,
-          });
-        }
-        if (faviconTextureRef.current) {
-          spawnParticles(deltaTime, particleLayer, particlesRef.current, faviconEmitAccumulatorRef, {
-            texture: faviconTextureRef.current,
-            emissionRate: 65,
-            originX: 820,
-            originY: HEIGHT * 0.5,
-            tintStart: 0xffffff,
-            tintEnd: 0xffffff,
-            sizeStartMin: 3.5,
-            sizeStartMax: 6,
-            sizeEndMin: 0.8,
-            sizeEndMax: 1.6,
-          });
-        }
-        if (digitTexturesRef.current) {
-          spawnNumberParticles(
-            deltaTime,
-            particleLayer,
-            particlesRef.current,
-            digitEmitAccumulatorRef,
-            numberCounterRef,
-            digitTexturesRef.current,
-            {
-              emissionRate: 20,
-              originX: 1020,
-              originY: HEIGHT * 0.54,
-              tintStart: 0xffffff,
-              tintEnd: 0xffffff,
-              sizeStartMin: 0.45,
-              sizeStartMax: 0.7,
-              sizeEndMin: 0.2,
-              sizeEndMax: 0.35,
-            },
-          );
-        }
-
-        updateParticles(deltaTime, particleLayer, particlesRef.current);
-        setActiveCount(particlesRef.current.length);
-      };
-
-      app.ticker.add(tick);
+        const deltaSeconds = Math.min(0.05, Math.max(0.001, ticker.deltaMS / 1000));
+        elapsed += deltaSeconds;
+        animateDepthNodes(nodesRef.current, elapsed);
+      });
     };
 
     void init().catch((error) => {
-      console.error('Pixi native particle page init failed:', error);
+      console.error('Pixi native battle core init failed:', error);
     });
 
     return () => {
       disposed = true;
-      const appInstance = appRef.current;
-      const layer = containerRef.current;
-      if (appInstance && layer) {
-        appInstance.stage.removeChild(layer);
-      }
-      for (const particle of particlesRef.current) {
-        particle.sprite.destroy();
-      }
-      particlesRef.current = [];
-      containerRef.current = null;
-      whiteTextureRef.current = null;
-      faviconTextureRef.current = null;
-      digitTexturesRef.current = null;
-      whiteEmitAccumulatorRef.current = 0;
-      faviconEmitAccumulatorRef.current = 0;
-      digitEmitAccumulatorRef.current = 0;
-      numberCounterRef.current = 0;
-      setActiveCount(0);
-
-      if (appInstance?.renderer) {
-        appInstance.destroy(true, { children: true, texture: true });
+      nodesRef.current = [];
+      sceneRootRef.current = null;
+      if (appRef.current?.renderer) {
+        appRef.current.destroy(true, { children: true, texture: true });
       }
       appRef.current = null;
     };
@@ -192,9 +114,9 @@ export function PixiNativeParticlePage() {
     <div className="app-shell">
       <section className="hero">
         <p className="eyebrow">Pixi Native</p>
-        <h1>原生 Pixi 粒子自检页</h1>
+        <h1>核心战斗 UI 外观（伪3D节点）</h1>
         <p className="summary">
-          该页面完全绕过 `src/pixiJSRenderer`，直接使用 Pixi 原生 API 绘制粒子。
+          使用 `heptagon_45.svg` 生成两排节点：上排更小更远，下排更大更近，模拟核心战斗区景深。
         </p>
       </section>
 
@@ -209,220 +131,216 @@ export function PixiNativeParticlePage() {
       <section className="controls">
         <div className="control-group">
           <button className="primary" onClick={() => setRunning((value) => !value)}>
-            {running ? '暂停' : '继续'}
-          </button>
-          <button
-            className="secondary"
-            style={{ marginLeft: '12px' }}
-            onClick={() => {
-              const layer = containerRef.current;
-              if (!layer) return;
-              for (const particle of particlesRef.current) {
-                layer.removeChild(particle.sprite);
-                particle.sprite.destroy();
-              }
-              particlesRef.current = [];
-              whiteEmitAccumulatorRef.current = 0;
-              faviconEmitAccumulatorRef.current = 0;
-              digitEmitAccumulatorRef.current = 0;
-              numberCounterRef.current = 0;
-              setActiveCount(0);
-            }}
-          >
-            清空并重置
+            {running ? '暂停动效' : '继续动效'}
           </button>
         </div>
       </section>
 
-      <p className="status">当前活跃粒子: {activeCount}</p>
+      <p className="status">节点总数: 8（前排 4 / 后排 4）</p>
     </div>
   );
 }
 
-function spawnParticles(
-  deltaTime: number,
-  layer: Container,
-  particles: NativeParticle[],
-  emitAccumulatorRef: { current: number },
-  options: EmitterOptions,
-) {
-  emitAccumulatorRef.current += deltaTime * options.emissionRate;
-  const spawnCount = Math.floor(emitAccumulatorRef.current);
-  emitAccumulatorRef.current -= spawnCount;
+function renderBackground(root: Container, palette: BattlePalette) {
+  const base = new Sprite(Texture.WHITE);
+  base.width = WIDTH;
+  base.height = HEIGHT;
+  base.tint = palette.darkNavy;
+  base.alpha = 1;
+  base.zIndex = -300;
+  root.addChild(base);
 
-  for (let i = 0; i < spawnCount; i++) {
-    if (particles.length >= MAX_PARTICLES) break;
-    const angle = ((-90 + randomRange(-40, 40)) * Math.PI) / 180;
-    const speed = randomRange(80, 220);
-    const sprite = new Sprite(options.texture);
-    sprite.x = options.originX;
-    sprite.y = options.originY;
-    sprite.anchor.set(0.5, 0.5);
-    layer.addChild(sprite);
+  const horizon = new Sprite(Texture.WHITE);
+  horizon.anchor.set(0.5, 0.5);
+  horizon.x = WIDTH * 0.5;
+  horizon.y = HEIGHT * 0.53;
+  horizon.width = WIDTH * 0.84;
+  horizon.height = HEIGHT * 0.26;
+  horizon.tint = palette.darkSlate;
+  horizon.alpha = 0.45;
+  horizon.zIndex = -250;
+  root.addChild(horizon);
 
-    particles.push({
-      sprite,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      age: 0,
-      lifetime: randomRange(0.5, 1.4),
-      sizeStart: randomRange(options.sizeStartMin, options.sizeStartMax),
-      sizeEnd: randomRange(options.sizeEndMin, options.sizeEndMax),
-      alphaStart: 0.95,
-      alphaEnd: 0,
-      tintStart: options.tintStart,
-      tintEnd: options.tintEnd,
-    });
+  const floor = new Sprite(Texture.WHITE);
+  floor.anchor.set(0.5, 0.5);
+  floor.x = WIDTH * 0.5;
+  floor.y = HEIGHT * 0.74;
+  floor.width = WIDTH * 0.9;
+  floor.height = HEIGHT * 0.24;
+  floor.tint = palette.deepBlackBlue;
+  floor.alpha = 0.68;
+  floor.zIndex = -240;
+  root.addChild(floor);
+}
+
+function createDepthNodes(
+  root: Container,
+  heptagonTexture: Texture,
+  circleTexture: Texture,
+  palette: BattlePalette,
+): DepthNodeVisual[] {
+  const nodes: DepthNodeVisual[] = [];
+  const xStart = WIDTH * 0.26;
+  const xGap = WIDTH * 0.16;
+
+  for (let column = 0; column < NODE_COLUMNS; column++) {
+    nodes.push(
+      createNodeVisual({
+        root,
+        id: `back-${column}`,
+        heptagonTexture,
+        circleTexture,
+        palette,
+        x: xStart + xGap * column,
+        y: HEIGHT * 0.34,
+        isFront: false,
+        index: column,
+      }),
+    );
+  }
+
+  for (let column = 0; column < NODE_COLUMNS; column++) {
+    nodes.push(
+      createNodeVisual({
+        root,
+        id: `front-${column}`,
+        heptagonTexture,
+        circleTexture,
+        palette,
+        x: xStart + xGap * column,
+        y: HEIGHT * 0.57,
+        isFront: true,
+        index: column,
+      }),
+    );
+  }
+
+  return nodes;
+}
+
+function createNodeVisual({
+  root,
+  heptagonTexture,
+  circleTexture,
+  palette,
+  x,
+  y,
+  isFront,
+  index,
+}: {
+  root: Container;
+  id: string;
+  heptagonTexture: Texture;
+  circleTexture: Texture;
+  palette: BattlePalette;
+  x: number;
+  y: number;
+  isFront: boolean;
+  index: number;
+}): DepthNodeVisual {
+  const nodeRoot = new Container();
+  nodeRoot.x = x;
+  nodeRoot.y = y;
+  nodeRoot.zIndex = isFront ? 160 + index : 80 + index;
+  nodeRoot.sortableChildren = true;
+  root.addChild(nodeRoot);
+
+  const glow = new Sprite(circleTexture);
+  glow.anchor.set(0.5, 0.5);
+  glow.tint = isFront ? palette.cyan : palette.blue;
+  glow.alpha = isFront ? 0.28 : 0.2;
+  glow.scale.set(isFront ? 4.4 : 3.3, isFront ? 4.4 : 3.3);
+  glow.zIndex = 10;
+  nodeRoot.addChild(glow);
+
+  const plate = new Sprite(circleTexture);
+  plate.anchor.set(0.5, 0.5);
+  plate.tint = isFront ? palette.whiteBlue : palette.paleBlue;
+  plate.alpha = isFront ? 0.92 : 0.7;
+  plate.scale.set(isFront ? 3.2 : 2.4, isFront ? 3.2 : 2.4);
+  plate.zIndex = 20;
+  nodeRoot.addChild(plate);
+
+  const inner = new Sprite(circleTexture);
+  inner.anchor.set(0.5, 0.5);
+  inner.tint = palette.darkerNavy;
+  inner.alpha = isFront ? 0.95 : 0.9;
+  inner.scale.set(isFront ? 2.45 : 1.8, isFront ? 2.45 : 1.8);
+  inner.zIndex = 30;
+  nodeRoot.addChild(inner);
+
+  const icon = new Sprite(heptagonTexture);
+  icon.anchor.set(0.5, 0.5);
+  icon.tint = isFront ? palette.yellow : palette.grayBlue;
+  icon.alpha = isFront ? 1 : 0.82;
+  icon.scale.set(isFront ? 1.38 : 0.95, isFront ? 1.38 : 0.95);
+  icon.zIndex = 40;
+  nodeRoot.addChild(icon);
+
+  return {
+    root: nodeRoot,
+    glow,
+    plate,
+    inner,
+    icon,
+    baseX: x,
+    baseY: y,
+    baseScale: isFront ? 1 : 0.82,
+    bobAmplitude: isFront ? 6.5 : 4,
+    bobSpeed: isFront ? 1.8 : 1.2,
+    phase: index * 0.65 + (isFront ? 0.3 : 0),
+    glowAlphaBase: isFront ? 0.28 : 0.2,
+  };
+}
+
+function animateDepthNodes(nodes: DepthNodeVisual[], elapsed: number) {
+  for (const node of nodes) {
+    const bob = Math.sin(elapsed * node.bobSpeed + node.phase) * node.bobAmplitude;
+    const pulse = 1 + Math.sin(elapsed * 2.1 + node.phase) * 0.035;
+
+    node.root.x = node.baseX;
+    node.root.y = node.baseY + bob;
+    node.root.scale.set(node.baseScale * pulse, node.baseScale * pulse);
+    node.glow.alpha = node.glowAlphaBase + Math.sin(elapsed * 2.2 + node.phase) * 0.05;
+    node.icon.rotation += 0.0035;
   }
 }
 
-function updateParticles(deltaTime: number, layer: Container, particles: NativeParticle[]) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const particle = particles[i];
-    particle.age += deltaTime;
-    if (particle.age >= particle.lifetime) {
-      layer.removeChild(particle.sprite);
-      particle.sprite.destroy();
-      particles.splice(i, 1);
-      continue;
-    }
+function resolveBattlePalette(): BattlePalette {
+  return {
+    darkNavy: resolveColorVar('--dark-navy'),
+    darkSlate: resolveColorVar('--dark-slate'),
+    deepBlackBlue: resolveColorVar('--deep-black-blue'),
+    cyan: resolveColorVar('--cyan'),
+    blue: resolveColorVar('--blue'),
+    whiteBlue: resolveColorVar('--white-blue'),
+    paleBlue: resolveColorVar('--pale-blue'),
+    darkerNavy: resolveColorVar('--darker-navy'),
+    yellow: resolveColorVar('--yellow'),
+    grayBlue: resolveColorVar('--gray-blue'),
+  };
+}
 
-    const t = Math.min(1, particle.age / particle.lifetime);
+function resolveColorVar(name: string): number {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return cssColorToNumber(raw);
+}
 
-    if (particle.isNumber) {
-      // 1. 移动：开始移动很快，但是后面就快速变慢最后数字不再移动
-      // 使用基于 t 的衰减来实现“急停”效果，在生命周期的 40% 处完全停止
-      const stopProgress = 0.4;
-      if (t < stopProgress) {
-        // 速度随时间呈平方衰减，产生急刹车感
-        const speedFactor = Math.pow(1 - t / stopProgress, 2);
-        particle.sprite.x += particle.vx * speedFactor * deltaTime;
-        particle.sprite.y += particle.vy * speedFactor * deltaTime;
-      }
+function cssColorToNumber(value: string): number {
+  const color = value.trim();
+  if (!color) return 0;
 
-      // 2. 大小：在 50% 的生命周期内增长到最大
-      const sizeT = Math.min(1, t / 0.5);
-      const size = lerp(particle.sizeStart, particle.sizeEnd, sizeT);
-      particle.sprite.scale.set(size, size);
-
-      // 3. 渐变消失：在 80% 生命周期后才开始渐变消失，中间留出 50%-80% 的完全静止停留时间
-      if (t > 0.8) {
-        const alphaT = (t - 0.8) / 0.2;
-        particle.sprite.alpha = lerp(1, 0, alphaT);
-      } else {
-        particle.sprite.alpha = 1;
-      }
-    } else {
-      // 其他粒子的原始逻辑
-      particle.sprite.x += particle.vx * deltaTime;
-      particle.sprite.y += particle.vy * deltaTime;
-      const size = lerp(particle.sizeStart, particle.sizeEnd, t);
-      particle.sprite.scale.set(size, size);
-      particle.sprite.alpha = lerp(particle.alphaStart, particle.alphaEnd, t);
-    }
-    particle.sprite.tint = lerpColor(particle.tintStart, particle.tintEnd, t);
+  if (color.startsWith('#')) {
+    const hex = color.slice(1);
+    const normalized = hex.length === 3
+      ? `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`
+      : hex;
+    const parsed = Number.parseInt(normalized, 16);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
-}
 
-type NumberEmitterOptions = {
-  emissionRate: number;
-  originX: number;
-  originY: number;
-  tintStart: number;
-  tintEnd: number;
-  sizeStartMin: number;
-  sizeStartMax: number;
-  sizeEndMin: number;
-  sizeEndMax: number;
-};
-
-function spawnNumberParticles(
-  deltaTime: number,
-  layer: Container,
-  particles: NativeParticle[],
-  emitAccumulatorRef: { current: number },
-  numberCounterRef: { current: number },
-  digitTextures: Texture[],
-  options: NumberEmitterOptions,
-) {
-  emitAccumulatorRef.current += deltaTime * options.emissionRate;
-  const spawnCount = Math.floor(emitAccumulatorRef.current);
-  emitAccumulatorRef.current -= spawnCount;
-
-  for (let i = 0; i < spawnCount; i++) {
-    const numberValue = numberCounterRef.current;
-    const digits = String(numberValue).split('');
-    numberCounterRef.current = (numberCounterRef.current + 1) % 1000;
-    const angle = ((-90 + randomRange(-35, 35)) * Math.PI) / 180;
-
-    // 开始移动很快
-    const speed = randomRange(600, 1000);
-    const vx = Math.cos(angle) * speed;
-    const vy = Math.sin(angle) * speed;
-
-    const lifetime = randomRange(2.5, 3.5);
-
-    // 数字越大，数字最后的大小也越大
-    // 基础缩放从 1.2 开始，最大到 2.8，确保即使是数字 0 也有足够的体积感
-    const scaleFactor = 1.2 + (numberValue / 999) * 1.6;
-    const sizeEnd = options.sizeEndMax * scaleFactor;
-    // 初始大小也稍微调大一点，从最终大小的 40% 开始增长
-    const sizeStart = sizeEnd * 0.4;
-
-    for (let digitIndex = 0; digitIndex < digits.length; digitIndex++) {
-      if (particles.length >= MAX_PARTICLES) return;
-      const digit = Number.parseInt(digits[digitIndex] ?? '0', 10);
-      const texture = digitTextures[digit];
-      if (!texture) continue;
-
-      // 根据缩放调整间距，将 14 调小可以让数字更靠近
-      const digitOffset = (digitIndex - (digits.length - 1) / 2) * (10 * scaleFactor);
-      const sprite = new Sprite(texture);
-      sprite.x = options.originX + digitOffset;
-      sprite.y = options.originY;
-      sprite.anchor.set(0.5, 0.5);
-      layer.addChild(sprite);
-
-      particles.push({
-        sprite,
-        vx,
-        vy,
-        age: 0,
-        lifetime,
-        sizeStart,
-        sizeEnd,
-        alphaStart: 1,
-        alphaEnd: 0,
-        tintStart: options.tintStart,
-        tintEnd: options.tintEnd,
-        isNumber: true,
-      });
-    }
-  }
-}
-
-function randomRange(min: number, max: number) {
-  return min + Math.random() * (max - min);
-}
-
-function lerp(start: number, end: number, t: number) {
-  return start + (end - start) * t;
-}
-
-function parseHex(value: string) {
-  const normalized = value.startsWith('#') ? value.slice(1) : value;
-  return Number.parseInt(normalized, 16) || 0xffffff;
-}
-
-function lerpColor(start: number, end: number, t: number) {
-  const sr = (start >> 16) & 0xff;
-  const sg = (start >> 8) & 0xff;
-  const sb = start & 0xff;
-  const er = (end >> 16) & 0xff;
-  const eg = (end >> 8) & 0xff;
-  const eb = end & 0xff;
-  const r = Math.round(lerp(sr, er, t));
-  const g = Math.round(lerp(sg, eg, t));
-  const b = Math.round(lerp(sb, eb, t));
-  return (r << 16) | (g << 8) | b;
+  const rgbMatch = color.match(/rgba?\(([^)]+)\)/i);
+  if (!rgbMatch) return 0;
+  const [r, g, b] = rgbMatch[1].split(',').slice(0, 3).map((part) => Number.parseFloat(part.trim()) || 0);
+  return ((r & 0xff) << 16) | ((g & 0xff) << 8) | (b & 0xff);
 }
