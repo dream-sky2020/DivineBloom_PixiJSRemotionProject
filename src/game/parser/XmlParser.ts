@@ -749,6 +749,7 @@ export class XmlParser {
       angularVelocity: parseFloat(el.getAttribute('angularVelocity') || '0'),
       fixedRotation: el.getAttribute('fixedRotation') === 'true',
       bullet: el.getAttribute('bullet') === 'true',
+      sensor: el.getAttribute('sensor') === 'true',
       gravityScale: parseFloat(el.getAttribute('gravityScale') || '1'),
       friction: parseFloat(el.getAttribute('friction') || '0.5'),
       restitution: parseFloat(el.getAttribute('restitution') || '0.2'),

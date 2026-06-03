@@ -8,12 +8,16 @@ import type {
   PolygonColliderComponent
 } from '../../types';
 import { PhysicsSystem as PhysicsEngine } from '../../../physics2D/PhysicsSystem';
+import type { PhysicsContactEvent } from '../../../physics2D/PhysicsSystem';
 import {
   createEntityMap,
   resolveWorldTransform,
   worldToLocalPosition,
   type TransformCache,
 } from '../utils/transformHierarchy';
+import type { SignalBindingsComponent } from '../components/SignalBindings';
+import type { AnimationControllerComponent } from '../components/AnimationController';
+import { applyAnimationControllerAction } from '../components/AnimationController';
 
 /**
  * 物理系统 (ECS 桥接版)
@@ -36,6 +40,7 @@ export class EcsPhysicsSystem extends System {
 
     // 2. 执行物理步进
     this.engine.step(this.substeps);
+    this.dispatchContactSignals(entities, this.engine.consumeContactEvents());
 
     // 3. 将物理模拟结果同步回 Transform
     this.syncEngineToEntities(entities);
@@ -87,6 +92,7 @@ export class EcsPhysicsSystem extends System {
       friction: rb.friction,
       restitution: rb.restitution,
       bullet: rb.bullet,
+      sensor: rb.sensor,
       fixedRotation: rb.fixedRotation,
       gravityScale: rb.gravityScale,
     };
@@ -177,4 +183,84 @@ export class EcsPhysicsSystem extends System {
   getEngine(): PhysicsEngine {
     return this.engine;
   }
+
+  private dispatchContactSignals(entities: Entity[], contacts: PhysicsContactEvent[]): void {
+    if (contacts.length === 0) return;
+
+    const events = contacts.map((contact) => ({
+      id: `physics.overlap.${contact.phase}`,
+      payload: {
+        selfId: contact.selfId,
+        otherId: contact.otherId,
+      },
+    }));
+
+    for (const signal of events) {
+      for (const entity of entities) {
+        const bindings = entity.components.get('SignalBindings') as SignalBindingsComponent | undefined;
+        if (!bindings || String(entity.id) !== String(signal.payload.selfId)) continue;
+
+        for (const rule of bindings.rules) {
+          if (rule.event !== signal.id) continue;
+          if (rule.when && !evaluateWhenExpr(rule.when, signal.payload, entity)) continue;
+          this.applySignalRule(entity, rule.target, rule.action, resolveRuleArgs(rule.args, signal.payload, entity));
+        }
+      }
+    }
+  }
+
+  private applySignalRule(
+    entity: Entity,
+    target: string,
+    action: string,
+    args: Record<string, unknown>,
+  ): void {
+    const normalizedTarget = target.trim().toLowerCase();
+    if (normalizedTarget !== 'animationcontroller') return;
+
+    const controller = entity.components.get('AnimationController') as AnimationControllerComponent | undefined;
+    if (!controller) return;
+    applyAnimationControllerAction(controller, action, args);
+  }
+}
+
+function evaluateWhenExpr(expr: string, payload: Record<string, unknown>, entity: Entity): boolean {
+  try {
+    const fn = new Function('payload', 'self', `return Boolean(${expr});`);
+    return Boolean(fn(payload, entity));
+  } catch {
+    return false;
+  }
+}
+
+function resolveRuleArgs(
+  args: Record<string, string | number | boolean>,
+  payload: Record<string, unknown>,
+  entity: Entity,
+): Record<string, unknown> {
+  const resolved: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(args)) {
+    if (typeof value === 'string') {
+      if (value.startsWith('payload.')) {
+        resolved[key] = readPath(payload, value.slice('payload.'.length));
+        continue;
+      }
+      if (value === 'self.id') {
+        resolved[key] = entity.id;
+        continue;
+      }
+    }
+    resolved[key] = value;
+  }
+  return resolved;
+}
+
+function readPath(source: Record<string, unknown>, path: string): unknown {
+  const segments = path.split('.');
+  let cursor: unknown = source;
+  for (const segment of segments) {
+    if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor)) return undefined;
+    cursor = (cursor as Record<string, unknown>)[segment];
+  }
+  return cursor;
 }

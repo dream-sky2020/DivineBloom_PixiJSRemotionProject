@@ -348,6 +348,66 @@
     "path": "audio/meme/yeah-boiii-i-i-i.mp3"
   },
   {
+    "id": "digit-digit_0",
+    "url": "/digit/digit_0.svg",
+    "type": "image",
+    "path": "digit/digit_0.svg"
+  },
+  {
+    "id": "digit-digit_1",
+    "url": "/digit/digit_1.svg",
+    "type": "image",
+    "path": "digit/digit_1.svg"
+  },
+  {
+    "id": "digit-digit_2",
+    "url": "/digit/digit_2.svg",
+    "type": "image",
+    "path": "digit/digit_2.svg"
+  },
+  {
+    "id": "digit-digit_3",
+    "url": "/digit/digit_3.svg",
+    "type": "image",
+    "path": "digit/digit_3.svg"
+  },
+  {
+    "id": "digit-digit_4",
+    "url": "/digit/digit_4.svg",
+    "type": "image",
+    "path": "digit/digit_4.svg"
+  },
+  {
+    "id": "digit-digit_5",
+    "url": "/digit/digit_5.svg",
+    "type": "image",
+    "path": "digit/digit_5.svg"
+  },
+  {
+    "id": "digit-digit_6",
+    "url": "/digit/digit_6.svg",
+    "type": "image",
+    "path": "digit/digit_6.svg"
+  },
+  {
+    "id": "digit-digit_7",
+    "url": "/digit/digit_7.svg",
+    "type": "image",
+    "path": "digit/digit_7.svg"
+  },
+  {
+    "id": "digit-digit_8",
+    "url": "/digit/digit_8.svg",
+    "type": "image",
+    "path": "digit/digit_8.svg"
+  },
+  {
+    "id": "digit-digit_9",
+    "url": "/digit/digit_9.svg",
+    "type": "image",
+    "path": "digit/digit_9.svg"
+  },
+  {
     "id": "image-1779766347972",
     "url": "/image/1779766347972.png",
     "type": "image",
@@ -779,6 +839,318 @@
     "type": "image",
     "path": "image/君主宝/君主宝/默认-站立/默认（白边）.png",
     "defaultScale": 0.18
+  },
+  {
+    "id": "image-无我良-轻伤-受击-优势",
+    "url": "/image/无我良/轻伤-受击/优势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-受击/优势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-受击-优势（白边）",
+    "url": "/image/无我良/轻伤-受击/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-受击/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-受击-劣势",
+    "url": "/image/无我良/轻伤-受击/劣势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-受击/劣势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-受击-劣势（白边）",
+    "url": "/image/无我良/轻伤-受击/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-受击/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-受击-默认",
+    "url": "/image/无我良/轻伤-受击/默认.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-受击/默认.png"
+  },
+  {
+    "id": "image-无我良-轻伤-受击-默认（白边）",
+    "url": "/image/无我良/轻伤-受击/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-受击/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击前摇-优势",
+    "url": "/image/无我良/轻伤-攻击前摇/优势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击前摇/优势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击前摇-优势（白边）",
+    "url": "/image/无我良/轻伤-攻击前摇/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击前摇/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击前摇-劣势",
+    "url": "/image/无我良/轻伤-攻击前摇/劣势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击前摇/劣势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击前摇-劣势（白边）",
+    "url": "/image/无我良/轻伤-攻击前摇/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击前摇/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击前摇-默认",
+    "url": "/image/无我良/轻伤-攻击前摇/默认.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击前摇/默认.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击前摇-默认（白边）",
+    "url": "/image/无我良/轻伤-攻击前摇/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击前摇/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击后摇-默认",
+    "url": "/image/无我良/轻伤-攻击后摇/默认.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击后摇/默认.png"
+  },
+  {
+    "id": "image-无我良-轻伤-攻击后摇-默认（白边）",
+    "url": "/image/无我良/轻伤-攻击后摇/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-攻击后摇/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-移动-优势",
+    "url": "/image/无我良/轻伤-移动/优势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-移动/优势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-移动-优势（白边）",
+    "url": "/image/无我良/轻伤-移动/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-移动/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-移动-劣势",
+    "url": "/image/无我良/轻伤-移动/劣势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-移动/劣势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-移动-劣势（白边）",
+    "url": "/image/无我良/轻伤-移动/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-移动/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-移动-默认",
+    "url": "/image/无我良/轻伤-移动/默认.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-移动/默认.png"
+  },
+  {
+    "id": "image-无我良-轻伤-移动-默认（白边）",
+    "url": "/image/无我良/轻伤-移动/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-移动/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-站立-优势",
+    "url": "/image/无我良/轻伤-站立/优势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-站立/优势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-站立-优势（白边）",
+    "url": "/image/无我良/轻伤-站立/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-站立/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-站立-劣势",
+    "url": "/image/无我良/轻伤-站立/劣势.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-站立/劣势.png"
+  },
+  {
+    "id": "image-无我良-轻伤-站立-劣势（白边）",
+    "url": "/image/无我良/轻伤-站立/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-站立/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-轻伤-站立-默认",
+    "url": "/image/无我良/轻伤-站立/默认.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-站立/默认.png"
+  },
+  {
+    "id": "image-无我良-轻伤-站立-默认（白边）",
+    "url": "/image/无我良/轻伤-站立/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/轻伤-站立/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-受击-优势",
+    "url": "/image/无我良/默认-受击/优势.png",
+    "type": "image",
+    "path": "image/无我良/默认-受击/优势.png"
+  },
+  {
+    "id": "image-无我良-默认-受击-优势（白边）",
+    "url": "/image/无我良/默认-受击/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-受击/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-受击-劣势",
+    "url": "/image/无我良/默认-受击/劣势.png",
+    "type": "image",
+    "path": "image/无我良/默认-受击/劣势.png"
+  },
+  {
+    "id": "image-无我良-默认-受击-劣势（白边）",
+    "url": "/image/无我良/默认-受击/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-受击/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-受击-默认",
+    "url": "/image/无我良/默认-受击/默认.png",
+    "type": "image",
+    "path": "image/无我良/默认-受击/默认.png"
+  },
+  {
+    "id": "image-无我良-默认-受击-默认（白边）",
+    "url": "/image/无我良/默认-受击/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-受击/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击前摇-优势",
+    "url": "/image/无我良/默认-攻击前摇/优势.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击前摇/优势.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击前摇-优势（白边）",
+    "url": "/image/无我良/默认-攻击前摇/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击前摇/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击前摇-劣势",
+    "url": "/image/无我良/默认-攻击前摇/劣势.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击前摇/劣势.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击前摇-劣势（白边）",
+    "url": "/image/无我良/默认-攻击前摇/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击前摇/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击前摇-默认",
+    "url": "/image/无我良/默认-攻击前摇/默认.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击前摇/默认.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击前摇-默认（白边）",
+    "url": "/image/无我良/默认-攻击前摇/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击前摇/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击后摇-默认",
+    "url": "/image/无我良/默认-攻击后摇/默认.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击后摇/默认.png"
+  },
+  {
+    "id": "image-无我良-默认-攻击后摇-默认（白边）",
+    "url": "/image/无我良/默认-攻击后摇/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-攻击后摇/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-移动-优势",
+    "url": "/image/无我良/默认-移动/优势.png",
+    "type": "image",
+    "path": "image/无我良/默认-移动/优势.png"
+  },
+  {
+    "id": "image-无我良-默认-移动-优势（白边）",
+    "url": "/image/无我良/默认-移动/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-移动/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-移动-劣势",
+    "url": "/image/无我良/默认-移动/劣势.png",
+    "type": "image",
+    "path": "image/无我良/默认-移动/劣势.png"
+  },
+  {
+    "id": "image-无我良-默认-移动-劣势（白边）",
+    "url": "/image/无我良/默认-移动/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-移动/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-移动-默认",
+    "url": "/image/无我良/默认-移动/默认.png",
+    "type": "image",
+    "path": "image/无我良/默认-移动/默认.png"
+  },
+  {
+    "id": "image-无我良-默认-移动-默认（白边）",
+    "url": "/image/无我良/默认-移动/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-移动/默认（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-站立-优势",
+    "url": "/image/无我良/默认-站立/优势.png",
+    "type": "image",
+    "path": "image/无我良/默认-站立/优势.png"
+  },
+  {
+    "id": "image-无我良-默认-站立-优势（白边）",
+    "url": "/image/无我良/默认-站立/优势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-站立/优势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-站立-劣势",
+    "url": "/image/无我良/默认-站立/劣势.png",
+    "type": "image",
+    "path": "image/无我良/默认-站立/劣势.png"
+  },
+  {
+    "id": "image-无我良-默认-站立-劣势（白边）",
+    "url": "/image/无我良/默认-站立/劣势（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-站立/劣势（白边）.png"
+  },
+  {
+    "id": "image-无我良-默认-站立-默认",
+    "url": "/image/无我良/默认-站立/默认.png",
+    "type": "image",
+    "path": "image/无我良/默认-站立/默认.png"
+  },
+  {
+    "id": "image-无我良-默认-站立-默认（白边）",
+    "url": "/image/无我良/默认-站立/默认（白边）.png",
+    "type": "image",
+    "path": "image/无我良/默认-站立/默认（白边）.png"
   },
   {
     "id": "image-第九章背景-第九章最后演出back",

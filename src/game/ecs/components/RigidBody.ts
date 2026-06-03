@@ -10,6 +10,7 @@ export interface RigidBodyComponent extends Component {
   angularVelocity: number;
   fixedRotation: boolean;
   bullet: boolean;
+  sensor: boolean;
   gravityScale: number;
   friction: number;
   restitution: number;
@@ -27,6 +28,7 @@ export const createRigidBody = (
   angularVelocity: options.angularVelocity ?? 0,
   fixedRotation: options.fixedRotation ?? false,
   bullet: options.bullet ?? false,
+  sensor: options.sensor ?? false,
   gravityScale: options.gravityScale ?? 1,
   friction: options.friction ?? 0.5,
   restitution: options.restitution ?? 0.2,

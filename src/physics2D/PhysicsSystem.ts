@@ -29,16 +29,28 @@ export interface PhysicsObjectDetailedState extends PhysicsObjectState {
   worldPoints?: PhysicsPoint[];
 }
 
+export type PhysicsContactPhase = 'enter' | 'stay' | 'exit';
+
+export interface PhysicsContactEvent {
+  selfId: string;
+  otherId: string;
+  phase: PhysicsContactPhase;
+}
+
 export class PhysicsSystem {
   private world: planck.World;
   private bodies: Map<string, planck.Body> = new Map();
   private metadata: Map<string, any> = new Map();
+  private activeContactPairs: Set<string> = new Set();
+  private enteredContactPairs: Set<string> = new Set();
+  private exitedContactPairs: Set<string> = new Set();
 
   constructor(gravity = { x: 0.0, y: 0.0 }) {
     // 创建物理世界
     this.world = new planck.World({
       gravity: planck.Vec2(gravity.x, gravity.y)
     });
+    this.attachContactListeners();
   }
 
   static async init() {
@@ -52,6 +64,9 @@ export class PhysicsSystem {
    * Planck 的 step 默认建议使用 1/60s
    */
   step(substeps = 1) {
+    this.enteredContactPairs.clear();
+    this.exitedContactPairs.clear();
+
     const dt = 1 / 60;
     const velocityIterations = 8;
     const positionIterations = 3;
@@ -74,6 +89,7 @@ export class PhysicsSystem {
       fixedRotation: options.fixedRotation ?? false,
       gravityScale: options.gravityScale ?? 1.0,
     });
+    body.setUserData({ id });
     this.bodies.set(id, body);
     return body;
   }
@@ -86,6 +102,7 @@ export class PhysicsSystem {
       restitution: options.restitution ?? 0.7,
       friction: options.friction ?? 0.5,
       density: options.density ?? 1.0,
+      isSensor: options.sensor ?? false,
     });
     
     this.metadata.set(id, { type: 'circle', radius, color: options.color });
@@ -101,6 +118,7 @@ export class PhysicsSystem {
       restitution: options.restitution ?? 0.7,
       friction: options.friction ?? 0.5,
       density: options.density ?? 1.0,
+      isSensor: options.sensor ?? false,
     });
     
     this.metadata.set(id, { type: 'rectangle', width, height, color: options.color });
@@ -122,6 +140,7 @@ export class PhysicsSystem {
       restitution: options.restitution ?? 0.7,
       friction: options.friction ?? 0.5,
       density: options.density ?? 1.0,
+      isSensor: options.sensor ?? false,
     });
     
     this.metadata.set(id, { type: 'triangle', points: [p1, p2, p3], color: options.color });
@@ -138,6 +157,7 @@ export class PhysicsSystem {
       restitution: options.restitution ?? 0.7,
       friction: options.friction ?? 0.5,
       density: options.density ?? 1.0,
+      isSensor: options.sensor ?? false,
     });
     
     this.metadata.set(id, { type: 'polygon', points, color: options.color });
@@ -154,10 +174,41 @@ export class PhysicsSystem {
   removeObject(id: string) {
     const body = this.bodies.get(id);
     if (body) {
+      this.detachBodyContacts(id);
       this.world.destroyBody(body);
       this.bodies.delete(id);
       this.metadata.delete(id);
     }
+  }
+
+  consumeContactEvents(): PhysicsContactEvent[] {
+    const events: PhysicsContactEvent[] = [];
+
+    for (const pairKey of this.enteredContactPairs) {
+      const pair = decodePairKey(pairKey);
+      if (!pair) continue;
+      events.push({ selfId: pair.a, otherId: pair.b, phase: 'enter' });
+      events.push({ selfId: pair.b, otherId: pair.a, phase: 'enter' });
+    }
+
+    for (const pairKey of this.activeContactPairs) {
+      if (this.enteredContactPairs.has(pairKey)) continue;
+      const pair = decodePairKey(pairKey);
+      if (!pair) continue;
+      events.push({ selfId: pair.a, otherId: pair.b, phase: 'stay' });
+      events.push({ selfId: pair.b, otherId: pair.a, phase: 'stay' });
+    }
+
+    for (const pairKey of this.exitedContactPairs) {
+      const pair = decodePairKey(pairKey);
+      if (!pair) continue;
+      events.push({ selfId: pair.a, otherId: pair.b, phase: 'exit' });
+      events.push({ selfId: pair.b, otherId: pair.a, phase: 'exit' });
+    }
+
+    this.enteredContactPairs.clear();
+    this.exitedContactPairs.clear();
+    return events;
   }
 
   getAllStates(): PhysicsObjectState[] {
@@ -295,6 +346,51 @@ export class PhysicsSystem {
     };
   }
 
+  private attachContactListeners(): void {
+    this.world.on('begin-contact', (contact) => {
+      const pairKey = this.createContactPairKey(contact);
+      if (!pairKey) return;
+      if (!this.activeContactPairs.has(pairKey)) {
+        this.enteredContactPairs.add(pairKey);
+      }
+      this.activeContactPairs.add(pairKey);
+    });
+
+    this.world.on('end-contact', (contact) => {
+      const pairKey = this.createContactPairKey(contact);
+      if (!pairKey) return;
+      if (this.activeContactPairs.has(pairKey)) {
+        this.activeContactPairs.delete(pairKey);
+        this.exitedContactPairs.add(pairKey);
+      }
+    });
+  }
+
+  private createContactPairKey(contact: planck.Contact): string | null {
+    const fixtureA = contact.getFixtureA();
+    const fixtureB = contact.getFixtureB();
+    const bodyA = fixtureA?.getBody();
+    const bodyB = fixtureB?.getBody();
+    const idA = readBodyId(bodyA);
+    const idB = readBodyId(bodyB);
+    if (!idA || !idB || idA === idB) {
+      return null;
+    }
+    return encodePairKey(idA, idB);
+  }
+
+  private detachBodyContacts(bodyId: string): void {
+    for (const pairKey of [...this.activeContactPairs]) {
+      const pair = decodePairKey(pairKey);
+      if (!pair) continue;
+      if (pair.a === bodyId || pair.b === bodyId) {
+        this.activeContactPairs.delete(pairKey);
+        this.enteredContactPairs.delete(pairKey);
+        this.exitedContactPairs.add(pairKey);
+      }
+    }
+  }
+
   destroy() {
     // Planck 不需要显式 free，但可以清除引用
     this.bodies.clear();
@@ -304,4 +400,20 @@ export class PhysicsSystem {
       this.world.destroyBody(b);
     }
   }
+}
+
+function readBodyId(body: planck.Body | null | undefined): string | null {
+  if (!body) return null;
+  const userData = body.getUserData() as { id?: string } | undefined;
+  return userData?.id || null;
+}
+
+function encodePairKey(a: string, b: string): string {
+  return a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`;
+}
+
+function decodePairKey(pairKey: string): { a: string; b: string } | null {
+  const [a, b] = pairKey.split('\u0000');
+  if (!a || !b) return null;
+  return { a, b };
 }
