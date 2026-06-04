@@ -4,13 +4,10 @@ import type {
   SignalConfigComponent,
   SignalEmitRule,
   SignalActionRule,
+  BehaviorComponent,
 } from '../../types';
-import type { AnimationControllerComponent } from '../components/AnimationController';
-import { queueAnimationControllerAction } from '../components/AnimationController';
 import type { GameObjectControllerComponent } from '../components/GameObjectController';
 import { queueGameObjectControllerAction } from '../components/GameObjectController';
-import type { StageDirectorControllerComponent } from '../components/StageDirectorController';
-import { queueStageDirectorControllerAction } from '../components/StageDirectorController';
 import {
   consumeQueuedSignalEvents,
   enqueueSignalEvent,
@@ -95,18 +92,12 @@ export class EcsSignalSystem extends System {
   }
 
   private applyActionRule(
-    entities: Entity[],
+    _entities: Entity[],
     entity: Entity,
     rule: SignalActionRule,
     payload: Record<string, unknown>,
   ): void {
     const normalizedTarget = rule.target.trim().toLowerCase();
-    if (normalizedTarget === 'animationcontroller') {
-      const controller = entity.components.get('AnimationController') as AnimationControllerComponent | undefined;
-      if (!controller) return;
-      queueAnimationControllerAction(controller, rule.action, resolveActionArgs(rule, payload, entity));
-      return;
-    }
 
     if (normalizedTarget === 'gameobjectcontroller') {
       const controller = entity.components.get('GameObjectController') as GameObjectControllerComponent | undefined;
@@ -115,31 +106,12 @@ export class EcsSignalSystem extends System {
       return;
     }
 
-    if (normalizedTarget === 'stagedirectorcontroller') {
-      const resolvedArgs = resolveActionArgs(rule, payload, entity);
-      const localController = entity.components.get('StageDirectorController') as
-        | StageDirectorControllerComponent
-        | undefined;
-      if (localController) {
-        queueStageDirectorControllerAction(localController, rule.action, resolvedArgs);
-        return;
+    if (normalizedTarget === 'behavior') {
+      const behavior = entity.components.get('Behavior') as BehaviorComponent | undefined;
+      if (behavior?.instance?.onMessage) {
+        behavior.instance.onMessage(rule.action, resolveActionArgs(rule, payload, entity));
       }
-      const requestedDirectorId =
-        typeof resolvedArgs.directorId === 'string' ? resolvedArgs.directorId.trim() : '';
-      const requestedScope = typeof resolvedArgs.scope === 'string' ? resolvedArgs.scope.trim() : '';
-      for (const candidate of entities) {
-        const candidateController = candidate.components.get('StageDirectorController') as
-          | StageDirectorControllerComponent
-          | undefined;
-        if (!candidateController) continue;
-        if (requestedDirectorId && candidateController.id !== requestedDirectorId) continue;
-        if (requestedScope && candidateController.scope !== requestedScope) continue;
-        queueStageDirectorControllerAction(candidateController, rule.action, resolvedArgs);
-        return;
-      }
-      console.warn(
-        `[SignalSystem] No StageDirectorController matched action "${rule.action}" (directorId=${requestedDirectorId || '*'}, scope=${requestedScope || '*'})`,
-      );
+      return;
     }
   }
 }

@@ -1,5 +1,5 @@
 import { System } from '../../types';
-import type { Entity } from '../../types';
+import type { Entity, BehaviorComponent } from '../../types';
 import type { GameObjectControllerComponent } from '../components/GameObjectController';
 import { consumeGameObjectControllerActions } from '../components/GameObjectController';
 import { queueEntityDestroy } from '../lifecycleRuntime';
@@ -19,6 +19,10 @@ export class EcsGameObjectLifecycleSystem extends System {
       }
 
       if (!controller.alive) {
+        const behavior = entity.components.get('Behavior') as BehaviorComponent | undefined;
+        if (behavior?.instance?.onDestroy) {
+          behavior.instance.onDestroy();
+        }
         queueEntityDestroy(String(entity.id));
         continue;
       }
@@ -27,6 +31,10 @@ export class EcsGameObjectLifecycleSystem extends System {
       if (controller.destroyAt !== null && now < controller.destroyAt) continue;
 
       controller.alive = false;
+      const behavior = entity.components.get('Behavior') as BehaviorComponent | undefined;
+      if (behavior?.instance?.onDestroy) {
+        behavior.instance.onDestroy();
+      }
       queueEntityDestroy(String(entity.id));
     }
   }

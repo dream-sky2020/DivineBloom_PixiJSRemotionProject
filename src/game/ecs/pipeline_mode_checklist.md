@@ -8,25 +8,24 @@
 
 1. `InputSystem`
 2. `SignalSystem`
-3. `StageDirectorSystem`
-4. `AnimationSystem`
-5. `PhysicsSystem`
-6. `ParticleSystem`
-7. `GameObjectLifecycleSystem`
-8. `RenderSystem`
+3. `BehaviorSystem`
+4. `PhysicsSystem`
+5. `ParticleSystem`
+6. `GameObjectLifecycleSystem`
+7. `RenderSystem`
 
 ## 2) 系统职责边界
 
 - `InputSystem`：采样输入，发事件。
-- `SignalSystem`：匹配规则，写动作请求。
-- `StageDirectorSystem`：推进舞台实例，写舞台轨道属性，发 `Key.Events/Cues`。
-- `AnimationSystem`：推进动画控制器，写动画轨道属性，发动画 `Key.Events`。
+- `SignalSystem`：匹配规则，写动作请求或向 `Behavior` 发送消息。
+- `BehaviorSystem`：调度自定义 `GameObject` 实例，执行复杂的业务逻辑和动画计算。
 - `PhysicsSystem`：推进物理并同步回组件。
 - `RenderSystem`：读取状态并输出渲染命令，不写业务状态。
 
 ## 3) 新功能接入前自检
 
 - 这个功能是“事件路由”还是“状态推进”？只能选一个主职责系统。
+- 复杂的业务逻辑是否应该放在 `Behavior` 中实现？
 - 是否新增了跨系统直接调用？如果有，优先改为事件或 action request。
 - 是否能明确回答：事件在哪产生、在哪消费、在哪落状态？
 

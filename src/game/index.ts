@@ -1,3 +1,9 @@
+import { GameObjectRegistry } from './GameObjectRegistry';
+import { DigitCycleBehavior } from './behaviors/DigitCycleBehavior';
+
+// 注册演示 Behavior
+GameObjectRegistry.register('DigitCycle', (entity, params) => new DigitCycleBehavior(entity, params));
+
 export * from './types';
 export * from './ecs/World';
 export * from './parser/XmlParser';
@@ -10,19 +16,15 @@ export * from './ecs/components/Graphic';
 export * from './ecs/components/Camera';
 export * from './ecs/components/Canvas';
 export * from './ecs/components/ParticleEmitter';
-export * from './ecs/components/Animations';
-export * from './ecs/components/AnimationController';
 export * from './ecs/components/GameObjectController';
-export * from './ecs/components/StageDirectorController';
 export * from './ecs/systems/PhysicsSystem';
 export * from './ecs/systems/RenderSystem';
 export * from './ecs/systems/ParticleSystem';
-export * from './ecs/systems/AnimationSystem';
 export * from './ecs/systems/InputSystem';
 export * from './ecs/systems/SignalSystem';
 export * from './ecs/systems/GameObjectLifecycleSystem';
-export * from './ecs/systems/StageDirectorSystem';
-export * from './animationFunctionRegistry';
+export * from './ecs/systems/BehaviorSystem';
+export * from './GameObjectRegistry';
 
 import { World } from './ecs/World';
 import { XmlParser } from './parser/XmlParser';
@@ -31,8 +33,7 @@ import type { System, WorldData } from './types';
 const RECOMMENDED_PIPELINE_ORDER = [
   'InputSystem',
   'SignalSystem',
-  'StageDirectorSystem',
-  'AnimationSystem',
+  'BehaviorSystem',
   'PhysicsSystem',
   'ParticleSystem',
   'GameObjectLifecycleSystem',
@@ -133,18 +134,18 @@ function collectAutoRequiredSystems(worldData: WorldData): string[] {
     required.push('SignalSystem');
   }
 
-  const hasStageDirectorEntity = worldData.entities.some((entity) =>
-    entity.components.has('StageDirectorController'),
-  );
-  if (hasStageDirectorEntity && !enabledSet.has('StageDirectorSystem')) {
-    required.push('StageDirectorSystem');
-  }
-
   const hasGameObjectControllerEntity = worldData.entities.some((entity) =>
     entity.components.has('GameObjectController'),
   );
   if (hasGameObjectControllerEntity && !enabledSet.has('GameObjectLifecycleSystem')) {
     required.push('GameObjectLifecycleSystem');
+  }
+
+  const hasBehaviorEntity = worldData.entities.some((entity) =>
+    entity.components.has('Behavior'),
+  );
+  if (hasBehaviorEntity && !enabledSet.has('BehaviorSystem')) {
+    required.push('BehaviorSystem');
   }
 
   return required;

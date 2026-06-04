@@ -11,10 +11,9 @@
         <SystemPipeline>
             <!-- 以下系统仅为示例，实际名称取决于你注册的系统 -->
             <System name="InputSystem" enabled="true" />
-            <System name="AISystem" enabled="true" />
             <System name="PhysicsSystem" enabled="true" />
             <System name="ParticleSystem" enabled="true" />
-            <System name="AnimationSystem" enabled="false" />
+            <System name="BehaviorSystem" enabled="true" />
             <System name="RenderSystem" enabled="true" />
         </SystemPipeline>
     </EngineConfig>
@@ -87,61 +86,10 @@
 粒子系统建议顺序：`PhysicsSystem -> ParticleSystem -> RenderSystem`。
 其中 `ParticleSystem` 会将发射器生成的 `ParticleData[]` 批处理为 Pixi 粒子命令。
 
-当工程启用输入-信号驱动时，建议顺序：
-`InputSystem -> EventDispatchSystem -> Gameplay/AI/Physics -> RenderSystem`。
+当工程启用行为系统时，建议顺序：
+`InputSystem -> BehaviorSystem -> PhysicsSystem -> RenderSystem`。
 
-### 2.2 事件总线配置 (EventBus)
-
-用于声明“允许发布/订阅的事件集合”以及 payload 结构约束。
-推荐作为 `<EngineConfig>` 的直接子节点，作为项目级基线。
-
-```xml
-<EventBus
-    mode="strict"
-    unknownEvent="error"
-    maxQueuePerFrame="2048"
->
-    <EventCatalog>
-        <Event id="core.scene.loaded" channel="lifecycle" sticky="true">
-            <Payload>
-                <Field name="sceneName" type="string" required="true" />
-            </Payload>
-        </Event>
-
-        <Event id="combat.damage.applied" channel="combat">
-            <Payload>
-                <Field name="sourceId" type="entityId" required="true" />
-                <Field name="targetId" type="entityId" required="true" />
-                <Field name="amount" type="number" required="true" />
-                <Field name="crit" type="boolean" required="false" default="false" />
-            </Payload>
-        </Event>
-    </EventCatalog>
-</EventBus>
-```
-
-字段说明：
-
-- `mode`：`[可选]` 校验模式，支持 `strict` / `loose`，默认 `strict`。
-  - `strict`：事件定义不合法即报错并中断加载（如 `Event.id` 重复、字段类型非法、payload 结构错误）。
-  - `loose`：记录警告并跳过非法定义，其余合法事件继续注册；适合编辑期预览，不建议用于正式构建。
-- `unknownEvent`：`[可选]` 未注册事件处理，支持 `error` / `warn` / `ignore`，默认 `error`。
-- `maxQueuePerFrame`：`[可选]` 单帧事件队列上限，默认 `2048`。
-- `Event.id`：`[必填]` 事件唯一标识。建议使用 `domain.subdomain.action`（如 `combat.damage.applied`）。
-- `Event.channel`：`[可选]` 事件逻辑频道（用于调试/分流），默认 `default`。
-  - 语义：用于给事件打“分类标签”，便于日志过滤、统计监控与中间件分流；不参与事件唯一性判定。
-  - 适用：事件量较大或系统较多时，按 `combat|ui|input|network|lifecycle` 分组管理。
-  - 不建议：把 `channel` 当作订阅主键；业务订阅应以 `Event.id` 为准。
-- `Event.sticky`：`[可选]` 是否粘性事件（新订阅者可收到最后一次状态），默认 `false`。
-  - 语义：事件总线会缓存该事件“最后一次 payload”；后续新订阅者在订阅瞬间会立即收到一次回放。
-  - 适用：状态型事件（如 `core.scene.loaded`、`network.connected`）。
-  - 不建议：瞬时动作事件（如 `input.jump.triggered`、`combat.damage.applied`），避免晚订阅导致误触发。
-- `Field.name`：`[必填]` payload 字段名。
-- `Field.type`：`[必填]` 字段类型，建议 `string|int|number|boolean|entityId|vector2|vector3`。
-- `Field.required`：`[可选]` 是否必填，默认 `false`。
-- `Field.default`：`[可选]` 缺省值；仅在 `required="false"` 时建议使用。
-
-### 2.3 输入配置 (InputConfig)
+### 2.2 输入配置 (InputConfig)
 
 定义输入设备策略、动作集合与底层绑定。输入系统只负责产出 Action 状态，不直接耦合业务逻辑。
 职责边界：本节只定义“设备 -> Action”的映射，不定义业务事件触发时机。
@@ -183,29 +131,9 @@
 </InputConfig>
 ```
 
-字段说明：
-
-- `mode`：`[可选]` 输入配置校验模式，支持 `strict` / `loose`，默认 `strict`。
-  - `strict`：配置不合法即报错并中断加载（如 action 不存在、ActionMap 不存在、2dComposite 缺 Part、枚举非法）。
-  - `loose`：记录警告并跳过非法项，其他合法配置继续生效。
-- `devicePolicy`：`[可选]` 允许设备集合，逗号分隔，默认 `keyboard,mouse`。
-- `deadzone`：`[可选]` 全局死区，默认 `0.15`。
-- `ActionMap.id`：`[必填]` 动作映射表 ID（如 `gameplay`、`ui`）。
-- `ActionMap.enabled`：`[可选]` 是否启用该映射表，默认 `true`。
-- `Action.id`：`[必填]` 动作 ID（语义化意图，不写业务实现）。
-- `Action.type`：`[必填]` 动作类型，支持 `button|axis1|axis2`。
-- `Binding.action`：`[必填]` 目标动作 ID。
-- `Binding.map`：`[可选]` 目标动作表；为空时使用 `ActionMaps.active`。
-- `Binding.path`：`[可选]` 单输入路径（如 `Keyboard/Space`、`Gamepad/LeftStick`）。
-- `Binding.kind`：`[可选]` 绑定模式。`2dComposite` 表示由多个 Part 组成二维轴。
-- `Binding.processor`：`[可选]` 输入后处理器表达式（如 `scale(0.1)`）。
-- `Part.name`：`[必填]` 复合轴方向名，建议 `up/down/left/right`。
-- `Part.path`：`[必填]` 方向输入路径。
-
-### 2.4 输入到信号映射 (InputToSignalMap)
+### 2.3 输入到信号映射 (InputToSignalMap)
 
 用于将 `Action` 的阶段变化统一映射为 `EventBus` 事件。推荐作为 `<EngineConfig>` 直接子节点。
-职责边界：业务事件触发时机只在本节通过 `Route.phase` 定义，避免与 `InputConfig` 重复。
 
 ```xml
 <InputToSignalMap defaultMap="gameplay">
@@ -223,58 +151,8 @@
             <Set key="entityId" value="$player" />
         </Payload>
     </Route>
-
-    <Route action="skill.primary" phase="pressed" emit="combat.skill.primary.requested" />
-    <Route action="ui.confirm" map="ui" phase="pressed" emit="ui.confirm.requested" />
 </InputToSignalMap>
 ```
-
-字段说明：
-
-- `defaultMap`：`[可选]` 默认动作表 ID（Route 未写 map 时使用）。
-- `Route.action`：`[必填]` 来源动作 ID。
-- `Route.map`：`[可选]` 来源动作表 ID。
-- `Route.phase`：`[必填]` 动作阶段，支持 `pressed|released|held|changed`。
-- `Route.emit`：`[必填]` 目标事件 ID（需在 EventBus 中注册，strict 下必须存在）。
-- `Route.throttleMs`：`[可选]` 节流间隔（毫秒），常用于 `axis` / `changed` 类持续输入。
-- `Set.key`：`[必填]` 输出 payload 键名。
-- `Set.from`：`[可选]` 从输入上下文取值，常见 `ctx.action|ctx.value|ctx.device|ctx.path|ctx.time`。
-- `Set.value`：`[可选]` 写入常量值（如 `$player`）。
-
-### 2.5 舞台动画剧本库 (StageScriptLibrary)
-
-用于定义“多对象参与”的全局动画剧本资产（角色占位符 + 运行时绑定）。
-
-最小结构示例：
-
-```xml
-<StageScriptLibrary mode="strict" defaultFps="60" unknownScript="error">
-    <StageScript id="stage.example.dual" duration="90" interruptPolicy="replace">
-        <Roles>
-            <Role id="attacker" required="true" />
-            <Role id="target" required="true" />
-        </Roles>
-        <Tracks>
-            <Track role="attacker" prop="transform.position.x">
-                <Key frame="0" value="420" />
-                <Key frame="20" value="520" />
-            </Track>
-        </Tracks>
-    </StageScript>
-</StageScriptLibrary>
-```
-
-核心字段（简版）：
-
-- `StageScript.id`：剧本 ID（全库唯一）。
-- `StageScript.duration`：时长（帧）。
-- `Role.id`：角色占位符 ID。
-- `Track.role`：目标角色。
-- `Track.prop`：目标属性路径。
-- `Key.frame` / `Key.value`：关键帧定义。
-
-详细字段、约束、错误码、关键帧事件（Key.Events）请查看：
-`src/game/doc/animation_module_spec.txt`
 
 ## 3. 游戏对象 (GameObject)
 
@@ -287,11 +165,11 @@
     <!-- Components -->
 </GameObject>
 
-## 3. 组件 (Components)
+## 4. 组件 (Components)
 
 挂载在 GameObject 下的数据结构。
 
-### 3.1 变换组件 (Transform)
+### 4.1 变换组件 (Transform)
 
 定义实体在空间中的位置、旋转和缩放。
 
@@ -302,19 +180,7 @@
     scale="1, 1, 1"                 <!-- [可选] x, y, z 缩放，默认 "1, 1, 1" -->
 />
 
-父子关系示例（无需嵌套 XML）：
-
-<GameObject name="Car" id="1001">
-    <Transform position="100, 100, 0" />
-    <RigidBody type="dynamic" />
-</GameObject>
-
-<GameObject name="Wheel" id="1002">
-    <Transform position="20, -10, 0" parent="1001" />
-    <Sprite texture="wheel.png" />
-</GameObject>
-
-### 3.2 精灵组件 (Sprite)
+### 4.2 精灵组件 (Sprite)
 
 定义实体的视觉表现。
 
@@ -327,9 +193,9 @@
     tint="0xffffff"                 <!-- [可选] 颜色滤镜 (十六进制)，默认 "0xffffff" -->
 />
 
-### 3.3 刚体组件 (RigidBody)
+### 4.3 刚体组件 (RigidBody)
 
-定义实体的物理属性，以及对外可触发的物理 `emit` 能力。
+定义实体的物理属性。
 
 <RigidBody 
     mass="50.0"                     <!-- [可选] 质量，默认 "1.0" -->
@@ -341,20 +207,11 @@
     fixedRotation="false"           <!-- [可选] 是否固定旋转，默认 "false" -->
     bullet="false"                  <!-- [可选] 是否开启高速避障 (CCD)，默认 "false" -->
     sensor="false"                  <!-- [可选] 是否作为传感器夹具，默认 "false" -->
-    emits="sensor.enter,sensor.stay,sensor.exit" <!-- [可选] 允许对外暴露的 emit 白名单 -->
     gravityScale="1.0"              <!-- [可选] 重力缩放系数，默认 "1.0" -->
     density="1.0"                   <!-- [可选] 密度，默认 "1.0" -->
 />
 
-字段补充：
-
-- `sensor`：`true` 时参与接触检测但不产生物理阻挡，常用于触发区/检测区。
-- `emits`：刚体可对外触发的 `emit` 列表（逗号分隔）。
-  - 默认值：`sensor.enter,sensor.stay,sensor.exit`。
-  - 当前支持值：`sensor.enter`（首次接触）、`sensor.stay`（持续接触）、`sensor.exit`（结束接触）。
-  - 建议：只暴露业务实际需要的 emit，避免无意义高频事件。
-
-### 3.4 盒碰撞体组件 (BoxCollider)
+### 4.4 盒碰撞体组件 (BoxCollider)
 
 定义实体的矩形碰撞区域。
 
@@ -365,7 +222,7 @@
     offsetY="0"                     <!-- [可选] 相对偏移 Y -->
 />
 
-### 3.5 圆形碰撞体组件 (CircleCollider)
+### 4.5 圆形碰撞体组件 (CircleCollider)
 
 定义实体的圆形碰撞区域。
 
@@ -375,7 +232,7 @@
     offsetY="0"                     <!-- [可选] 相对偏移 Y -->
 />
 
-### 3.6 多边形碰撞体组件 (PolygonCollider)
+### 4.6 多边形碰撞体组件 (PolygonCollider)
 
 定义实体的多边形碰撞区域。
 
@@ -383,7 +240,7 @@
     points="0,-10 10,10 -10,10"     <!-- [必填] 顶点列表，空格分隔坐标对，逗号分隔 x,y -->
 />
 
-### 3.7 矢量图形组件 (Graphic)
+### 4.7 矢量图形组件 (Graphic)
 
 定义实体的几何形状渲染。
 
@@ -399,9 +256,9 @@
     points="0,-10 10,10 -10,10"     <!-- [kind=polygonGraphic 时必填] 顶点列表 -->
 />
 
-### 3.8 摄像机组件 (Camera)
+### 4.8 摄像机组件 (Camera)
 
-定义场景的观察视角。通常挂载在一个专门的 GameObject 上。
+定义场景的观察视角。
 
 <Camera 
     x="0"                           <!-- [可选] 摄像机 X 轴偏移，默认 "0" -->
@@ -410,265 +267,60 @@
     focus="400"                     <!-- [可选] 焦点距离 (控制伪 3D 投影)，默认 "400" -->
 />
 
-### 3.9 粒子发射器组件 (ParticleEmitter)
+### 4.9 粒子发射器组件 (ParticleEmitter)
 
-定义一个粒子发射器。系统每帧会把粒子数据写入 `ParticleData[]`，再批量同步到 Pixi 粒子容器。
+定义一个粒子发射器。
 
 <ParticleEmitter
     maxParticles="200"              <!-- [可选] 粒子上限，默认 "200" -->
     emissionRate="30"               <!-- [可选] 每秒发射数量，默认 "30" -->
-    texture="spark.png"             <!-- [可选] 粒子纹理路径（推荐）。未提供时可配合 graphicKind 使用纯色点粒子 -->
-    graphicKind="circleGraphic"     <!-- [可选] 简单图形模式：circleGraphic / squareGraphic -->
-    lifetimeMin="0.5"               <!-- [可选] 最小生命周期（秒），默认 "0.5" -->
-    lifetimeMax="1.5"               <!-- [可选] 最大生命周期（秒），默认 "1.5" -->
-    speedMin="50"                   <!-- [可选] 最小速度，默认 "50" -->
-    speedMax="120"                  <!-- [可选] 最大速度，默认 "120" -->
-    angle="-90"                     <!-- [可选] 发射主方向（度），默认 "-90" -->
-    spread="45"                     <!-- [可选] 扩散角（度），默认 "45" -->
-    startColor="#ffaa00"            <!-- [可选] 起始颜色，默认 "#ffaa00" -->
-    endColor="#ff0000"              <!-- [可选] 结束颜色，默认 "#ff0000" -->
-    startSize="1.5"                 <!-- [可选] 起始缩放，默认 "1.5" -->
-    endSize="0.2"                   <!-- [可选] 结束缩放，默认 "0.2" -->
-    startAlpha="1.0"                <!-- [可选] 起始透明度，默认 "1.0" -->
-    endAlpha="0.0"                  <!-- [可选] 结束透明度，默认 "0.0" -->
-    blendMode="add"                 <!-- [可选] 混合模式，默认 "add" -->
-    anchor="0.5, 0.5"               <!-- [可选] 粒子锚点，默认 "0.5,0.5" -->
+    texture="spark.png"             <!-- [可选] 粒子纹理路径 -->
+    graphicKind="circleGraphic"     <!-- [可选] 简单图形模式 -->
+    lifetimeMin="0.5"               <!-- [可选] 最小生命周期（秒） -->
+    lifetimeMax="1.5"               <!-- [可选] 最大生命周期（秒） -->
+    speedMin="50"                   <!-- [可选] 最小速度 -->
+    speedMax="120"                  <!-- [可选] 最大速度 -->
+    angle="-90"                     <!-- [可选] 发射主方向（度） -->
+    spread="45"                     <!-- [可选] 扩散角（度） -->
+    startColor="#ffaa00"            <!-- [可选] 起始颜色 -->
+    endColor="#ff0000"              <!-- [可选] 结束颜色 -->
+    startSize="1.5"                 <!-- [可选] 起始缩放 -->
+    endSize="0.2"                   <!-- [可选] 结束缩放 -->
+    startAlpha="1.0"                <!-- [可选] 起始透明度 -->
+    endAlpha="0.0"                  <!-- [可选] 结束透明度 -->
+    blendMode="add"                 <!-- [可选] 混合模式 -->
+    anchor="0.5, 0.5"               <!-- [可选] 粒子锚点 -->
 />
 
-### 3.10 动画资产组件 (Animations)
+### 4.10 行为组件 (Behavior) [核心逻辑入口]
 
-定义实体可播放的本地动画资产（Label/Track/Key）。
-该组件只描述动画数据，不包含运行时播放状态。
-
-最小示例：
+用于挂载自定义代码逻辑。
 
 ```xml
-<Animations defaultLabel="idle">
-    <Label name="idle" duration="30" loop="true">
-        <Track prop="sprite.textureFrame" interpolation="hold">
-            <Key frame="0" value="idle_01" />
-            <Key frame="10" value="idle_02" />
-        </Track>
-    </Label>
-</Animations>
-```
-
-详细字段、插值语义与校验规则请查看：
-`src/game/doc/animation_module_spec.txt`
-
-### 3.11 动画控制组件 (AnimationController)
-
-定义实体动画运行时状态（支持单状态机与多层并行控制）。
-该组件不保存轨道资产，只消费 `Animations` 标签数据。
-
-最小示例：
-
-```xml
-<AnimationController
-    mode="layered"
-    layerConflictPolicy="byMask"
-    actions="setLabel,playOnce,pause,resume,setSpeed,setLoopOverride,setLayerLabel,playLayerOnce,pauseLayer,resumeLayer"
+<Behavior 
+    type="Boss"                     <!-- [必填] 注册在 GameObjectRegistry 中的类型名称 -->
+    health="1000"                   <!-- [可选] 自定义属性，将作为 params 传入构造函数 -->
+    difficulty="hard"
 >
-    <Layers>
-        <Layer id="lowerBody" priority="10" enabled="true" writeMask="transform.position.*,lowerBody.*">
-            <State currentLabel="run" playing="true" localFrame="0" speedScale="1.0" direction="forward" />
-        </Layer>
-        <Layer id="upperBody" priority="20" enabled="true" writeMask="upperBody.*,sprite.textureFrame.upper">
-            <State currentLabel="shoot" playing="true" localFrame="0" speedScale="1.0" direction="forward" />
-        </Layer>
-        <Layer id="fx" priority="100" enabled="true" blendMode="additive" writeMask="sprite.tint,sprite.alpha,color.*">
-            <State currentLabel="flash" playing="true" localFrame="0" speedScale="1.0" direction="forward" />
-        </Layer>
-    </Layers>
-</AnimationController>
+    <CustomData>extra info</CustomData> <!-- [可选] 子元素也会作为 params 传入 -->
+</Behavior>
 ```
 
-详细字段、动作清单与运行时约束请查看：
-`src/game/doc/animation_module_spec.txt`
+### 4.11 信号配置组件 (SignalConfig)
 
-### 3.12 信号配置组件 (SignalConfig)
-
-定义实体的“信号编排规则”。  
-职责边界：本组件统一负责两类能力：
-
-1) 消费信号并驱动目标组件动作（`On` 规则）；  
-2) 消费组件 `emit` 并发送新信号（`Emit` 规则）。
-
-本组件不负责输入采样（`InputConfig`）和输入转信号（`InputToSignalMap`）。
+定义实体的“信号编排规则”。
 
 ```xml
 <SignalConfig>
-    <!-- A. 信号 -> 动作 -->
-    <On event="input.move.changed" target="AnimationController" action="setLabel" priority="10">
-        <When expr="payload.axis && (payload.axis.x !== 0 || payload.axis.y !== 0)" />
-        <Args label="run" restart="false" />
+    <On event="input.jump.triggered" target="GameObjectController" action="destroy">
+        <Args reason="jump_to_death" />
     </On>
-
-    <On event="input.move.changed" target="AnimationController" action="setLabel" priority="5">
-        <When expr="payload.axis && payload.axis.x === 0 && payload.axis.y === 0" />
-        <Args label="idle" />
-    </On>
-
-    <On event="input.shoot.pressed" target="AnimationController" action="setLayerLabel" priority="20">
-        <Args layerId="upperBody" label="shoot" restart="true" />
-    </On>
-
-    <!-- B. 组件 emit -> 信号 -->
-    <Emit from="RigidBody" emit="sensor.enter" signal="combat.hit.enter" priority="100">
-        <Args selfId="self.id" otherId="payload.otherId" source="sensor" />
-    </Emit>
 </SignalConfig>
 ```
 
-字段说明：
+### 4.12 游戏对象控制组件 (GameObjectController)
 
-`On` 规则（信号 -> 动作）：
-
-- `On.event`：`[必填]` 监听的信号 ID（如 `input.jump.triggered`）。
-- `On.target`：`[必填]` 目标组件/目标域名称。当前规范建议支持 `AnimationController`、`GameObjectController`、`StageDirector`。
-- `On.action`：`[必填]` 目标组件动作名（需在目标组件 `actions` 白名单内）。
-- `On.priority`：`[可选]` 优先级，数字越大越先执行，默认 `0`。
-- `When.expr`：`[可选]` 触发表达式；返回 `true` 才执行动作。
-- `Args`：`[可选]` 动作参数容器。其所有属性都会作为参数传入动作。
-
-`On.target="StageDirector"` 数据约定（用于“事件触发舞台剧本 + 角色绑定”）：
-
-- `On.action` 建议支持：
-  - `playScript`：创建并播放一个舞台剧本实例；
-  - `stopScript`：按实例 ID 或 scriptId 停止剧本；
-  - `stopByRole`：停止占用了指定实体/角色的剧本实例。
-- `playScript` 的 `Args` 建议字段：
-  - `scriptId`：`[必填]` 剧本 ID；
-  - `instanceId`：`[可选]` 实例 ID（未传可由运行时生成）；
-  - `startFrame`：`[可选]` 起始帧，默认 `0`；
-  - `speed`：`[可选]` 播放倍率，默认 `1.0`；
-  - `loop`：`[可选]` 是否循环，默认 `false`；
-  - `bind.<roleId>`：`[可选/建议]` 将角色绑定到实体 ID（例如 `bind.attacker="payload.sourceId"`）。
-- 绑定校验建议：
-  - `bind.<roleId>` 中的 `<roleId>` 必须存在于目标剧本 `Roles`；
-  - 若目标角色为 `required=true` 且未绑定，创建实例失败；
-  - 绑定实体 ID 不存在时，按 `StageScriptLibrary.unknownScript` 风格配置策略处理（建议新增并行策略）。
-
-`Emit` 规则（组件 emit -> 信号）：
-
-- `Emit.from`：`[必填]` emit 来源组件名（如 `RigidBody`）。
-- `Emit.emit`：`[必填]` 来源组件触发的 emit 名（如 `sensor.enter`）。
-- `Emit.signal`：`[必填]` 发送到信号总线的目标信号 ID。
-- `Emit.priority`：`[可选]` 优先级，数字越大越先执行，默认 `0`。
-- `When.expr`：`[可选]` 条件表达式；返回 `true` 才发送该信号。
-- `Args`：`[可选]` 信号 payload 增量字段；会合并到 emit 的原始 payload。
-
-`Emit` 自定义能力（规范要求）：
-
-- 每个 `GameObject` 的 `SignalConfig` 独立生效，因此不同对象可以为同一个 `emit` 配置不同的 `signal`。
-- 每条 `Emit` 可以定义自己的 `Args` 模板，为信号注入不同业务字段（例如 `damage`、`zoneType`、`rewardId`、`source`）。
-- `Args` 支持“自定义固定字段”（常量字段），例如 `source="trap.spike"`、`zoneType="safe"`、`damage="25"`，用于声明稳定业务语义。
-- 合并规则：最终 payload = `emit` 原始 payload + `Args` 解析结果；同名字段由 `Args` 覆盖。
-- 同一对象可为同一 `emit` 配置多条 `Emit` 规则（用 `priority` + `When` 控制命中顺序与条件分流）。
-
-`When` / `Args` 上下文约定：
-
-- `When.expr` 可读取 `payload` 与 `self`：
-  - `payload`：当前信号（`On`）或当前 emit（`Emit`）的载荷；
-  - `self`：当前实体对象（可用 `self.id`）。
-- `Args` 属性值支持 primitive 自动解析：
-  - `"true"/"false"` -> boolean；
-  - 数字字符串 -> number；
-  - 其他 -> string。
-- `Args` 中若写 `payload.xxx` 字符串，将按路径从 payload 读取值；
-  例如：`<Args speed="payload.value" />`。
-- `Args` 中若写 `self.id`，会映射为当前实体 ID。
-- `Args` 中不带 `payload.` / `self.` 前缀的值，按固定字段处理（作为常量写入 payload）。
-
-固定字段示例（常量 + 动态字段混用）：
-
-```xml
-<Emit from="RigidBody" emit="sensor.enter" signal="combat.damage.requested">
-    <Args source="trap.spike" damage="25" element="fire" targetId="payload.otherId" triggerId="self.id" />
-</Emit>
-```
-
-执行顺序建议：
-
-1) `InputSystem` 读取输入并更新 Action 状态；  
-2) `InputToSignalMap` 按 `Route.phase` 产出输入信号；  
-3) 业务系统产生组件 emit（如 `RigidBody.sensor.enter`）；  
-4) `SignalConfig.Emit` 把组件 emit 映射为业务信号；  
-5) `SignalConfig.On` 消费信号并写入目标组件的 action 请求（`pending=true`）；  
-6) 各业务系统（如 `AnimationSystem`）在自身阶段消费请求、执行动作并重置 `pending=false`。
-
-多对象差异化示例（同为 `sensor.enter`，但发送不同信号和数据）：
-
-```xml
-<GameObject name="SpikeTrap" id="trap_01">
-    <RigidBody type="static" sensor="true" emits="sensor.enter" />
-    <SignalConfig>
-        <Emit from="RigidBody" emit="sensor.enter" signal="combat.damage.requested" priority="100">
-            <Args source="trap.spike" damage="25" targetId="payload.otherId" trapId="self.id" />
-        </Emit>
-    </SignalConfig>
-</GameObject>
-
-<GameObject name="TreasureZone" id="zone_01">
-    <RigidBody type="static" sensor="true" emits="sensor.enter" />
-    <SignalConfig>
-        <Emit from="RigidBody" emit="sensor.enter" signal="loot.collect.requested" priority="100">
-            <Args source="zone.treasure" rewardId="gold_001" amount="100" collectorId="payload.otherId" zoneId="self.id" />
-        </Emit>
-    </SignalConfig>
-</GameObject>
-```
-
-组合示例（Sensor emit -> 业务信号 -> 动画动作）：
-
-```xml
-<GameObject name="Hero" id="hero_01">
-    <RigidBody type="dynamic" sensor="true" emits="sensor.enter,sensor.exit" />
-
-    <Animations defaultLabel="idle">
-        <Label name="idle" duration="20" loop="true">
-            <Track prop="sprite.alpha" interpolation="linear" valueMode="absolute">
-                <Key frame="0" value="1.0" />
-                <Key frame="10" value="0.85" />
-                <Key frame="20" value="1.0" />
-            </Track>
-        </Label>
-        <Label name="hit" duration="8" loop="false">
-            <Track prop="sprite.alpha" interpolation="hold" valueMode="absolute">
-                <Key frame="0" value="1.0" />
-                <Key frame="8" value="1.0" />
-            </Track>
-        </Label>
-    </Animations>
-
-    <AnimationController
-        currentLabel="idle"
-        playing="true"
-        fallbackLabel="idle"
-        actions="setLabel,playOnce"
-    />
-
-    <SignalConfig>
-        <Emit from="RigidBody" emit="sensor.enter" signal="hero.hit.enter">
-            <Args selfId="self.id" otherId="payload.otherId" />
-        </Emit>
-
-        <On event="hero.hit.enter" target="AnimationController" action="playOnce" priority="100">
-            <Args label="hit" fallbackLabel="idle" />
-        </On>
-    </SignalConfig>
-</GameObject>
-```
-
-兼容说明：
-
-- `On` / `Emit` 规则都必须显式使用对应结构（内部统一为 `kind='action'` 与 `kind='emit'`）；
-- 建议统一采用“`Emit`（产出业务信号） + `On`（消费业务信号）”两段式编排，降低系统耦合。
-
-### 3.13 游戏对象控制组件 (GameObjectController)
-
-用于管理实体生命周期（存活、待销毁、延迟销毁等），并作为统一的生命周期 action 入口。
-该组件本身描述“生命周期状态 + 可接受动作”，具体执行由对应系统在自身阶段处理。
+用于管理实体生命周期。
 
 ```xml
 <GameObjectController
@@ -679,218 +331,29 @@
 />
 ```
 
-字段说明：
+## 5. 画布配置 (Canvas)
 
-- `alive`：`[可选]` 当前是否存活，默认 `"true"`。
-- `destroyable`：`[可选]` 是否允许销毁，默认 `"true"`。
-- `destroyDelayMs`：`[可选]` 默认延迟销毁毫秒数，默认 `"0"`。
-- `actions`：`[可选]` 允许被 `SignalConfig` 调用的生命周期动作白名单，逗号分隔。
-  当前建议至少包含：`destroy`。
-
-运行时字段（系统侧维护）：
-
-- `actionRequests.destroy.pending`：是否收到销毁请求。
-- `actionRequests.destroy.args`：销毁请求参数（如 `reason`、`delayMs`）。
-- `pendingDestroy`：是否已进入待销毁阶段。
-- `destroyAt`：计划销毁时间戳（毫秒）；`null` 表示本帧销毁。
-- `destroyReason`：销毁原因（可选，便于日志/回放/统计）。
-
-支持动作（与当前设计对齐）：
-
-- `destroy`：请求销毁当前实体。
-  - 常用参数：`reason`（可选）、`delayMs`（可选）、`emit`（可选，销毁时附加事件 ID）。
-  - 若 `delayMs` 未提供，回退到 `destroyDelayMs`。
-  - 动作应满足幂等：重复请求不会重复进入销毁流程。
-
-与 `SignalConfig` 配合示例（信号触发生命周期动作）：
-
-```xml
-<GameObject name="Enemy_01" id="enemy_01">
-    <GameObjectController
-        alive="true"
-        destroyable="true"
-        destroyDelayMs="0"
-        actions="destroy"
-    />
-
-    <SignalConfig>
-        <On event="combat.hp.zero" target="GameObjectController" action="destroy" priority="100">
-            <Args reason="hp_zero" delayMs="0" />
-        </On>
-    </SignalConfig>
-</GameObject>
-```
-
-执行时序建议：
-
-1) `SignalSystem` 写入 `GameObjectController.actionRequests.destroy.pending=true`；  
-2) 生命周期系统在自身阶段消费请求并计算 `destroyAt`；  
-3) 在帧末统一执行实体回收（避免遍历中删除导致迭代问题）；  
-4) 如配置 `emit`，可在销毁前发送收尾信号（如 `entity.destroyed`）。
-
-约束建议：
-
-- 当 `destroyable=false` 时忽略 `destroy` 请求（建议记录 warning）。
-- 禁止在任意系统遍历实体时直接删除；必须走统一回收环节。
-- `pendingDestroy` 后建议禁止重复进入其他一次性生命周期动作。
-
-## 4. 画布配置 (Canvas)
-
-定义整个世界的渲染输出参数。它是 <World> 的直接子节点，不属于任何 GameObject。
+定义整个世界的渲染输出参数。
 
 <Canvas 
     name="scene_name"               <!-- [可选] 场景名称 -->
-    width="1920"                    <!-- [可选] 画布宽度，默认 "1920" -->
-    height="1080"                   <!-- [可选] 画布高度，默认 "1080" -->
-    background="#020817"            <!-- [可选] 背景颜色，默认 "#020817" -->
+    width="1920"                    <!-- [可选] 画布宽度 -->
+    height="1080"                   <!-- [可选] 画布高度 -->
+    background="#020817"            <!-- [可选] 背景颜色 -->
 />
 
-## 5. 预制体 (Prefab) [扩展格式]
+## 6. 预制体 (Prefab)
 
-用于复用常见实体结构（例如：弹跳球、敌人单位、静态墙体）。
-该格式是对现有 DSL 的向后兼容扩展：不使用 Prefab 时，原有 GameObject 写法保持不变。
-
-### 5.1 预制体库 (PrefabLibrary)
-
-预制体定义容器，作为 <World> 的直接子节点。
-支持两种写法：
-1) 内联写法（在当前 XML 内写完整 GameObject）
-2) 跨文件写法（仅写 public 下相对路径，解析器自动加载）
+用于复用常见实体结构。
 
 <PrefabLibrary>
-    <!-- 内联写法 -->
     <Prefab id="bouncing_circle">
         <GameObject name="CircleTemplate">
             <!-- Components -->
         </GameObject>
     </Prefab>
-
-    <!-- 跨文件写法：src 为 public 目录下的相对路径 -->
-    <Prefab id="enemy_unit" src="prefabs/enemy_unit.xml" />
-    <Prefab id="wall_base" src="public/prefabs/wall_base.xml" />
 </PrefabLibrary>
 
-<Prefab
-    id="ally_unit"                  <!-- [可选] 不写时可使用外部文件中的 id -->
-    src="prefabs/ally_unit.xml"     <!-- [可选] public 下相对路径 -->
-    extends="unit_base"             <!-- [可选] 继承的父预制体 ID -->
->
-    <!-- 内联模式下写 <GameObject>；使用 src 时可省略 -->
-</Prefab>
-
-### 5.2 外部预制体文件格式 (public/*)
-
-当使用 src 跨文件引用时，外部文件允许以下根节点之一：
-
-1) <Prefab> 根
-
-public/prefabs/enemy_unit.xml
-<Prefab id="enemy_unit">
-    <GameObject name="EnemyTemplate">
-        <!-- Components -->
-    </GameObject>
-</Prefab>
-
-2) <GameObject> 根（最简文件）
-
-public/prefabs/simple_wall.xml
-<GameObject name="WallTemplate">
-    <!-- Components -->
-</GameObject>
-
-3) <PrefabLibrary> 根
-
-public/prefabs/group.xml
-<PrefabLibrary>
-    <Prefab id="first_prefab" export="true">
-        <GameObject>
-            <!-- Components -->
-        </GameObject>
-    </Prefab>
-    <Prefab id="other_prefab">
-        <GameObject>
-            <!-- Components -->
-        </GameObject>
-    </Prefab>
-</PrefabLibrary>
-
-4) <World> 根（可用于复杂预览与测试）
-
-public/prefabs/enemy_pack.xml
-<World>
-    <EngineConfig>...</EngineConfig>
-    <Canvas ... />
-    <PrefabLibrary>
-        <Prefab id="enemy_main" export="true">
-            <GameObject>
-                <!-- Components -->
-            </GameObject>
-        </Prefab>
-        <Prefab id="enemy_variant">
-            <GameObject>
-                <!-- Components -->
-            </GameObject>
-        </Prefab>
-    </PrefabLibrary>
-
-    <!-- 本文件内可写完整测试场景 -->
-    <Instance prefab="enemy_main" id="preview_enemy_01" />
-</World>
-
-#### 5.2.1 跨文件导出选择规则
-
-当 src 文件包含多个 Prefab（例如根为 <PrefabLibrary> 或 <World>）时，按以下顺序选择被引用目标：
-
-1) 优先使用带 `export="true"` 的 Prefab（建议且应保持一个文件最多一个）。
-2) 若一个都没标：
-   - 可选策略 B（兼容）：若只有一个 Prefab，自动使用它；
-   - 否则报错（避免歧义）。
-3) 若 `export="true"` 超过一个，必须报错。
-
-### 5.3 预制体实例 (Instance)
-
-在场景中实例化预制体。Instance 作为 <World> 的直接子节点。
-
-<Instance
-    prefab="bouncing_circle"        <!-- [必填] 引用的预制体 ID -->
-    id="obj-circle-01"              <!-- [必填] 实例实体 ID（全局唯一） -->
-    name="BallA"                    <!-- [可选] 实例名称 -->
->
-    <!-- [可选] 覆盖模板中的组件属性 -->
+<Instance prefab="bouncing_circle" id="obj-01" name="BallA">
     <Transform position="200, 200, 0" />
-    <RigidBody linearVelocity="200, 300" />
 </Instance>
-
-### 5.4 覆盖与合并规则
-
-1) 合并顺序：模板组件 -> 实例覆盖组件，后者优先。
-2) 组件键按 type 唯一：同一实体中每种组件类型最多一个。
-3) 建议在模板中不写 GameObject.id，由 Instance.id 作为最终实体 ID。
-4) 解析器需做深拷贝，避免多个实例共享同一数组/对象引用（如 Polygon points）。
-5) 当 prefab 不存在、id 重复、组件格式非法时，解析应报错并中断加载。
-
-### 5.5 推荐放置顺序
-
-<World>
-    <EngineConfig>...</EngineConfig>
-    <Canvas ... />
-    <PrefabLibrary>...</PrefabLibrary>
-    <Instance ... />
-    <GameObject ... />              <!-- 仍可与 Instance 混用 -->
-</World>
-
-## 示例
-
-<World>
-    <GameObject name="Player" id="1001">
-        <Transform position="10, 20, 0" rotation="0" scale="1, 1, 1"/>
-        <Sprite texture="player.png" layer="1"/>
-        <RigidBody mass="50.0" type="dynamic"/>
-    </GameObject>
-    
-    <GameObject name="Tree" id="1002">
-        <Transform position="50, 0, 0"/>
-        <Sprite texture="tree.png" layer="0"/>
-        <BoxCollider width="10" height="20"/>
-    </GameObject>
-</World>

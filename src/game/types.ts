@@ -11,7 +11,6 @@ import type { GraphicComponent } from './ecs/components/Graphic';
 import type { CameraComponent } from './ecs/components/Camera';
 import type { CanvasComponent } from './ecs/components/Canvas';
 import type { ParticleEmitterComponent } from './ecs/components/ParticleEmitter';
-import type { AnimationsComponent } from './ecs/components/Animations';
 import type {
   GameObjectControllerActionName,
   GameObjectControllerComponent,
@@ -27,7 +26,6 @@ export type {
   CameraComponent,
   CanvasComponent,
   ParticleEmitterComponent,
-  AnimationsComponent,
   GameObjectControllerComponent,
   GameObjectControllerActionName,
 };
@@ -43,187 +41,6 @@ export interface BoxColliderComponent extends Component {
   width: number;
   height: number;
   offset: { x: number; y: number };
-}
-
-export type AnimationDirection = 'forward' | 'backward';
-export type AnimationControllerMode = 'single' | 'layered';
-export type AnimationLayerConflictPolicy = 'byMask' | 'priority' | 'weight';
-export type AnimationLayerBlendMode = 'override' | 'additive';
-
-export type AnimationActionName =
-  | 'setLabel'
-  | 'playOnce'
-  | 'pause'
-  | 'resume'
-  | 'setSpeed'
-  | 'setLoopOverride'
-  | 'setLayerLabel'
-  | 'playLayerOnce'
-  | 'pauseLayer'
-  | 'resumeLayer'
-  | 'setLayerWeight'
-  | 'enableLayer'
-  | 'disableLayer';
-
-export interface AnimationActionRequest {
-  pending: boolean;
-  args: Record<string, unknown>;
-}
-
-export type AnimationActionRequestMap = Partial<Record<AnimationActionName, AnimationActionRequest>>;
-
-export interface AnimationLayerState {
-  playing: boolean;
-  currentLabel?: string;
-  localFrame: number;
-  speedScale: number;
-  direction: AnimationDirection;
-  loopOverride?: boolean;
-  fallbackLabel?: string;
-}
-
-export interface AnimationLayerConfig {
-  id: string;
-  priority: number;
-  enabled: boolean;
-  weight: number;
-  blendMode: AnimationLayerBlendMode;
-  writeMask: string[];
-  blockMask: string[];
-  state: AnimationLayerState;
-}
-
-export interface AnimationControllerComponent extends Component {
-  readonly type: 'AnimationController';
-  mode: AnimationControllerMode;
-  layerConflictPolicy: AnimationLayerConflictPolicy;
-  allowedActions: AnimationActionName[];
-  actionRequests: AnimationActionRequestMap;
-  // single mode state
-  playing: boolean;
-  currentLabel?: string;
-  localFrame: number;
-  speedScale: number;
-  direction: AnimationDirection;
-  loopOverride?: boolean;
-  fallbackLabel?: string;
-  // layered mode state
-  layers: AnimationLayerConfig[];
-}
-
-export type StageDirectorActionName =
-  | 'playScript'
-  | 'stopScript'
-  | 'stopAll'
-  | 'pauseScript'
-  | 'resumeScript';
-
-export type StageDirectorConflictPolicy = 'localFirst' | 'stageFirst' | 'byMask';
-
-export interface StageDirectorActionRequest {
-  pending: boolean;
-  args: Record<string, unknown>;
-}
-
-export type StageDirectorActionRequestMap = Partial<
-  Record<StageDirectorActionName, StageDirectorActionRequest>
->;
-
-export interface StageDirectorControllerComponent extends Component {
-  readonly type: 'StageDirectorController';
-  id: string;
-  scope: string;
-  enabled: boolean;
-  conflictPolicy: StageDirectorConflictPolicy;
-  maxActiveInstances: number;
-  defaultPriority: number;
-  allowCrossScope: boolean;
-  allowedActions: StageDirectorActionName[];
-  actionRequests: StageDirectorActionRequestMap;
-}
-
-export type StageInterpolation = 'hold' | 'linear';
-export type StageValueMode = 'absolute' | 'relative';
-export type StageUnknownScriptPolicy = 'error' | 'warn' | 'ignore';
-export type StageInterruptPolicy = 'replace' | 'reject' | 'queue';
-export type StageVariableValueType = 'number' | 'string' | 'boolean';
-export type StagePrimitive = string | number | boolean;
-
-export interface StagePayloadSet {
-  key: string;
-  from?: string;
-  value?: StagePrimitive;
-}
-
-export interface StageScriptEvent {
-  signal: string;
-  once: boolean;
-  phase: 'enter' | 'leave' | 'exact';
-  direction: 'both' | 'forward' | 'backward';
-  fireOnSeek: boolean;
-  cooldownMs: number;
-  payloadSets: StagePayloadSet[];
-}
-
-export interface StageScriptKey {
-  frame: number;
-  value?: StagePrimitive;
-  expr?: string;
-  valueFromVar?: string;
-  easing?: string;
-  events: StageScriptEvent[];
-}
-
-export interface StageScriptTrack {
-  role: string;
-  prop: string;
-  interpolation: StageInterpolation;
-  valueMode: StageValueMode;
-  keys: StageScriptKey[];
-}
-
-export interface StageScriptCue {
-  frame: number;
-  signal: string;
-  payloadSets: StagePayloadSet[];
-}
-
-export interface StageScriptVariableDef {
-  name: string;
-  type?: StageVariableValueType;
-  required: boolean;
-  from?: string;
-  value?: StagePrimitive;
-  expr?: string;
-  functionRef?: string;
-  args: string[];
-  timeoutMs?: number;
-  cacheKey?: string;
-  default?: StagePrimitive;
-}
-
-export interface StageScriptRole {
-  id: string;
-  required: boolean;
-}
-
-export interface StageScriptAsset {
-  id: string;
-  duration: number;
-  fps: number;
-  interruptPolicy: StageInterruptPolicy;
-  completeSignal?: string;
-  variables: StageScriptVariableDef[];
-  roles: StageScriptRole[];
-  tracks: StageScriptTrack[];
-  cues: StageScriptCue[];
-}
-
-export interface StageScriptLibraryAsset {
-  mode: 'strict' | 'loose';
-  defaultFps: number;
-  unknownScript: StageUnknownScriptPolicy;
-  scripts: Record<string, StageScriptAsset>;
 }
 
 export interface SignalActionRule {
@@ -321,11 +138,43 @@ export type AnyComponent =
   | GraphicComponent
   | CameraComponent
   | ParticleEmitterComponent
-  | AnimationsComponent
-  | AnimationControllerComponent
-  | StageDirectorControllerComponent
   | GameObjectControllerComponent
-  | SignalConfigComponent;
+  | SignalConfigComponent
+  | BehaviorComponent;
+
+/**
+ * 自定义 GameObject 接口，用于在 ECS 之外实现复杂的逻辑
+ */
+export interface GameObject {
+  readonly entity: Entity;
+  
+  /**
+   * 初始化时调用
+   */
+  onAwake?(): void;
+
+  /**
+   * 每帧更新逻辑
+   */
+  onUpdate?(deltaTime: number): void;
+
+  /**
+   * 通信协议：处理自定义消息
+   */
+  onMessage?(message: string, payload: any): void;
+
+  /**
+   * 销毁时调用
+   */
+  onDestroy?(): void;
+}
+
+export interface BehaviorComponent extends Component {
+  readonly type: 'Behavior';
+  behaviorType: string;
+  instance?: GameObject;
+  params: Record<string, any>;
+}
 
 export interface Entity {
   id: EntityId;
@@ -353,6 +202,5 @@ export interface EngineConfig {
 export interface WorldData {
   config: EngineConfig;
   canvas?: CanvasComponent;
-  stageScriptLibrary?: StageScriptLibraryAsset;
   entities: Entity[];
 }

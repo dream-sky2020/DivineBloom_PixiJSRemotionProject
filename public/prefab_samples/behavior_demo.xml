@@ -1,0 +1,82 @@
+<World>
+    <Canvas name="behavior_demo" width="1280" height="720" background="#020817" />
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="InputSystem" enabled="true" />
+            <System name="BehaviorSystem" enabled="true" />
+            <System name="PhysicsSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+    </EngineConfig>
+
+    <!-- 静态边界 (墙壁) -->
+    <GameObject id="wall-bottom">
+        <Transform position="640, 770, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="1280" height="100" />
+    </GameObject>
+    <GameObject id="wall-top">
+        <Transform position="640, -50, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="1280" height="100" />
+    </GameObject>
+    <GameObject id="wall-left">
+        <Transform position="-50, 360, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="100" height="720" />
+    </GameObject>
+    <GameObject id="wall-right">
+        <Transform position="1330, 360, 0" />
+        <RigidBody type="static" restitution="1.0" friction="0.0" />
+        <BoxCollider width="100" height="720" />
+    </GameObject>
+
+    <!-- 携带 Behavior 的动态物体 -->
+    <GameObject id="digit-obj-1">
+        <Transform position="200, 200, 0" />
+        <RigidBody type="dynamic" restitution="0.8" friction="0.5" linearVelocity="100, 100" />
+        <CircleCollider radius="40" />
+        <Sprite texture="digit/digit_0.svg" anchor="0.5, 0.5" />
+        <Behavior type="DigitCycle" interval="0.3" />
+    </GameObject>
+
+    <GameObject id="digit-obj-2">
+        <Transform position="400, 300, 0" />
+        <RigidBody type="dynamic" restitution="0.8" friction="0.5" linearVelocity="-200, 150" />
+        <CircleCollider radius="40" />
+        <Sprite texture="digit/digit_0.svg" anchor="0.5, 0.5" />
+        <Behavior type="DigitCycle" interval="0.5" />
+    </GameObject>
+
+    <GameObject id="digit-obj-3">
+        <Transform position="600, 400, 0" />
+        <RigidBody type="dynamic" restitution="0.8" friction="0.5" linearVelocity="150, -100" />
+        <CircleCollider radius="40" />
+        <Sprite texture="digit/digit_0.svg" anchor="0.5, 0.5" />
+        <Behavior type="DigitCycle" interval="0.2" />
+    </GameObject>
+
+    <GameObject id="digit-obj-4">
+        <Transform position="800, 200, 0" />
+        <RigidBody type="dynamic" restitution="0.8" friction="0.5" linearVelocity="-100, -200" />
+        <CircleCollider radius="40" />
+        <Sprite texture="digit/digit_0.svg" anchor="0.5, 0.5" />
+        <Behavior type="DigitCycle" interval="0.4" />
+    </GameObject>
+
+    <GameObject id="digit-obj-5">
+        <Transform position="1000, 500, 0" />
+        <RigidBody type="dynamic" restitution="0.8" friction="0.5" linearVelocity="50, 300" />
+        <CircleCollider radius="40" />
+        <Sprite texture="digit/digit_0.svg" anchor="0.5, 0.5" />
+        <Behavior type="DigitCycle" interval="0.6" />
+    </GameObject>
+
+    <!-- 添加一些普通物体作为对比 -->
+    <GameObject id="normal-circle">
+        <Transform position="640, 360, 0" />
+        <RigidBody type="dynamic" restitution="1.0" friction="0.0" linearVelocity="0, 0" />
+        <CircleCollider radius="50" />
+        <Graphic kind="circleGraphic" radius="50" fillColor="#ff0000" fillAlpha="0.5" />
+    </GameObject>
+</World>

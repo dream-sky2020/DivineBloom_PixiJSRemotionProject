@@ -4,35 +4,33 @@
 
 ## 文档目录
 
-## 1) 动画模块数据规范
+## 1) 自定义 GameObject (Behavior) 使用指南
 
-- 文件：`src/game/doc/animation_module_spec.txt`
+- 文件：`src/game/doc/custom_gameobject_guide.md`
 - 内容范围：
-  - `Animations`（单实体动画资产）
-  - `AnimationController`（单实体动画控制，含 layered 模式）
-  - `StageScriptLibrary`（多角色舞台动画资产）
-  - `Key.Events`（关键帧事件）
-  - `StageDirectorController`（多导演运行时编排）
-  - 解析约束、冲突规则、错误码、strict/loose 行为建议
+  - `GameObject` 接口定义
+  - `Behavior` 组件用法
+  - `GameObjectRegistry` 注册机制
+  - 如何在代码中实现复杂动画和逻辑
 
-直达链接：[`animation_module_spec.txt`](./doc/animation_module_spec.txt)
+直达链接：[`custom_gameobject_guide.md`](./custom_gameobject_guide.md)
 
 ## 2) 游戏世界初始化数据结构定义（ECS）
 
 - 文件：`src/game/doc/world_data_structures.txt`
 - 内容范围：
   - `World / EngineConfig / SystemPipeline`
-  - `EventBus / InputConfig / InputToSignalMap`
-  - `GameObject` 与组件规范（Transform、Sprite、RigidBody、Collider、Graphic、Camera、ParticleEmitter 等）
+  - `InputConfig / InputToSignalMap`
+  - `GameObject` 与组件规范（Transform、Sprite、RigidBody、Collider、Graphic、Camera、ParticleEmitter、Behavior 等）
   - `SignalConfig`（`On` / `Emit` 编排）
   - `PrefabLibrary / Prefab / Instance` 扩展格式与跨文件约束
 
-直达链接：[`world_data_structures.txt`](./doc/world_data_structures.txt)
+直达链接：[`world_data_structures.txt`](./world_data_structures.txt)
 
 ---
 
 ## 使用建议
 
-- 新增或调整动画字段时，优先更新 `animation_module_spec.txt`。
+- 复杂的逻辑和动画计算，请通过 `Behavior` 组件在代码中实现，参考 `custom_gameobject_guide.md`。
 - 新增或调整世界 DSL/组件字段时，优先更新 `world_data_structures.txt`。
 - 该入口文件仅做导航与范围说明，避免重复维护同一份规范文本。

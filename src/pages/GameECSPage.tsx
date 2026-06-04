@@ -5,11 +5,10 @@ import {
   EcsPhysicsSystem,
   EcsRenderSystem,
   EcsParticleSystem,
-  EcsAnimationSystem,
   EcsInputSystem,
   EcsSignalSystem,
   EcsGameObjectLifecycleSystem,
-  EcsStageDirectorSystem,
+  EcsBehaviorSystem,
 } from '../game';
 import type { World } from '../game/ecs/World';
 import { toast } from '../components/Toast';
@@ -156,11 +155,10 @@ export function GameECSPage() {
       GameEngine.registerSystem('PhysicsSystem', () => new EcsPhysicsSystem({ x: 0, y: 0 }, 4));
       GameEngine.registerSystem('RenderSystem', () => new EcsRenderSystem(processor));
       GameEngine.registerSystem('ParticleSystem', () => new EcsParticleSystem(processor));
-      GameEngine.registerSystem('AnimationSystem', () => new EcsAnimationSystem());
       GameEngine.registerSystem('InputSystem', () => new EcsInputSystem());
       GameEngine.registerSystem('SignalSystem', () => new EcsSignalSystem());
       GameEngine.registerSystem('GameObjectLifecycleSystem', () => new EcsGameObjectLifecycleSystem());
-      GameEngine.registerSystem('StageDirectorSystem', () => new EcsStageDirectorSystem());
+      GameEngine.registerSystem('BehaviorSystem', () => new EcsBehaviorSystem());
 
       // 2. 创建世界
       const newWorld = await GameEngine.createWorldFromXml(xmlString);
