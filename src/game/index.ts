@@ -22,6 +22,7 @@ export * from './ecs/systems/InputSystem';
 export * from './ecs/systems/SignalSystem';
 export * from './ecs/systems/GameObjectLifecycleSystem';
 export * from './ecs/systems/StageDirectorSystem';
+export * from './animationFunctionRegistry';
 
 import { World } from './ecs/World';
 import { XmlParser } from './parser/XmlParser';

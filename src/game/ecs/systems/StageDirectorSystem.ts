@@ -1,11 +1,20 @@
 import { System } from '../../types';
-import type { Entity, StageScriptAsset, StageScriptLibraryAsset, StageScriptTrack, WorldData } from '../../types';
+import type {
+  Entity,
+  StagePrimitive,
+  StageScriptAsset,
+  StageScriptLibraryAsset,
+  StageScriptTrack,
+  StageScriptVariableDef,
+  WorldData,
+} from '../../types';
 import type {
   StageDirectorActionName,
   StageDirectorControllerComponent,
 } from '../components/StageDirectorController';
 import { consumeStageDirectorControllerActions } from '../components/StageDirectorController';
 import { enqueueSignalEvent } from '../signalRuntime';
+import { callAnimationFunction, hasAnimationFunction } from '../../animationFunctionRegistry';
 
 const LOG_PREFIX = '[StageDirectorSystem]';
 const CONFLICT_LOG_THROTTLE_MS = 1000;
@@ -22,6 +31,7 @@ interface ActiveStageScriptInstance {
   localFrame: number;
   lastFrame: number;
   roleBindings: Record<string, string>;
+  sourceArgs: Record<string, unknown>;
   relativeBaseByEntityProp: Map<string, number>;
   firedEventKeys: Set<string>;
   eventLastFiredAt: Map<string, number>;
@@ -176,6 +186,7 @@ export class EcsStageDirectorSystem extends System {
       localFrame: 0,
       lastFrame: 0,
       roleBindings,
+      sourceArgs: { ...args },
       relativeBaseByEntityProp: new Map(),
       firedEventKeys: new Set(),
       eventLastFiredAt: new Map(),
@@ -243,37 +254,47 @@ export class EcsStageDirectorSystem extends System {
 
     for (const instance of runtime.instances.values()) {
       if (instance.paused) continue;
-      const frameDelta = Math.max(0, deltaTime) * instance.script.fps * instance.speed;
-      instance.lastFrame = instance.localFrame;
-      instance.localFrame += frameDelta;
+      try {
+        const frameDelta = Math.max(0, deltaTime) * instance.script.fps * instance.speed;
+        instance.lastFrame = instance.localFrame;
+        instance.localFrame += frameDelta;
 
-      const duration = Math.max(0.0001, instance.script.duration);
-      if (instance.localFrame > duration) {
-        if (instance.loop) {
-          instance.localFrame = instance.localFrame % duration;
-        } else {
-          instance.localFrame = duration;
+        const duration = Math.max(0.0001, instance.script.duration);
+        if (instance.localFrame > duration) {
+          if (instance.loop) {
+            instance.localFrame = instance.localFrame % duration;
+          } else {
+            instance.localFrame = duration;
+          }
         }
-      }
 
-      this.dispatchStageKeyEvents(instance, now);
-      this.dispatchStageCues(instance, now);
-      this.collectTrackWrites(instance, entityById, writes);
+        const strictMode = this.stageScriptLibrary?.mode !== 'loose';
+        const vars = resolveStageVariables(instance, strictMode);
+        this.dispatchStageKeyEvents(instance, now, vars);
+        this.dispatchStageCues(instance, now, vars);
+        this.collectTrackWrites(instance, entityById, writes, vars);
 
-      if (!instance.loop && instance.localFrame >= duration) {
-        if (instance.script.completeSignal) {
-          enqueueSignalEvent({
-            id: instance.script.completeSignal,
-            payload: {
-              scriptId: instance.script.id,
-              instanceId: instance.instanceId,
-            },
-          });
+        if (!instance.loop && instance.localFrame >= duration) {
+          if (instance.script.completeSignal) {
+            enqueueSignalEvent({
+              id: instance.script.completeSignal,
+              payload: {
+                scriptId: instance.script.id,
+                instanceId: instance.instanceId,
+              },
+            });
+          }
+          toDelete.push(instance.instanceId);
+          this.logInfo(
+            `complete script instance: director=${controller.id} instance=${instance.instanceId} script=${instance.script.id}`,
+          );
         }
-        toDelete.push(instance.instanceId);
-        this.logInfo(
-          `complete script instance: director=${controller.id} instance=${instance.instanceId} script=${instance.script.id}`,
+      } catch (error) {
+        console.error(
+          `${LOG_PREFIX} variable/function resolve failed: script=${instance.script.id} instance=${instance.instanceId}`,
+          error,
         );
+        toDelete.push(instance.instanceId);
       }
     }
 
@@ -287,6 +308,7 @@ export class EcsStageDirectorSystem extends System {
     instance: ActiveStageScriptInstance,
     entityById: Map<string, Entity>,
     writes: TrackWriteCandidate[],
+    vars: Record<string, StagePrimitive>,
   ): void {
     for (let trackIndex = 0; trackIndex < instance.script.tracks.length; trackIndex++) {
       const track = instance.script.tracks[trackIndex];
@@ -294,7 +316,7 @@ export class EcsStageDirectorSystem extends System {
       if (!entityId) continue;
       const entity = entityById.get(String(entityId));
       if (!entity) continue;
-      const sampled = sampleStageTrack(track, instance.localFrame);
+      const sampled = sampleStageTrack(track, instance.localFrame, createStageEvalContext(instance, vars));
       if (sampled === undefined) continue;
 
       let value = sampled;
@@ -345,7 +367,11 @@ export class EcsStageDirectorSystem extends System {
     }
   }
 
-  private dispatchStageKeyEvents(instance: ActiveStageScriptInstance, now: number): void {
+  private dispatchStageKeyEvents(
+    instance: ActiveStageScriptInstance,
+    now: number,
+    vars: Record<string, StagePrimitive>,
+  ): void {
     for (let trackIndex = 0; trackIndex < instance.script.tracks.length; trackIndex++) {
       const track = instance.script.tracks[trackIndex];
       for (let keyIndex = 0; keyIndex < track.keys.length; keyIndex++) {
@@ -363,14 +389,18 @@ export class EcsStageDirectorSystem extends System {
           if (event.once) instance.firedEventKeys.add(eventKey);
           enqueueSignalEvent({
             id: event.signal,
-            payload: resolveStagePayloadSets(event.payloadSets, instance, event.signal),
+            payload: resolveStagePayloadSets(event.payloadSets, instance, event.signal, vars),
           });
         }
       }
     }
   }
 
-  private dispatchStageCues(instance: ActiveStageScriptInstance, _now: number): void {
+  private dispatchStageCues(
+    instance: ActiveStageScriptInstance,
+    _now: number,
+    vars: Record<string, StagePrimitive>,
+  ): void {
     for (const cue of instance.script.cues) {
       if (!didCross(instance.lastFrame, instance.localFrame, cue.frame, instance.localFrame < instance.lastFrame)) {
         continue;
@@ -378,7 +408,7 @@ export class EcsStageDirectorSystem extends System {
       if (!instance.loop && instance.firedCueFrames.has(cue.frame)) continue;
       enqueueSignalEvent({
         id: cue.signal,
-        payload: resolveStagePayloadSets(cue.payloadSets, instance, cue.signal),
+        payload: resolveStagePayloadSets(cue.payloadSets, instance, cue.signal, vars),
       });
       if (!instance.loop) {
         instance.firedCueFrames.add(cue.frame);
@@ -522,22 +552,257 @@ function maskSpecificityScore(propPath: string): number {
   return score;
 }
 
-function sampleStageTrack(track: StageScriptTrack, frame: number): string | number | boolean | undefined {
+interface StageEvalContext {
+  vars: Record<string, StagePrimitive>;
+  arg: Record<string, unknown>;
+  ctx: {
+    scriptId: string;
+    instanceId: string;
+    localFrame: number;
+  };
+  role: Record<string, string>;
+}
+
+function createStageEvalContext(
+  instance: ActiveStageScriptInstance,
+  vars: Record<string, StagePrimitive>,
+): StageEvalContext {
+  return {
+    vars,
+    arg: instance.sourceArgs,
+    ctx: {
+      scriptId: instance.script.id,
+      instanceId: instance.instanceId,
+      localFrame: instance.localFrame,
+    },
+    role: instance.roleBindings,
+  };
+}
+
+function resolveStageVariables(
+  instance: ActiveStageScriptInstance,
+  strictMode: boolean,
+): Record<string, StagePrimitive> {
+  if (!instance.script.variables || instance.script.variables.length === 0) {
+    return {};
+  }
+  const vars: Record<string, StagePrimitive> = {};
+  for (const variable of instance.script.variables) {
+    const context = createStageEvalContext(instance, vars);
+    const resolved = resolveSingleStageVariable(variable, context, strictMode);
+    if (resolved === undefined) {
+      if (variable.required) {
+        throw new Error(`required variable "${variable.name}" resolved to undefined`);
+      }
+      continue;
+    }
+    vars[variable.name] = resolved;
+  }
+  return vars;
+}
+
+function resolveSingleStageVariable(
+  variable: StageScriptVariableDef,
+  context: StageEvalContext,
+  strictMode: boolean,
+): StagePrimitive | undefined {
+  let resolved: StagePrimitive | undefined;
+
+  if (variable.functionRef) {
+    resolved = tryResolveByFunction(variable, context, strictMode);
+  }
+  if (resolved === undefined && variable.expr) {
+    try {
+      resolved = toStagePrimitive(evaluateExpression(variable.expr, context), variable.name, strictMode);
+    } catch (error) {
+      if (strictMode) throw error;
+      resolved = undefined;
+    }
+  }
+  if (resolved === undefined && variable.from) {
+    resolved = toStagePrimitive(resolveByPath(variable.from, context), variable.name, strictMode);
+  }
+  if (resolved === undefined && variable.value !== undefined) {
+    resolved = variable.value;
+  }
+  if (resolved === undefined && variable.default !== undefined) {
+    resolved = variable.default;
+  }
+
+  if (resolved !== undefined && variable.type && !isTypeMatched(resolved, variable.type)) {
+    if (strictMode) {
+      throw new Error(`variable "${variable.name}" type mismatch: expected ${variable.type}`);
+    }
+    return undefined;
+  }
+  return resolved;
+}
+
+function tryResolveByFunction(
+  variable: StageScriptVariableDef,
+  context: StageEvalContext,
+  strictMode: boolean,
+): StagePrimitive | undefined {
+  const functionRef = variable.functionRef?.trim();
+  if (!functionRef) return undefined;
+  if (!hasAnimationFunction(functionRef)) {
+    if (strictMode) {
+      throw new Error(`animation function not found: ${functionRef}`);
+    }
+    return undefined;
+  }
+
+  const args = variable.args.map((token) =>
+    toStagePrimitive(resolveVariableArgToken(token, context), variable.name, strictMode),
+  );
+  const start = Date.now();
+  let output: StagePrimitive | undefined;
+  try {
+    output = callAnimationFunction(functionRef, args, {
+      vars: context.vars,
+      arg: context.arg,
+      ctx: context.ctx,
+      role: context.role,
+    });
+  } catch (error) {
+    if (strictMode) throw error;
+    return undefined;
+  }
+  const timeoutMs = variable.timeoutMs;
+  if (typeof timeoutMs === 'number' && timeoutMs >= 0 && Date.now() - start > timeoutMs) {
+    if (strictMode) {
+      throw new Error(`animation function timeout: ${functionRef}`);
+    }
+    return undefined;
+  }
+  return toStagePrimitive(output, variable.name, strictMode);
+}
+
+function resolveVariableArgToken(token: string, context: StageEvalContext): unknown {
+  const trimmed = token.trim();
+  if (!trimmed) return undefined;
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    return trimmed.slice(1, -1);
+  }
+  if (trimmed === 'true') return true;
+  if (trimmed === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
+  if (
+    trimmed.startsWith('vars.') ||
+    trimmed.startsWith('arg.') ||
+    trimmed.startsWith('ctx.') ||
+    trimmed.startsWith('role.')
+  ) {
+    return resolveByPath(trimmed, context);
+  }
+  return trimmed;
+}
+
+function evaluateExpression(expression: string, context: StageEvalContext): unknown {
+  const helpers = {
+    min: Math.min,
+    max: Math.max,
+    abs: Math.abs,
+    floor: Math.floor,
+    ceil: Math.ceil,
+    round: Math.round,
+    clamp: (value: number, min: number, max: number) => Math.max(min, Math.min(max, value)),
+  };
+  const fn = new Function(
+    'vars',
+    'arg',
+    'ctx',
+    'role',
+    'helpers',
+    '"use strict"; const { min, max, abs, floor, ceil, round, clamp } = helpers; return (' +
+      expression +
+      ');',
+  );
+  return fn(context.vars, context.arg, context.ctx, context.role, helpers);
+}
+
+function resolveByPath(path: string, context: StageEvalContext): unknown {
+  const normalized = path.trim();
+  if (!normalized) return undefined;
+  if (normalized.startsWith('vars.')) {
+    return readObjectPath(context.vars as unknown as Record<string, unknown>, normalized.slice(5));
+  }
+  if (normalized.startsWith('arg.')) {
+    return readObjectPath(context.arg as Record<string, unknown>, normalized.slice(4));
+  }
+  if (normalized.startsWith('ctx.')) {
+    return readObjectPath(context.ctx as unknown as Record<string, unknown>, normalized.slice(4));
+  }
+  if (normalized.startsWith('role.')) {
+    const rolePath = normalized.slice(5);
+    return readObjectPath(context.role as unknown as Record<string, unknown>, rolePath);
+  }
+  return undefined;
+}
+
+function toStagePrimitive(
+  value: unknown,
+  variableName: string,
+  strictMode: boolean,
+): StagePrimitive | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  if (strictMode) {
+    throw new Error(`variable "${variableName}" resolved non-primitive value`);
+  }
+  return undefined;
+}
+
+function isTypeMatched(value: StagePrimitive, expectedType: StageScriptVariableDef['type']): boolean {
+  if (!expectedType) return true;
+  return typeof value === expectedType;
+}
+
+function resolveStageKeyValue(
+  key: StageScriptTrack['keys'][number],
+  evalContext: StageEvalContext,
+): StagePrimitive | undefined {
+  if (key.valueFromVar) {
+    const value = evalContext.vars[key.valueFromVar];
+    return toStagePrimitive(value, key.valueFromVar, false);
+  }
+  if (key.expr) {
+    try {
+      return toStagePrimitive(evaluateExpression(key.expr, evalContext), 'key.expr', false);
+    } catch (_error) {
+      return undefined;
+    }
+  }
+  return key.value;
+}
+
+function sampleStageTrack(
+  track: StageScriptTrack,
+  frame: number,
+  evalContext: StageEvalContext,
+): string | number | boolean | undefined {
   if (track.keys.length === 0) return undefined;
   const sorted = track.keys;
-  if (frame <= sorted[0].frame) return sorted[0].value;
+  if (frame <= sorted[0].frame) return resolveStageKeyValue(sorted[0], evalContext);
   for (let i = 0; i < sorted.length - 1; i++) {
     const from = sorted[i];
     const to = sorted[i + 1];
     if (frame >= to.frame) continue;
-    if (track.interpolation === 'hold') return from.value;
+    const fromValue = resolveStageKeyValue(from, evalContext);
+    const toValue = resolveStageKeyValue(to, evalContext);
+    if (track.interpolation === 'hold') return fromValue ?? toValue;
     const t = clamp01((frame - from.frame) / Math.max(0.0001, to.frame - from.frame));
-    if (typeof from.value !== 'number' || typeof to.value !== 'number') {
-      return t < 1 ? from.value : to.value;
+    if (typeof fromValue !== 'number' || typeof toValue !== 'number') {
+      return t < 1 ? fromValue : toValue;
     }
-    return from.value + (to.value - from.value) * t;
+    return fromValue + (toValue - fromValue) * t;
   }
-  return sorted[sorted.length - 1].value;
+  return resolveStageKeyValue(sorted[sorted.length - 1], evalContext);
 }
 
 function didCross(previousFrame: number, currentFrame: number, targetFrame: number, wrapped: boolean): boolean {
@@ -578,6 +843,7 @@ function resolveStagePayloadSets(
   sets: Array<{ key: string; from?: string; value?: string | number | boolean }>,
   instance: ActiveStageScriptInstance,
   eventSignal: string,
+  vars: Record<string, StagePrimitive>,
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     scriptId: instance.script.id,
@@ -587,7 +853,7 @@ function resolveStagePayloadSets(
   };
   for (const set of sets) {
     if (!set.key) continue;
-    const resolved = resolveSetValue(set.from, set.value, payload, instance);
+    const resolved = resolveSetValue(set.from, set.value, payload, instance, vars);
     if (resolved !== undefined) payload[set.key] = resolved;
   }
   return payload;
@@ -598,11 +864,18 @@ function resolveSetValue(
   fallbackValue: string | number | boolean | undefined,
   payloadCtx: Record<string, unknown>,
   instance: ActiveStageScriptInstance,
+  vars: Record<string, StagePrimitive>,
 ): unknown {
   if (!from) return fallbackValue;
   if (from.startsWith('role.')) {
     const roleId = from.slice('role.'.length).split('.')[0];
     return instance.roleBindings[roleId];
+  }
+  if (from.startsWith('arg.')) {
+    return readObjectPath(instance.sourceArgs, from.slice('arg.'.length));
+  }
+  if (from.startsWith('vars.')) {
+    return readObjectPath(vars as unknown as Record<string, unknown>, from.slice('vars.'.length));
   }
   if (from.startsWith('ctx.')) {
     return readObjectPath(payloadCtx, from.slice('ctx.'.length));

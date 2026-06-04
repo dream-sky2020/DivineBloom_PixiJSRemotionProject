@@ -267,6 +267,244 @@
 - `role.<roleId>.<path>`：取绑定实体上下文路径（是否支持由实现声明）。
 - `ctx.scriptId` / `ctx.instanceId` / `ctx.localFrame`。
 
+### 6.1 动画变量定义（AnimationVars）
+
+为支持复杂动画计算，可在 `StageScript` 内声明变量集合 `AnimationVars`（简称 `Vars`）。
+变量用于把“业务输入”转换为“可直接驱动轨道/关键帧的动画参数”，避免逻辑层直接操作轨道细节。
+
+结构示例：
+
+```xml
+<StageScript id="stage.card.hand.selected" duration="20">
+    <AnimationVars>
+        <Var name="handIndex" from="arg.index" required="true" type="number" />
+        <Var name="handCount" from="arg.total" required="true" type="number" />
+        <Var name="fanSpacing" value="36" type="number" />
+        <Var name="fanX" expr="(vars.handIndex - (vars.handCount - 1) * 0.5) * vars.fanSpacing" type="number" />
+        <Var name="liftY" expr="min(24, 12 + vars.handCount * 0.8)" type="number" />
+    </AnimationVars>
+
+    <Tracks>
+        <Track role="card" prop="transform.position.x" interpolation="linear">
+            <Key frame="0" valueFromVar="fanX" />
+            <Key frame="20" valueFromVar="fanX" />
+        </Track>
+        <Track role="card" prop="transform.position.y" interpolation="linear">
+            <Key frame="0" value="0" />
+            <Key frame="20" expr="-vars.liftY" />
+        </Track>
+    </Tracks>
+</StageScript>
+```
+
+字段定义：
+
+- `AnimationVars`：`[可选]` 变量容器。
+- `Var.name`：`[必填]` 变量名（同一 `StageScript` 内唯一）。
+- `Var.type`：`[可选]` `number | string | boolean`，默认自动推导。
+- `Var.required`：`[可选]` 是否必填，默认 `false`。
+- `Var.from`：`[可选]` 外部来源（如 `arg.xxx` / `ctx.xxx` / `role.<roleId>`）。
+- `Var.value`：`[可选]` 常量值。
+- `Var.expr`：`[可选]` 表达式计算值。
+- `Var.default`：`[可选]` 缺省值；当 `from` 缺失或求值失败时回退。
+
+取值优先级：
+
+- `expr` > `from` > `value` > `default`。
+- 同时填写多个来源时按上述优先级取值，其余作为回退项。
+
+`from` 规范（建议最小集）：
+
+- `arg.<key>`：来自运行时动作参数（如 `playScript` 的 `Args`）。
+- `ctx.scriptId` / `ctx.instanceId` / `ctx.localFrame`：来自剧本实例上下文。
+- `role.<roleId>`：取绑定实体 ID。
+- `role.<roleId>.<path>`：取绑定实体上下文路径（是否支持由实现声明）。
+
+表达式规范（`Var.expr` / `Key.expr` 共用）：
+
+- 表达式上下文允许读取：`vars`、`arg`、`ctx`、`role`。
+- 推荐内建函数：`min` / `max` / `clamp` / `abs` / `floor` / `ceil` / `round`。
+- 表达式必须是纯计算，不允许副作用与外部调用。
+- 若表达式求值失败：`strict` 下报错；`loose` 下回退 `default`（无 `default` 则报错）。
+
+变量引用规则：
+
+- `Key.valueFromVar`：`[可选]` 从变量表直接取值。
+- `Key.expr`：`[可选]` 可直接使用 `vars.xxx`。
+- `Cue.Payload.Set.value` 可写表达式（实现上可复用 `expr` 求值器）。
+
+变量生命周期与作用域：
+
+- 变量作用域为“单个剧本实例”；不同实例互不共享。
+- 变量在实例创建时完成初始化；每帧可按需重算 `expr`（由实现选择缓存策略）。
+- 变量为只读快照；运行时若需动态更新，建议通过新实例参数重新驱动。
+
+### 6.2 变量调用函数（Function Registry）
+
+当 `expr` 无法满足复杂计算时，`Var` 允许通过“函数注册表”调用外部代码，得到变量值。
+该能力用于“动画层内部计算”，避免逻辑层直接拼接轨道细节。
+
+结构示例（XML 如何选择外部代码）：
+
+```xml
+<StageScript id="stage.card.hand.arrange" duration="24">
+    <AnimationVars>
+        <Var name="index" from="arg.index" type="number" required="true" />
+        <Var name="total" from="arg.total" type="number" required="true" />
+        <Var name="seat" from="arg.seat" type="string" default="bottom" />
+
+        <Var
+            name="fanX"
+            functionRef="anim.card.hand.fanX@v1"
+            args="vars.index,vars.total,36"
+            type="number"
+        />
+        <Var
+            name="fanY"
+            functionRef="anim.card.hand.curveY@v1"
+            args="vars.index,vars.total,vars.seat"
+            type="number"
+        />
+    </AnimationVars>
+
+    <Tracks>
+        <Track role="card" prop="transform.position.x" interpolation="linear">
+            <Key frame="0" valueFromVar="fanX" />
+            <Key frame="24" valueFromVar="fanX" />
+        </Track>
+        <Track role="card" prop="transform.position.y" interpolation="linear">
+            <Key frame="0" valueFromVar="fanY" />
+            <Key frame="24" valueFromVar="fanY" />
+        </Track>
+    </Tracks>
+</StageScript>
+```
+
+字段定义：
+
+- `Var.functionRef`：`[可选]` 外部函数引用 ID（由运行时注册表解析）。
+- `Var.args`：`[可选]` 参数列表（逗号分隔）；参数支持 `vars.xxx` / `arg.xxx` / `ctx.xxx` / 常量。
+- `Var.timeoutMs`：`[可选]` 单次调用超时毫秒，默认 `2`（建议小于单帧预算）。
+- `Var.cacheKey`：`[可选]` 显式缓存键；未填写时可由 `functionRef + args` 自动生成。
+
+取值优先级（补充）：
+
+- `functionRef` > `expr` > `from` > `value` > `default`。
+- `functionRef` 与 `expr` 同时存在时，优先调用外部函数；函数失败后可回退 `expr`（建议实现）。
+
+函数注册表约定（运行时）：
+
+- 注册表键必须全局唯一，建议格式：`<domain>.<module>.<name>@<version>`。
+  - 示例：`anim.card.hand.fanX@v1`、`anim.card.hand.curveY@v1`。
+- `functionRef` 只做“查表”，不接受任意代码字符串。
+- 外部代码必须在启动期显式注册到 `FunctionRegistry`，未注册函数不可调用。
+- 函数签名建议：`(ctx) => number | string | boolean` 或 `(args...) => primitive`。
+- 函数必须是纯函数（无副作用、可重放、同输入同输出）。
+
+安全与性能约束：
+
+- 禁止在函数中访问网络、文件、随机源、全局可变状态。
+- 建议函数只做 O(1) 或 O(log n) 计算，避免在逐帧计算中引入高开销。
+- 对同一 `cacheKey` 可按帧缓存，减少重复求值。
+- 函数抛错、超时或返回类型不匹配时按模式处理：
+  - `strict`：报错并拒绝该剧本实例创建；
+  - `loose`：回退 `expr -> from -> value -> default`，并记录 warning。
+
+### 6.3 FunctionRegistry 的 TypeScript 注册接口与示例
+
+推荐在运行时提供统一的 `FunctionRegistry`，并把 `functionRef` 解析限定在该注册表内。
+以下接口仅为规范建议，项目可在不破坏语义的前提下调整实现细节。
+
+TypeScript 接口建议：
+
+```ts
+type Primitive = number | string | boolean | null;
+
+interface AnimationFunctionContext {
+  vars: Record<string, Primitive>;
+  arg: Record<string, Primitive>;
+  ctx: {
+    scriptId: string;
+    instanceId: string;
+    localFrame: number;
+  };
+  role: Record<string, Primitive>;
+}
+
+type AnimationFunction = (
+  args: Primitive[],
+  context: AnimationFunctionContext
+) => Primitive;
+
+interface RegisteredAnimationFunction {
+  id: string; // e.g. anim.card.hand.fanX@v1
+  fn: AnimationFunction;
+  timeoutMs?: number;
+}
+
+interface FunctionRegistry {
+  register(def: RegisteredAnimationFunction): void;
+  has(id: string): boolean;
+  call(
+    id: string,
+    args: Primitive[],
+    context: AnimationFunctionContext
+  ): Primitive;
+}
+```
+
+注册表示例（与 XML 中的 `functionRef` 对应）：
+
+```ts
+const functionRegistry: FunctionRegistry = createFunctionRegistry();
+
+functionRegistry.register({
+  id: "anim.card.hand.fanX@v1",
+  timeoutMs: 2,
+  fn: (args) => {
+    const [index, total, spacing] = args as [number, number, number];
+    return (index - (total - 1) * 0.5) * spacing;
+  },
+});
+
+functionRegistry.register({
+  id: "anim.card.hand.curveY@v1",
+  timeoutMs: 2,
+  fn: (args) => {
+    const [index, total, seat] = args as [number, number, string];
+    const mid = (total - 1) * 0.5;
+    const distance = Math.abs(index - mid);
+    const base = seat === "top" ? 14 : 10;
+    return base + distance * 2;
+  },
+});
+```
+
+与 XML 的映射关系：
+
+- `Var.functionRef` -> `FunctionRegistry` 中的 `RegisteredAnimationFunction.id`。
+- `Var.args` -> `call(id, args, context)` 的 `args`。
+- `Var.timeoutMs` -> 调用时覆盖默认超时（未写则使用注册时 `timeoutMs` 或系统默认值）。
+- `Var.type` -> 对 `call(...)` 返回值做类型校验。
+
+对应 XML 示例：
+
+```xml
+<Var
+    name="fanX"
+    functionRef="anim.card.hand.fanX@v1"
+    args="vars.index,vars.total,36"
+    type="number"
+/>
+```
+
+实现建议：
+
+- 启动阶段一次性完成 `register`，运行中禁止热替换同 ID（避免回放不一致）。
+- `register` 时若 ID 已存在，直接报错（建议映射 `ANIM_FUNCTION_REF_DUPLICATE`）。
+- `call` 前先做 `has(id)` 检查；未命中时返回 `ANIM_FUNCTION_REF_NOT_FOUND`。
+- `args` 解析后先做类型预校验，再进入函数调用。
+
 ---
 
 ## 7. 多导演运行时编排组件（StageDirectorController + scope 隔离）
@@ -376,6 +614,14 @@
 - `StageDirectorController.id` 必须唯一。
 - `StageDirectorController.maxActiveInstances` 必须 `> 0`。
 - `StageDirectorController.conflictPolicy` 必须为合法枚举值。
+- `Var.name` 在同一 `StageScript` 内必须唯一。
+- `Var` 至少提供 `functionRef | from | value | expr | default` 之一。
+- `Var.type` 若声明，则变量最终值必须与类型一致。
+- `Key.valueFromVar` 引用的变量必须存在。
+- `Var.expr` / `Key.expr` 中引用的变量与上下文字段必须可解析。
+- `Var.functionRef` 必须在 `FunctionRegistry` 中可解析。
+- `Var.args` 里的路径参数必须可解析；常量参数必须可解析为 primitive。
+- `Var.functionRef` 对应函数返回值必须与 `Var.type`（若声明）一致。
 - 非法枚举值在 strict 下报错，loose 下回退默认值并警告。
 
 ---
@@ -413,6 +659,17 @@
 - `ANIM_LAYER_INVALID_BLEND_MODE`
 - `ANIM_LAYER_NOT_FOUND`
 - `ANIM_LAYER_ACTION_INVALID`
+- `ANIM_VAR_DUPLICATE_NAME`
+- `ANIM_VAR_SOURCE_MISSING`
+- `ANIM_VAR_TYPE_MISMATCH`
+- `ANIM_VAR_NOT_FOUND`
+- `ANIM_EXPR_EVAL_FAILED`
+- `ANIM_FUNCTION_REF_DUPLICATE`
+- `ANIM_FUNCTION_REF_NOT_FOUND`
+- `ANIM_FUNCTION_ARGS_INVALID`
+- `ANIM_FUNCTION_TIMEOUT`
+- `ANIM_FUNCTION_RETURN_TYPE_MISMATCH`
+- `ANIM_FUNCTION_EXECUTION_FAILED`
 
 - `STAGE_LIB_DUPLICATE_SCRIPT_ID`
 - `STAGE_SCRIPT_INVALID_DURATION`

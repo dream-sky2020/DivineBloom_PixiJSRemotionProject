@@ -146,11 +146,13 @@ export type StageInterpolation = 'hold' | 'linear';
 export type StageValueMode = 'absolute' | 'relative';
 export type StageUnknownScriptPolicy = 'error' | 'warn' | 'ignore';
 export type StageInterruptPolicy = 'replace' | 'reject' | 'queue';
+export type StageVariableValueType = 'number' | 'string' | 'boolean';
+export type StagePrimitive = string | number | boolean;
 
 export interface StagePayloadSet {
   key: string;
   from?: string;
-  value?: string | number | boolean;
+  value?: StagePrimitive;
 }
 
 export interface StageScriptEvent {
@@ -165,7 +167,9 @@ export interface StageScriptEvent {
 
 export interface StageScriptKey {
   frame: number;
-  value: string | number | boolean;
+  value?: StagePrimitive;
+  expr?: string;
+  valueFromVar?: string;
   easing?: string;
   events: StageScriptEvent[];
 }
@@ -184,6 +188,20 @@ export interface StageScriptCue {
   payloadSets: StagePayloadSet[];
 }
 
+export interface StageScriptVariableDef {
+  name: string;
+  type?: StageVariableValueType;
+  required: boolean;
+  from?: string;
+  value?: StagePrimitive;
+  expr?: string;
+  functionRef?: string;
+  args: string[];
+  timeoutMs?: number;
+  cacheKey?: string;
+  default?: StagePrimitive;
+}
+
 export interface StageScriptRole {
   id: string;
   required: boolean;
@@ -195,6 +213,7 @@ export interface StageScriptAsset {
   fps: number;
   interruptPolicy: StageInterruptPolicy;
   completeSignal?: string;
+  variables: StageScriptVariableDef[];
   roles: StageScriptRole[];
   tracks: StageScriptTrack[];
   cues: StageScriptCue[];

@@ -274,7 +274,7 @@
 - `Key.frame` / `Key.value`：关键帧定义。
 
 详细字段、约束、错误码、关键帧事件（Key.Events）请查看：
-`src/game/animation_module_spec.txt`
+`src/game/doc/animation_module_spec.txt`
 
 ## 3. 游戏对象 (GameObject)
 
@@ -454,7 +454,7 @@
 ```
 
 详细字段、插值语义与校验规则请查看：
-`src/game/animation_module_spec.txt`
+`src/game/doc/animation_module_spec.txt`
 
 ### 3.11 动画控制组件 (AnimationController)
 
@@ -484,7 +484,7 @@
 ```
 
 详细字段、动作清单与运行时约束请查看：
-`src/game/animation_module_spec.txt`
+`src/game/doc/animation_module_spec.txt`
 
 ### 3.12 信号配置组件 (SignalConfig)
 

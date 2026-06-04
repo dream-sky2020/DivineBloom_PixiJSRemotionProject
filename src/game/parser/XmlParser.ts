@@ -149,6 +149,8 @@ export class XmlParser {
     const rolesEl = this.getDirectChildByTag(scriptEl, 'Roles');
     const tracksEl = this.getDirectChildByTag(scriptEl, 'Tracks');
     const cuesEl = this.getDirectChildByTag(scriptEl, 'Cues');
+    const varsEl =
+      this.getDirectChildByTag(scriptEl, 'AnimationVars') ?? this.getDirectChildByTag(scriptEl, 'Vars');
 
     const roles: StageScriptRole[] = [];
     if (rolesEl) {
@@ -163,6 +165,8 @@ export class XmlParser {
       }
     }
 
+    const variables = this.parseStageScriptVariables(varsEl);
+
     const tracks: StageScriptTrack[] = [];
     if (tracksEl) {
       for (const trackEl of this.getDirectChildren(tracksEl)) {
@@ -174,10 +178,14 @@ export class XmlParser {
         for (const keyEl of this.getDirectChildren(trackEl)) {
           if (keyEl.tagName !== 'Key') continue;
           const valueRaw = keyEl.getAttribute('value');
-          if (valueRaw === null) continue;
+          const expr = keyEl.getAttribute('expr')?.trim() || undefined;
+          const valueFromVar = keyEl.getAttribute('valueFromVar')?.trim() || undefined;
+          if (valueRaw === null && !expr && !valueFromVar) continue;
           const key: StageScriptKey = {
             frame: Math.max(0, parseFloat(keyEl.getAttribute('frame') || '0') || 0),
-            value: parseAnimationValue(valueRaw),
+            value: valueRaw === null ? undefined : parseAnimationValue(valueRaw),
+            expr,
+            valueFromVar,
             easing: keyEl.getAttribute('easing')?.trim() || undefined,
             events: this.parseStageScriptEvents(keyEl),
           };
@@ -214,10 +222,50 @@ export class XmlParser {
       fps: Math.max(1, parseFloat(scriptEl.getAttribute('fps') || `${defaultFps}`) || defaultFps),
       interruptPolicy: parseInterruptPolicy(scriptEl.getAttribute('interruptPolicy')),
       completeSignal: scriptEl.getAttribute('completeSignal')?.trim() || undefined,
+      variables,
       roles,
       tracks,
       cues,
     };
+  }
+
+  private static parseStageScriptVariables(varsEl: Element | undefined): StageScriptAsset['variables'] {
+    if (!varsEl) return [];
+    const variables: StageScriptAsset['variables'] = [];
+    for (const varEl of this.getDirectChildren(varsEl)) {
+      if (varEl.tagName !== 'Var') continue;
+      const name = (varEl.getAttribute('name') || '').trim();
+      if (!name) continue;
+      const typeAttr = (varEl.getAttribute('type') || '').trim().toLowerCase();
+      const type =
+        typeAttr === 'number' || typeAttr === 'string' || typeAttr === 'boolean'
+          ? typeAttr
+          : undefined;
+      const from = varEl.getAttribute('from')?.trim() || undefined;
+      const valueAttr = varEl.getAttribute('value');
+      const expr = varEl.getAttribute('expr')?.trim() || undefined;
+      const functionRef = varEl.getAttribute('functionRef')?.trim() || undefined;
+      const args = parseList(varEl.getAttribute('args'));
+      const timeoutRaw = varEl.getAttribute('timeoutMs');
+      const timeoutMs =
+        timeoutRaw && Number.isFinite(Number(timeoutRaw)) ? Math.max(0, Number(timeoutRaw)) : undefined;
+      const cacheKey = varEl.getAttribute('cacheKey')?.trim() || undefined;
+      const defaultAttr = varEl.getAttribute('default');
+      variables.push({
+        name,
+        type,
+        required: varEl.getAttribute('required') === 'true',
+        from,
+        value: valueAttr === null ? undefined : parseLoosePrimitive(valueAttr),
+        expr,
+        functionRef,
+        args,
+        timeoutMs,
+        cacheKey,
+        default: defaultAttr === null ? undefined : parseLoosePrimitive(defaultAttr),
+      });
+    }
+    return variables;
   }
 
   private static parseStageScriptEvents(keyEl: Element): StageScriptEvent[] {
@@ -1438,6 +1486,14 @@ function parseStageDirectorConflictPolicy(
 }
 
 function parseMaskList(value: string | null): string[] {
+  if (!value) return [];
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function parseList(value: string | null): string[] {
   if (!value) return [];
   return value
     .split(',')
