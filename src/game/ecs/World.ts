@@ -1,5 +1,6 @@
 import { System } from '../types';
 import type { Entity, EntityId, WorldData } from '../types';
+import { consumeQueuedDestroyEntityIds } from './lifecycleRuntime';
 
 export class World {
   private entities: Map<EntityId, Entity> = new Map();
@@ -26,6 +27,9 @@ export class World {
     const entitiesArray = Array.from(this.entities.values());
     for (const system of this.systems) {
       system.update(entitiesArray, deltaTime);
+    }
+    for (const id of consumeQueuedDestroyEntityIds()) {
+      this.entities.delete(id);
     }
   }
 

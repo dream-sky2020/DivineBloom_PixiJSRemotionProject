@@ -12,7 +12,10 @@ import type { CameraComponent } from './ecs/components/Camera';
 import type { CanvasComponent } from './ecs/components/Canvas';
 import type { ParticleEmitterComponent } from './ecs/components/ParticleEmitter';
 import type { AnimationsComponent } from './ecs/components/Animations';
-import type { AnimationActionName, AnimationControllerComponent } from './ecs/components/AnimationController';
+import type {
+  GameObjectControllerActionName,
+  GameObjectControllerComponent,
+} from './ecs/components/GameObjectController';
 
 export type { 
   TransformComponent, 
@@ -25,8 +28,8 @@ export type {
   CanvasComponent,
   ParticleEmitterComponent,
   AnimationsComponent,
-  AnimationControllerComponent,
-  AnimationActionName,
+  GameObjectControllerComponent,
+  GameObjectControllerActionName,
 };
 
 export type EntityId = string | number;
@@ -42,7 +45,170 @@ export interface BoxColliderComponent extends Component {
   offset: { x: number; y: number };
 }
 
-export interface SignalBindingRule {
+export type AnimationDirection = 'forward' | 'backward';
+export type AnimationControllerMode = 'single' | 'layered';
+export type AnimationLayerConflictPolicy = 'byMask' | 'priority' | 'weight';
+export type AnimationLayerBlendMode = 'override' | 'additive';
+
+export type AnimationActionName =
+  | 'setLabel'
+  | 'playOnce'
+  | 'pause'
+  | 'resume'
+  | 'setSpeed'
+  | 'setLoopOverride'
+  | 'setLayerLabel'
+  | 'playLayerOnce'
+  | 'pauseLayer'
+  | 'resumeLayer'
+  | 'setLayerWeight'
+  | 'enableLayer'
+  | 'disableLayer';
+
+export interface AnimationActionRequest {
+  pending: boolean;
+  args: Record<string, unknown>;
+}
+
+export type AnimationActionRequestMap = Partial<Record<AnimationActionName, AnimationActionRequest>>;
+
+export interface AnimationLayerState {
+  playing: boolean;
+  currentLabel?: string;
+  localFrame: number;
+  speedScale: number;
+  direction: AnimationDirection;
+  loopOverride?: boolean;
+  fallbackLabel?: string;
+}
+
+export interface AnimationLayerConfig {
+  id: string;
+  priority: number;
+  enabled: boolean;
+  weight: number;
+  blendMode: AnimationLayerBlendMode;
+  writeMask: string[];
+  blockMask: string[];
+  state: AnimationLayerState;
+}
+
+export interface AnimationControllerComponent extends Component {
+  readonly type: 'AnimationController';
+  mode: AnimationControllerMode;
+  layerConflictPolicy: AnimationLayerConflictPolicy;
+  allowedActions: AnimationActionName[];
+  actionRequests: AnimationActionRequestMap;
+  // single mode state
+  playing: boolean;
+  currentLabel?: string;
+  localFrame: number;
+  speedScale: number;
+  direction: AnimationDirection;
+  loopOverride?: boolean;
+  fallbackLabel?: string;
+  // layered mode state
+  layers: AnimationLayerConfig[];
+}
+
+export type StageDirectorActionName =
+  | 'playScript'
+  | 'stopScript'
+  | 'stopAll'
+  | 'pauseScript'
+  | 'resumeScript';
+
+export type StageDirectorConflictPolicy = 'localFirst' | 'stageFirst' | 'byMask';
+
+export interface StageDirectorActionRequest {
+  pending: boolean;
+  args: Record<string, unknown>;
+}
+
+export type StageDirectorActionRequestMap = Partial<
+  Record<StageDirectorActionName, StageDirectorActionRequest>
+>;
+
+export interface StageDirectorControllerComponent extends Component {
+  readonly type: 'StageDirectorController';
+  id: string;
+  scope: string;
+  enabled: boolean;
+  conflictPolicy: StageDirectorConflictPolicy;
+  maxActiveInstances: number;
+  defaultPriority: number;
+  allowCrossScope: boolean;
+  allowedActions: StageDirectorActionName[];
+  actionRequests: StageDirectorActionRequestMap;
+}
+
+export type StageInterpolation = 'hold' | 'linear';
+export type StageValueMode = 'absolute' | 'relative';
+export type StageUnknownScriptPolicy = 'error' | 'warn' | 'ignore';
+export type StageInterruptPolicy = 'replace' | 'reject' | 'queue';
+
+export interface StagePayloadSet {
+  key: string;
+  from?: string;
+  value?: string | number | boolean;
+}
+
+export interface StageScriptEvent {
+  signal: string;
+  once: boolean;
+  phase: 'enter' | 'leave' | 'exact';
+  direction: 'both' | 'forward' | 'backward';
+  fireOnSeek: boolean;
+  cooldownMs: number;
+  payloadSets: StagePayloadSet[];
+}
+
+export interface StageScriptKey {
+  frame: number;
+  value: string | number | boolean;
+  easing?: string;
+  events: StageScriptEvent[];
+}
+
+export interface StageScriptTrack {
+  role: string;
+  prop: string;
+  interpolation: StageInterpolation;
+  valueMode: StageValueMode;
+  keys: StageScriptKey[];
+}
+
+export interface StageScriptCue {
+  frame: number;
+  signal: string;
+  payloadSets: StagePayloadSet[];
+}
+
+export interface StageScriptRole {
+  id: string;
+  required: boolean;
+}
+
+export interface StageScriptAsset {
+  id: string;
+  duration: number;
+  fps: number;
+  interruptPolicy: StageInterruptPolicy;
+  completeSignal?: string;
+  roles: StageScriptRole[];
+  tracks: StageScriptTrack[];
+  cues: StageScriptCue[];
+}
+
+export interface StageScriptLibraryAsset {
+  mode: 'strict' | 'loose';
+  defaultFps: number;
+  unknownScript: StageUnknownScriptPolicy;
+  scripts: Record<string, StageScriptAsset>;
+}
+
+export interface SignalActionRule {
+  kind: 'action';
   event: string;
   target: string;
   action: string;
@@ -51,8 +217,20 @@ export interface SignalBindingRule {
   priority: number;
 }
 
-export interface SignalBindingsComponent extends Component {
-  readonly type: 'SignalBindings';
+export interface SignalEmitRule {
+  kind: 'emit';
+  from: string;
+  emit: string;
+  signal: string;
+  when?: string;
+  args: Record<string, string | number | boolean>;
+  priority: number;
+}
+
+export type SignalBindingRule = SignalActionRule | SignalEmitRule;
+
+export interface SignalConfigComponent extends Component {
+  readonly type: 'SignalConfig';
   rules: SignalBindingRule[];
 }
 
@@ -126,7 +304,9 @@ export type AnyComponent =
   | ParticleEmitterComponent
   | AnimationsComponent
   | AnimationControllerComponent
-  | SignalBindingsComponent;
+  | StageDirectorControllerComponent
+  | GameObjectControllerComponent
+  | SignalConfigComponent;
 
 export interface Entity {
   id: EntityId;
@@ -137,6 +317,7 @@ export interface Entity {
 export abstract class System {
   abstract update(entities: Entity[], deltaTime: number): void;
   configure?(_config: EngineConfig): void;
+  bindWorldData?(_worldData: WorldData): void;
 }
 
 export interface SystemConfig {
@@ -153,5 +334,6 @@ export interface EngineConfig {
 export interface WorldData {
   config: EngineConfig;
   canvas?: CanvasComponent;
+  stageScriptLibrary?: StageScriptLibraryAsset;
   entities: Entity[];
 }

@@ -5,6 +5,9 @@ import {
   EcsParticleSystem,
   EcsAnimationSystem,
   EcsInputSystem,
+  EcsSignalSystem,
+  EcsGameObjectLifecycleSystem,
+  EcsStageDirectorSystem,
 } from '../index';
 import type { PixiCommandProcessor } from '../../pixiJSRenderer/PixiCommandProcessor';
 
@@ -22,6 +25,9 @@ export async function initBounceExample(pixiProcessor: PixiCommandProcessor, xml
   GameEngine.registerSystem('ParticleSystem', () => new EcsParticleSystem(pixiProcessor));
   GameEngine.registerSystem('AnimationSystem', () => new EcsAnimationSystem());
   GameEngine.registerSystem('InputSystem', () => new EcsInputSystem());
+  GameEngine.registerSystem('SignalSystem', () => new EcsSignalSystem());
+  GameEngine.registerSystem('GameObjectLifecycleSystem', () => new EcsGameObjectLifecycleSystem());
+  GameEngine.registerSystem('StageDirectorSystem', () => new EcsStageDirectorSystem());
 
   // 2. 从 XML 创建世界
   // 解析器会自动处理 EngineConfig (系统加载) 和 GameObject (实体创建)

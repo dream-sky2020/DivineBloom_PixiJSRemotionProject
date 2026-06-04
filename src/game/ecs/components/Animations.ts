@@ -5,10 +5,30 @@ export type AnimationValueMode = 'absolute' | 'relative';
 
 export type AnimationKeyValue = number | string | boolean;
 
+export type AnimationKeyEventPhase = 'enter' | 'leave' | 'exact';
+export type AnimationKeyEventDirection = 'both' | 'forward' | 'backward';
+
+export interface AnimationPayloadSet {
+  key: string;
+  from?: string;
+  value?: AnimationKeyValue;
+}
+
+export interface AnimationKeyEvent {
+  signal: string;
+  once: boolean;
+  phase: AnimationKeyEventPhase;
+  direction: AnimationKeyEventDirection;
+  fireOnSeek: boolean;
+  cooldownMs: number;
+  sets: AnimationPayloadSet[];
+}
+
 export interface AnimationKeyframe {
   frame: number;
   value: AnimationKeyValue;
   easing?: string;
+  events?: AnimationKeyEvent[];
 }
 
 export interface AnimationTrack {

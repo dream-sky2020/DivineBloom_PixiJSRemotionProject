@@ -8,9 +8,7 @@ import type {
   InputRouteDefinition,
   InputToSignalMapConfig,
 } from '../../types';
-import type { SignalBindingsComponent } from '../components/SignalBindings';
-import type { AnimationControllerComponent } from '../components/AnimationController';
-import { applyAnimationControllerAction } from '../components/AnimationController';
+import { enqueueSignalEvent } from '../signalRuntime';
 
 type ActionValue = boolean | number | { x: number; y: number };
 
@@ -41,7 +39,7 @@ export class EcsInputSystem extends System {
     this.inputToSignalMap = config.inputToSignalMap;
   }
 
-  update(entities: Entity[], _deltaTime: number): void {
+  update(_entities: Entity[], _deltaTime: number): void {
     if (!this.inputConfig || !this.inputToSignalMap) {
       return;
     }
@@ -96,9 +94,7 @@ export class EcsInputSystem extends System {
       });
     }
 
-    if (signals.length > 0) {
-      this.dispatchSignals(entities, signals);
-    }
+    if (signals.length > 0) this.dispatchSignals(signals);
 
     this.wheelDeltaY = 0;
   }
@@ -288,33 +284,10 @@ export class EcsInputSystem extends System {
     return payload;
   }
 
-  private dispatchSignals(entities: Entity[], events: SignalEvent[]): void {
+  private dispatchSignals(events: SignalEvent[]): void {
     for (const signal of events) {
-      for (const entity of entities) {
-        const bindings = entity.components.get('SignalBindings') as SignalBindingsComponent | undefined;
-        if (!bindings) continue;
-
-        for (const rule of bindings.rules) {
-          if (rule.event !== signal.id) continue;
-          if (rule.when && !evaluateWhenExpr(rule.when, signal.payload, entity)) continue;
-          this.applySignalRule(entity, rule.target, rule.action, resolveRuleArgs(rule.args, signal.payload, entity));
-        }
-      }
+      enqueueSignalEvent(signal);
     }
-  }
-
-  private applySignalRule(
-    entity: Entity,
-    target: string,
-    action: string,
-    args: Record<string, unknown>,
-  ): void {
-    const normalizedTarget = target.trim().toLowerCase();
-    if (normalizedTarget !== 'animationcontroller') return;
-
-    const controller = entity.components.get('AnimationController') as AnimationControllerComponent | undefined;
-    if (!controller) return;
-    applyAnimationControllerAction(controller, action, args);
   }
 }
 
@@ -438,43 +411,3 @@ function resolveCtxPath(path: string, payload: Record<string, unknown>): unknown
   return cursor;
 }
 
-function evaluateWhenExpr(expr: string, payload: Record<string, unknown>, entity: Entity): boolean {
-  try {
-    const fn = new Function('payload', 'self', `return Boolean(${expr});`);
-    return Boolean(fn(payload, entity));
-  } catch {
-    return false;
-  }
-}
-
-function resolveRuleArgs(
-  args: Record<string, string | number | boolean>,
-  payload: Record<string, unknown>,
-  entity: Entity,
-): Record<string, unknown> {
-  const resolved: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(args)) {
-    if (typeof value === 'string') {
-      if (value.startsWith('payload.')) {
-        resolved[key] = readPath(payload, value.slice('payload.'.length));
-        continue;
-      }
-      if (value === 'self.id') {
-        resolved[key] = entity.id;
-        continue;
-      }
-    }
-    resolved[key] = value;
-  }
-  return resolved;
-}
-
-function readPath(source: Record<string, unknown>, path: string): unknown {
-  const segments = path.split('.');
-  let cursor: unknown = source;
-  for (const segment of segments) {
-    if (!cursor || typeof cursor !== 'object' || Array.isArray(cursor)) return undefined;
-    cursor = (cursor as Record<string, unknown>)[segment];
-  }
-  return cursor;
-}

@@ -135,10 +135,10 @@
                     </Label>
                 </Animations>
                 <AnimationController currentLabel="idle" playing="false" />
-                <SignalBindings>
+                <SignalConfig>
                     <On event="input.rotate.start" target="AnimationController" action="resume" />
                     <On event="input.rotate.stop" target="AnimationController" action="pause" />
-                </SignalBindings>
+                </SignalConfig>
             </GameObject>
         </Prefab>
 
@@ -239,10 +239,10 @@
                     </Label>
                 </Animations>
                 <AnimationController currentLabel="idle" playing="false" />
-                <SignalBindings>
+                <SignalConfig>
                     <On event="input.rotate.start" target="AnimationController" action="resume" />
                     <On event="input.rotate.stop" target="AnimationController" action="pause" />
-                </SignalBindings>
+                </SignalConfig>
             </GameObject>
         </Prefab>
 
@@ -353,10 +353,10 @@
                     </Label>
                 </Animations>
                 <AnimationController currentLabel="idle" playing="false" />
-                <SignalBindings>
+                <SignalConfig>
                     <On event="input.rotate.start" target="AnimationController" action="resume" />
                     <On event="input.rotate.stop" target="AnimationController" action="pause" />
-                </SignalBindings>
+                </SignalConfig>
             </GameObject>
         </Prefab>
 
@@ -467,10 +467,10 @@
                     </Label>
                 </Animations>
                 <AnimationController currentLabel="idle" playing="false" />
-                <SignalBindings>
+                <SignalConfig>
                     <On event="input.rotate.start" target="AnimationController" action="resume" />
                     <On event="input.rotate.stop" target="AnimationController" action="pause" />
-                </SignalBindings>
+                </SignalConfig>
             </GameObject>
         </Prefab>
     </PrefabLibrary>
