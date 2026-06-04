@@ -26,7 +26,9 @@ import type {
   WorldData,
   EngineConfig,
   SystemConfig,
-  BehaviorComponent
+  BehaviorComponent,
+  TimerComponent,
+  AnimationComponent
 } from '../types';
 import { createGameObjectControllerActionRequestState } from '../ecs/components/GameObjectController';
 
@@ -633,6 +635,10 @@ export class XmlParser {
         return this.parseSignalConfig(el);
       case 'Behavior':
         return this.parseBehavior(el);
+      case 'Timer':
+        return this.parseTimer(el);
+      case 'Animation':
+        return this.parseAnimation(el);
       default:
         console.warn(`Unknown component type: ${type}`);
         return null;
@@ -917,6 +923,67 @@ export class XmlParser {
       type: 'Behavior',
       behaviorType,
       params,
+    };
+  }
+
+  private static parseTimer(el: Element): TimerComponent {
+    return {
+      type: 'Timer',
+      time: parseFloat(el.getAttribute('time') || '0'),
+      duration: parseFloat(el.getAttribute('duration') || '1'),
+      loop: el.getAttribute('loop') === 'true',
+      active: el.getAttribute('active') !== 'false',
+      onCompleteSignal: el.getAttribute('onCompleteSignal') || undefined
+    };
+  }
+
+  private static parseAnimation(el: Element): AnimationComponent {
+    const labels: any[] = [];
+    const defaultLabel = el.getAttribute('defaultLabel') || undefined;
+
+    for (const labelEl of this.getDirectChildren(el)) {
+      if (labelEl.tagName === 'Label') {
+        const tracks: any[] = [];
+        for (const trackEl of this.getDirectChildren(labelEl)) {
+          if (trackEl.tagName === 'Track') {
+            const keyframes: any[] = [];
+            for (const keyEl of this.getDirectChildren(trackEl)) {
+              if (keyEl.tagName === 'Key') {
+                keyframes.push({
+                  frame: parseFloat(keyEl.getAttribute('frame') || '0'),
+                  value: parseLoosePrimitive(keyEl.getAttribute('value') || '0'),
+                  easing: keyEl.getAttribute('easing') || undefined
+                });
+              }
+            }
+            // 确保按帧排序
+            keyframes.sort((a, b) => a.frame - b.frame);
+
+            tracks.push({
+              property: trackEl.getAttribute('prop') || '',
+              interpolation: (trackEl.getAttribute('interpolation') || 'hold') as any,
+              valueMode: (trackEl.getAttribute('valueMode') || 'absolute') as any,
+              keyframes
+            });
+          }
+        }
+
+        labels.push({
+          name: labelEl.getAttribute('name') || 'default',
+          duration: parseFloat(labelEl.getAttribute('duration') || '1'),
+          loop: labelEl.getAttribute('loop') !== 'false',
+          speed: parseFloat(labelEl.getAttribute('speed') || '1.0'),
+          tracks
+        });
+      }
+    }
+
+    return {
+      type: 'Animation',
+      labels,
+      activeLabel: defaultLabel || (labels.length > 0 ? labels[0].name : undefined),
+      currentFrame: 0,
+      defaultLabel
     };
   }
 }

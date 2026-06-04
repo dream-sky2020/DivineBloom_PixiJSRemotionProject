@@ -24,6 +24,8 @@ export * from './ecs/systems/InputSystem';
 export * from './ecs/systems/SignalSystem';
 export * from './ecs/systems/GameObjectLifecycleSystem';
 export * from './ecs/systems/BehaviorSystem';
+export * from './ecs/systems/TimerSystem';
+export * from './ecs/systems/AnimationSystem';
 export * from './GameObjectRegistry';
 
 import { World } from './ecs/World';
@@ -33,7 +35,9 @@ import type { System, WorldData } from './types';
 const RECOMMENDED_PIPELINE_ORDER = [
   'InputSystem',
   'SignalSystem',
+  'TimerSystem',
   'BehaviorSystem',
+  'AnimationSystem',
   'PhysicsSystem',
   'ParticleSystem',
   'GameObjectLifecycleSystem',
@@ -146,6 +150,16 @@ function collectAutoRequiredSystems(worldData: WorldData): string[] {
   );
   if (hasBehaviorEntity && !enabledSet.has('BehaviorSystem')) {
     required.push('BehaviorSystem');
+  }
+
+  const hasTimerEntity = worldData.entities.some((entity) => entity.components.has('Timer'));
+  if (hasTimerEntity && !enabledSet.has('TimerSystem')) {
+    required.push('TimerSystem');
+  }
+
+  const hasAnimationEntity = worldData.entities.some((entity) => entity.components.has('Animation'));
+  if (hasAnimationEntity && !enabledSet.has('AnimationSystem')) {
+    required.push('AnimationSystem');
   }
 
   return required;

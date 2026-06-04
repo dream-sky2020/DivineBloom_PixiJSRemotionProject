@@ -11,6 +11,8 @@ import type { GraphicComponent } from './ecs/components/Graphic';
 import type { CameraComponent } from './ecs/components/Camera';
 import type { CanvasComponent } from './ecs/components/Canvas';
 import type { ParticleEmitterComponent } from './ecs/components/ParticleEmitter';
+import type { TimerComponent } from './ecs/components/Timer';
+import type { AnimationComponent, AnimationLabel, AnimationTrack, AnimationKeyframe } from './ecs/components/Animation';
 import type {
   GameObjectControllerActionName,
   GameObjectControllerComponent,
@@ -28,6 +30,11 @@ export type {
   ParticleEmitterComponent,
   GameObjectControllerComponent,
   GameObjectControllerActionName,
+  TimerComponent,
+  AnimationComponent,
+  AnimationLabel,
+  AnimationTrack,
+  AnimationKeyframe,
 };
 
 export type EntityId = string | number;
@@ -140,7 +147,9 @@ export type AnyComponent =
   | ParticleEmitterComponent
   | GameObjectControllerComponent
   | SignalConfigComponent
-  | BehaviorComponent;
+  | BehaviorComponent
+  | TimerComponent
+  | AnimationComponent;
 
 /**
  * 自定义 GameObject 接口，用于在 ECS 之外实现复杂的逻辑

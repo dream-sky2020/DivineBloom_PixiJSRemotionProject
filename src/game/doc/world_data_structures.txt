@@ -329,6 +329,61 @@
     destroyDelayMs="0"
     actions="destroy"
 />
+
+### 4.13 动画组件 (Animation)
+
+#### 4.13.1 结构示例
+
+```xml
+<Animation defaultLabel="idle">
+    <Label name="idle" duration="30" loop="true" speed="1.0">
+        <Track prop="sprite.textureFrame" interpolation="hold">
+            <Key frame="0" value="idle_01" />
+            <Key frame="10" value="idle_02" />
+        </Track>
+        <Track prop="transform.position.y" interpolation="linear" valueMode="relative">
+            <Key frame="0" value="0" />
+            <Key frame="15" value="-6" easing="cubic-bezier(0.25, 0.10, 0.25, 1.00)" />
+            <Key frame="30" value="0" />
+        </Track>
+    </Label>
+</Animation>
+```
+
+#### 4.13.2 字段定义
+
+- `defaultLabel`：`[可选]` 默认播放标签名。
+- `activeLabel`：`[运行时]` 当前正在播放的标签名。
+- `currentFrame`：`[运行时]` 当前播放到的帧数。
+- `Label.name`：`[必填]` 标签名（组件内唯一）。
+- `Label.duration`：`[必填]` 动画长度（帧），要求 `> 0`。
+- `Label.loop`：`[可选]` 是否循环，默认 `true`。
+- `Label.speed`：`[可选]` 标签内默认速率倍率，默认 `1.0`。
+- `Track.prop`：`[必填]` 目标属性路径。
+- `Track.interpolation`：`[可选]` `hold | linear`，默认 `hold`。
+- `Track.valueMode`：`[可选]` `absolute | relative`，默认 `absolute`。
+- `Key.frame`：`[必填]`，`0 <= frame <= duration`，同轨道严格升序且不可重复。
+- `Key.value`：`[必填]`，`number | string | boolean`。
+- `Key.easing`：`[可选]`，建议 `cubic-bezier(x1,y1,x2,y2)`。
+
+#### 4.13.3 语义约束
+
+- `relative` 模式是“基准值 + 采样值”，禁止逐帧累加。
+- `interpolation=linear` 且 value 非 number 时，按离散切换处理。
+
+### 4.14 定时器组件 (Timer)
+
+用于处理简单的倒计时逻辑。
+
+```xml
+<Timer 
+    duration="1.0"                  <!-- [必填] 持续时间（秒） -->
+    time="0"                        <!-- [可选] 当前时间，默认 "0" -->
+    loop="false"                    <!-- [可选] 是否循环，默认 "false" -->
+    active="true"                   <!-- [可选] 是否激活，默认 "true" -->
+    onCompleteSignal="timer.done"   <!-- [可选] 完成时发送的信号名称 -->
+/>
+```
 ```
 
 ## 5. 画布配置 (Canvas)

@@ -9,6 +9,8 @@ import {
   EcsSignalSystem,
   EcsGameObjectLifecycleSystem,
   EcsBehaviorSystem,
+  EcsTimerSystem,
+  EcsAnimationSystem,
 } from '../game';
 import type { World } from '../game/ecs/World';
 import { toast } from '../components/Toast';
@@ -159,6 +161,8 @@ export function GameECSPage() {
       GameEngine.registerSystem('SignalSystem', () => new EcsSignalSystem());
       GameEngine.registerSystem('GameObjectLifecycleSystem', () => new EcsGameObjectLifecycleSystem());
       GameEngine.registerSystem('BehaviorSystem', () => new EcsBehaviorSystem());
+      GameEngine.registerSystem('TimerSystem', () => new EcsTimerSystem());
+      GameEngine.registerSystem('AnimationSystem', () => new EcsAnimationSystem());
 
       // 2. 创建世界
       const newWorld = await GameEngine.createWorldFromXml(xmlString);
