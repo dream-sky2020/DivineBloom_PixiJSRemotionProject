@@ -241,41 +241,6 @@
 - `Set.from`：`[可选]` 从输入上下文取值，常见 `ctx.action|ctx.value|ctx.device|ctx.path|ctx.time`。
 - `Set.value`：`[可选]` 写入常量值（如 `$player`）。
 
-### 2.5 舞台动画剧本库 (StageScriptLibrary)
-
-用于定义“多对象参与”的全局动画剧本资产（角色占位符 + 运行时绑定）。
-
-最小结构示例：
-
-```xml
-<StageScriptLibrary mode="strict" defaultFps="60" unknownScript="error">
-    <StageScript id="stage.example.dual" duration="90" interruptPolicy="replace">
-        <Roles>
-            <Role id="attacker" required="true" />
-            <Role id="target" required="true" />
-        </Roles>
-        <Tracks>
-            <Track role="attacker" prop="transform.position.x">
-                <Key frame="0" value="420" />
-                <Key frame="20" value="520" />
-            </Track>
-        </Tracks>
-    </StageScript>
-</StageScriptLibrary>
-```
-
-核心字段（简版）：
-
-- `StageScript.id`：剧本 ID（全库唯一）。
-- `StageScript.duration`：时长（帧）。
-- `Role.id`：角色占位符 ID。
-- `Track.role`：目标角色。
-- `Track.prop`：目标属性路径。
-- `Key.frame` / `Key.value`：关键帧定义。
-
-详细字段、约束、错误码、关键帧事件（Key.Events）请查看：
-`src/game/animation_module_spec.txt`
-
 ## 3. 游戏对象 (GameObject)
 
 代表 ECS 中的一个实体 (Entity)。它本身不包含逻辑，只作为组件的容器。

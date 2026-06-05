@@ -20,7 +20,13 @@ const WHITE_PIXEL_TEXTURE: PixiTextureSource = {
 export class EcsParticleSystem extends System {
   private readonly reconciler = new PixiFrameReconciler();
   private readonly processor: PixiCommandProcessor;
+  
+  // 运行时状态：每个发射器私有的数据（如发射累加器）
   private readonly emitterState = new Map<string, EmitterRuntimeState>();
+  
+  // 粒子池：全局复用粒子对象，减少 GC
+  private readonly particlePool: ParticleData[] = [];
+  private readonly MAX_POOL_SIZE = 5000;
 
   constructor(processor: PixiCommandProcessor) {
     super();
@@ -33,6 +39,9 @@ export class EcsParticleSystem extends System {
     const entityMap = createEntityMap(entities);
     const transformCache: TransformCache = new Map();
     const activeEmitterIds = new Set<string>();
+    
+    // 批处理容器管理：Key 为 "texture|blendMode"
+    const activeBatchKeys = new Set<string>();
 
     for (const entity of entities) {
       const emitter = entity.components.get('ParticleEmitter') as ParticleEmitterComponent | undefined;
@@ -45,8 +54,15 @@ export class EcsParticleSystem extends System {
       const worldTransform = resolveWorldTransform(entity, entityMap, transformCache);
       if (!worldTransform) continue;
 
+      // 1. 确定批处理 Key
+      const texture = emitter.texture || (emitter.graphicKind ? WHITE_PIXEL_TEXTURE : undefined);
+      const textureUrl = texture?.kind === 'image' ? texture.image : 'default';
+      const batchKey = `${textureUrl}|${emitter.blendMode}`;
+      activeBatchKeys.add(batchKey);
+
+      // 2. 确保对应的全局容器存在
       this.reconciler.setObject({
-        id: this.getContainerId(emitterId),
+        id: `global_particle_container_${batchKey}`,
         kind: 'particleContainer',
         props: {
           blendMode: emitter.blendMode,
@@ -54,18 +70,19 @@ export class EcsParticleSystem extends System {
         },
       });
 
+      // 3. 更新发射器逻辑
       const runtime = this.getOrCreateRuntime(emitterId);
       this.stepEmitter(runtime, emitterId, emitter, worldTransform.position.x, worldTransform.position.y, deltaTime);
 
-      // ParticleData[] 批处理：统一遍历数组并提交 particle 状态。
+      // 4. 提交粒子渲染指令，挂载到全局共享容器下
       for (const particle of runtime.particles) {
         const t = Math.min(1, particle.age / particle.lifetime);
         this.reconciler.setObject({
           id: particle.id,
           kind: 'particle',
-          containerId: this.getContainerId(emitterId),
+          containerId: `global_particle_container_${batchKey}`,
           props: {
-            texture: emitter.texture || (emitter.graphicKind ? WHITE_PIXEL_TEXTURE : undefined),
+            texture: texture,
             x: particle.x,
             y: particle.y,
             scaleX: lerp(particle.startSize, particle.endSize, t),
@@ -80,8 +97,14 @@ export class EcsParticleSystem extends System {
       }
     }
 
+    // 清理已失效的发射器状态
     for (const emitterId of [...this.emitterState.keys()]) {
       if (!activeEmitterIds.has(emitterId)) {
+        const runtime = this.emitterState.get(emitterId);
+        if (runtime) {
+          // 将失效发射器的粒子回收到池中
+          this.recycleParticles(runtime.particles);
+        }
         this.emitterState.delete(emitterId);
       }
     }
@@ -98,6 +121,25 @@ export class EcsParticleSystem extends System {
     originY: number,
     deltaTime: number,
   ): void {
+    // 1. 更新现有粒子并回收死亡粒子
+    for (let i = runtime.particles.length - 1; i >= 0; i--) {
+      const particle = runtime.particles[i];
+      particle.age += deltaTime;
+      
+      if (particle.age >= particle.lifetime) {
+        // 死亡粒子：从发射器列表中移除并回收到池
+        const deadParticle = runtime.particles.splice(i, 1)[0];
+        this.recycleParticle(deadParticle);
+        continue;
+      }
+      
+      // 物理更新
+      particle.x += particle.vx * deltaTime;
+      particle.y += particle.vy * deltaTime;
+      particle.rotation += particle.angularVelocity * deltaTime;
+    }
+
+    // 2. 生成新粒子
     runtime.emitAccumulator += Math.max(0, deltaTime) * Math.max(0, emitter.emissionRate);
     const canSpawn = Math.max(0, emitter.maxParticles - runtime.particles.length);
     const spawnCount = Math.min(canSpawn, Math.floor(runtime.emitAccumulator));
@@ -107,39 +149,48 @@ export class EcsParticleSystem extends System {
       const angleDeg = emitter.angle + randomRange(-emitter.spread * 0.5, emitter.spread * 0.5);
       const angleRad = (angleDeg * Math.PI) / 180;
       const speed = randomRange(emitter.speedMin, emitter.speedMax);
-      runtime.particles.push({
-        id: `particle_${emitterId}_${runtime.sequence++}`,
-        x: originX,
-        y: originY,
-        vx: Math.cos(angleRad) * speed,
-        vy: Math.sin(angleRad) * speed,
-        age: 0,
-        lifetime: Math.max(0.001, randomRange(emitter.lifetimeMin, emitter.lifetimeMax)),
-        startColor: parseHexColor(emitter.startColor),
-        endColor: parseHexColor(emitter.endColor),
-        startSize: emitter.startSize,
-        endSize: emitter.endSize,
-        startAlpha: emitter.startAlpha,
-        endAlpha: emitter.endAlpha,
-        rotation: angleRad,
-        angularVelocity: randomRange(-2.2, 2.2),
-      });
+      
+      // 从池中获取或创建新粒子
+      const particle = this.spawnParticle();
+      
+      particle.id = `particle_${emitterId}_${runtime.sequence++}`;
+      particle.x = originX;
+      particle.y = originY;
+      particle.vx = Math.cos(angleRad) * speed;
+      particle.vy = Math.sin(angleRad) * speed;
+      particle.age = 0;
+      particle.lifetime = Math.max(0.001, randomRange(emitter.lifetimeMin, emitter.lifetimeMax));
+      particle.startColor = parseHexColor(emitter.startColor);
+      particle.endColor = parseHexColor(emitter.endColor);
+      particle.startSize = emitter.startSize;
+      particle.endSize = emitter.endSize;
+      particle.startAlpha = emitter.startAlpha;
+      particle.endAlpha = emitter.endAlpha;
+      particle.rotation = angleRad;
+      particle.angularVelocity = randomRange(-2.2, 2.2);
+      
+      runtime.particles.push(particle);
     }
-
-    runtime.particles = runtime.particles.filter((particle) => {
-      particle.age += deltaTime;
-      if (particle.age >= particle.lifetime) {
-        return false;
-      }
-      particle.x += particle.vx * deltaTime;
-      particle.y += particle.vy * deltaTime;
-      particle.rotation += particle.angularVelocity * deltaTime;
-      return true;
-    });
   }
 
-  private getContainerId(emitterId: string): string {
-    return `particle_container_${emitterId}`;
+  private spawnParticle(): ParticleData {
+    return this.particlePool.pop() || {
+      id: '', x: 0, y: 0, vx: 0, vy: 0, age: 0, lifetime: 0,
+      startColor: 0, endColor: 0, startSize: 0, endSize: 0,
+      startAlpha: 0, endAlpha: 0, rotation: 0, angularVelocity: 0
+    };
+  }
+
+  private recycleParticle(particle: ParticleData): void {
+    if (this.particlePool.length < this.MAX_POOL_SIZE) {
+      this.particlePool.push(particle);
+    }
+  }
+
+  private recycleParticles(particles: ParticleData[]): void {
+    for (const p of particles) {
+      this.recycleParticle(p);
+    }
   }
 
   private getOrCreateRuntime(emitterId: string): EmitterRuntimeState {

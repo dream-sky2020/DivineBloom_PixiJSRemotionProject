@@ -111,102 +111,6 @@ export interface AnimationControllerComponent extends Component {
   layers: AnimationLayerConfig[];
 }
 
-export type StageDirectorActionName =
-  | 'playScript'
-  | 'stopScript'
-  | 'stopAll'
-  | 'pauseScript'
-  | 'resumeScript';
-
-export type StageDirectorConflictPolicy = 'localFirst' | 'stageFirst' | 'byMask';
-
-export interface StageDirectorActionRequest {
-  pending: boolean;
-  args: Record<string, unknown>;
-}
-
-export type StageDirectorActionRequestMap = Partial<
-  Record<StageDirectorActionName, StageDirectorActionRequest>
->;
-
-export interface StageDirectorControllerComponent extends Component {
-  readonly type: 'StageDirectorController';
-  id: string;
-  scope: string;
-  enabled: boolean;
-  conflictPolicy: StageDirectorConflictPolicy;
-  maxActiveInstances: number;
-  defaultPriority: number;
-  allowCrossScope: boolean;
-  allowedActions: StageDirectorActionName[];
-  actionRequests: StageDirectorActionRequestMap;
-}
-
-export type StageInterpolation = 'hold' | 'linear';
-export type StageValueMode = 'absolute' | 'relative';
-export type StageUnknownScriptPolicy = 'error' | 'warn' | 'ignore';
-export type StageInterruptPolicy = 'replace' | 'reject' | 'queue';
-
-export interface StagePayloadSet {
-  key: string;
-  from?: string;
-  value?: string | number | boolean;
-}
-
-export interface StageScriptEvent {
-  signal: string;
-  once: boolean;
-  phase: 'enter' | 'leave' | 'exact';
-  direction: 'both' | 'forward' | 'backward';
-  fireOnSeek: boolean;
-  cooldownMs: number;
-  payloadSets: StagePayloadSet[];
-}
-
-export interface StageScriptKey {
-  frame: number;
-  value: string | number | boolean;
-  easing?: string;
-  events: StageScriptEvent[];
-}
-
-export interface StageScriptTrack {
-  role: string;
-  prop: string;
-  interpolation: StageInterpolation;
-  valueMode: StageValueMode;
-  keys: StageScriptKey[];
-}
-
-export interface StageScriptCue {
-  frame: number;
-  signal: string;
-  payloadSets: StagePayloadSet[];
-}
-
-export interface StageScriptRole {
-  id: string;
-  required: boolean;
-}
-
-export interface StageScriptAsset {
-  id: string;
-  duration: number;
-  fps: number;
-  interruptPolicy: StageInterruptPolicy;
-  completeSignal?: string;
-  roles: StageScriptRole[];
-  tracks: StageScriptTrack[];
-  cues: StageScriptCue[];
-}
-
-export interface StageScriptLibraryAsset {
-  mode: 'strict' | 'loose';
-  defaultFps: number;
-  unknownScript: StageUnknownScriptPolicy;
-  scripts: Record<string, StageScriptAsset>;
-}
-
 export interface SignalActionRule {
   kind: 'action';
   event: string;
@@ -304,7 +208,6 @@ export type AnyComponent =
   | ParticleEmitterComponent
   | AnimationsComponent
   | AnimationControllerComponent
-  | StageDirectorControllerComponent
   | GameObjectControllerComponent
   | SignalConfigComponent;
 
@@ -334,6 +237,5 @@ export interface EngineConfig {
 export interface WorldData {
   config: EngineConfig;
   canvas?: CanvasComponent;
-  stageScriptLibrary?: StageScriptLibraryAsset;
   entities: Entity[];
 }

@@ -8,18 +8,16 @@
 
 1. `InputSystem`
 2. `SignalSystem`
-3. `StageDirectorSystem`
-4. `AnimationSystem`
-5. `PhysicsSystem`
-6. `ParticleSystem`
-7. `GameObjectLifecycleSystem`
-8. `RenderSystem`
+3. `AnimationSystem`
+4. `PhysicsSystem`
+5. `ParticleSystem`
+6. `GameObjectLifecycleSystem`
+7. `RenderSystem`
 
 ## 2) 系统职责边界
 
 - `InputSystem`：采样输入，发事件。
 - `SignalSystem`：匹配规则，写动作请求。
-- `StageDirectorSystem`：推进舞台实例，写舞台轨道属性，发 `Key.Events/Cues`。
 - `AnimationSystem`：推进动画控制器，写动画轨道属性，发动画 `Key.Events`。
 - `PhysicsSystem`：推进物理并同步回组件。
 - `RenderSystem`：读取状态并输出渲染命令，不写业务状态。
