@@ -13,7 +13,6 @@ export * from './ecs/components/ParticleEmitter';
 export * from './ecs/components/Animations';
 export * from './ecs/components/AnimationController';
 export * from './ecs/components/GameObjectController';
-export * from './ecs/components/StageDirectorController';
 export * from './ecs/systems/PhysicsSystem';
 export * from './ecs/systems/RenderSystem';
 export * from './ecs/systems/ParticleSystem';
@@ -21,7 +20,6 @@ export * from './ecs/systems/AnimationSystem';
 export * from './ecs/systems/InputSystem';
 export * from './ecs/systems/SignalSystem';
 export * from './ecs/systems/GameObjectLifecycleSystem';
-export * from './ecs/systems/StageDirectorSystem';
 
 import { World } from './ecs/World';
 import { XmlParser } from './parser/XmlParser';
@@ -30,7 +28,6 @@ import type { System, WorldData } from './types';
 const RECOMMENDED_PIPELINE_ORDER = [
   'InputSystem',
   'SignalSystem',
-  'StageDirectorSystem',
   'AnimationSystem',
   'PhysicsSystem',
   'ParticleSystem',
@@ -130,13 +127,6 @@ function collectAutoRequiredSystems(worldData: WorldData): string[] {
   const hasSignalConfigEntity = worldData.entities.some((entity) => entity.components.has('SignalConfig'));
   if (hasSignalConfigEntity && !enabledSet.has('SignalSystem')) {
     required.push('SignalSystem');
-  }
-
-  const hasStageDirectorEntity = worldData.entities.some((entity) =>
-    entity.components.has('StageDirectorController'),
-  );
-  if (hasStageDirectorEntity && !enabledSet.has('StageDirectorSystem')) {
-    required.push('StageDirectorSystem');
   }
 
   const hasGameObjectControllerEntity = worldData.entities.some((entity) =>

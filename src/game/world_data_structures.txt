@@ -241,40 +241,9 @@
 - `Set.from`：`[可选]` 从输入上下文取值，常见 `ctx.action|ctx.value|ctx.device|ctx.path|ctx.time`。
 - `Set.value`：`[可选]` 写入常量值（如 `$player`）。
 
-### 2.5 舞台动画剧本库 (StageScriptLibrary)
+### 2.5 舞台动画剧本库 (StageScriptLibrary) [已废弃]
 
-用于定义“多对象参与”的全局动画剧本资产（角色占位符 + 运行时绑定）。
-
-最小结构示例：
-
-```xml
-<StageScriptLibrary mode="strict" defaultFps="60" unknownScript="error">
-    <StageScript id="stage.example.dual" duration="90" interruptPolicy="replace">
-        <Roles>
-            <Role id="attacker" required="true" />
-            <Role id="target" required="true" />
-        </Roles>
-        <Tracks>
-            <Track role="attacker" prop="transform.position.x">
-                <Key frame="0" value="420" />
-                <Key frame="20" value="520" />
-            </Track>
-        </Tracks>
-    </StageScript>
-</StageScriptLibrary>
-```
-
-核心字段（简版）：
-
-- `StageScript.id`：剧本 ID（全库唯一）。
-- `StageScript.duration`：时长（帧）。
-- `Role.id`：角色占位符 ID。
-- `Track.role`：目标角色。
-- `Track.prop`：目标属性路径。
-- `Key.frame` / `Key.value`：关键帧定义。
-
-详细字段、约束、错误码、关键帧事件（Key.Events）请查看：
-`src/game/animation_module_spec.txt`
+(该部分已废弃)
 
 ## 3. 游戏对象 (GameObject)
 
@@ -525,29 +494,11 @@
 `On` 规则（信号 -> 动作）：
 
 - `On.event`：`[必填]` 监听的信号 ID（如 `input.jump.triggered`）。
-- `On.target`：`[必填]` 目标组件/目标域名称。当前规范建议支持 `AnimationController`、`GameObjectController`、`StageDirector`。
+- `On.target`：`[必填]` 目标组件/目标域名称。当前规范建议支持 `AnimationController`、`GameObjectController`。
 - `On.action`：`[必填]` 目标组件动作名（需在目标组件 `actions` 白名单内）。
 - `On.priority`：`[可选]` 优先级，数字越大越先执行，默认 `0`。
 - `When.expr`：`[可选]` 触发表达式；返回 `true` 才执行动作。
 - `Args`：`[可选]` 动作参数容器。其所有属性都会作为参数传入动作。
-
-`On.target="StageDirector"` 数据约定（用于“事件触发舞台剧本 + 角色绑定”）：
-
-- `On.action` 建议支持：
-  - `playScript`：创建并播放一个舞台剧本实例；
-  - `stopScript`：按实例 ID 或 scriptId 停止剧本；
-  - `stopByRole`：停止占用了指定实体/角色的剧本实例。
-- `playScript` 的 `Args` 建议字段：
-  - `scriptId`：`[必填]` 剧本 ID；
-  - `instanceId`：`[可选]` 实例 ID（未传可由运行时生成）；
-  - `startFrame`：`[可选]` 起始帧，默认 `0`；
-  - `speed`：`[可选]` 播放倍率，默认 `1.0`；
-  - `loop`：`[可选]` 是否循环，默认 `false`；
-  - `bind.<roleId>`：`[可选/建议]` 将角色绑定到实体 ID（例如 `bind.attacker="payload.sourceId"`）。
-- 绑定校验建议：
-  - `bind.<roleId>` 中的 `<roleId>` 必须存在于目标剧本 `Roles`；
-  - 若目标角色为 `required=true` 且未绑定，创建实例失败；
-  - 绑定实体 ID 不存在时，按 `StageScriptLibrary.unknownScript` 风格配置策略处理（建议新增并行策略）。
 
 `Emit` 规则（组件 emit -> 信号）：
 

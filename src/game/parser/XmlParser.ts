@@ -18,15 +18,6 @@ import type {
   AnimationControllerMode,
   AnimationLayerConflictPolicy,
   AnimationDirection,
-  StageScriptAsset,
-  StageScriptCue,
-  StageScriptEvent,
-  StageScriptKey,
-  StageScriptLibraryAsset,
-  StageScriptRole,
-  StageScriptTrack,
-  StageDirectorControllerComponent,
-  StageDirectorActionName,
   GameObjectControllerComponent,
   GameObjectControllerActionName,
   InputActionDefinition,
@@ -45,7 +36,6 @@ import type {
   SystemConfig
 } from '../types';
 import { createGameObjectControllerActionRequestState } from '../ecs/components/GameObjectController';
-import { createStageDirectorActionRequestState } from '../ecs/components/StageDirectorController';
 
 interface PrefabDefinition {
   id: string;
@@ -74,7 +64,6 @@ export class XmlParser {
 
     // Parse Canvas
     const canvas = this.parseCanvas(worldElement);
-    const stageScriptLibrary = this.parseStageScriptLibrary(worldElement);
 
     // Parse Prefab library
     const prefabRegistry = await this.parsePrefabLibrary(worldElement);
@@ -103,7 +92,7 @@ export class XmlParser {
       }
     }
 
-    return { config, canvas, stageScriptLibrary, entities };
+    return { config, canvas, entities };
   }
 
   private static parseCanvas(worldEl: Element): CanvasComponent | undefined {
@@ -117,151 +106,6 @@ export class XmlParser {
       height: parseFloat(canvasEl.getAttribute('height') || '1080'),
       background: canvasEl.getAttribute('background') || undefined,
     };
-  }
-
-  private static parseStageScriptLibrary(worldEl: Element): StageScriptLibraryAsset | undefined {
-    const libraryEl = this.getDirectChildByTag(worldEl, 'StageScriptLibrary');
-    if (!libraryEl) return undefined;
-
-    const scripts: Record<string, StageScriptAsset> = {};
-    const defaultFps = Math.max(1, parseFloat(libraryEl.getAttribute('defaultFps') || '60') || 60);
-    for (const scriptEl of this.getDirectChildren(libraryEl)) {
-      if (scriptEl.tagName !== 'StageScript') continue;
-      const parsed = this.parseStageScript(scriptEl, defaultFps);
-      if (!parsed) continue;
-      scripts[parsed.id] = parsed;
-    }
-
-    return {
-      mode: (libraryEl.getAttribute('mode') || 'strict') === 'loose' ? 'loose' : 'strict',
-      defaultFps,
-      unknownScript: parseUnknownScriptPolicy(libraryEl.getAttribute('unknownScript')),
-      scripts,
-    };
-  }
-
-  private static parseStageScript(scriptEl: Element, defaultFps: number): StageScriptAsset | undefined {
-    const id = (scriptEl.getAttribute('id') || '').trim();
-    if (!id) return undefined;
-    const duration = Math.max(0, parseFloat(scriptEl.getAttribute('duration') || '0') || 0);
-    if (duration <= 0) return undefined;
-
-    const rolesEl = this.getDirectChildByTag(scriptEl, 'Roles');
-    const tracksEl = this.getDirectChildByTag(scriptEl, 'Tracks');
-    const cuesEl = this.getDirectChildByTag(scriptEl, 'Cues');
-
-    const roles: StageScriptRole[] = [];
-    if (rolesEl) {
-      for (const roleEl of this.getDirectChildren(rolesEl)) {
-        if (roleEl.tagName !== 'Role') continue;
-        const roleId = (roleEl.getAttribute('id') || '').trim();
-        if (!roleId) continue;
-        roles.push({
-          id: roleId,
-          required: roleEl.getAttribute('required') !== 'false',
-        });
-      }
-    }
-
-    const tracks: StageScriptTrack[] = [];
-    if (tracksEl) {
-      for (const trackEl of this.getDirectChildren(tracksEl)) {
-        if (trackEl.tagName !== 'Track') continue;
-        const role = (trackEl.getAttribute('role') || '').trim();
-        const prop = (trackEl.getAttribute('prop') || '').trim();
-        if (!role || !prop) continue;
-        const keys: StageScriptKey[] = [];
-        for (const keyEl of this.getDirectChildren(trackEl)) {
-          if (keyEl.tagName !== 'Key') continue;
-          const valueRaw = keyEl.getAttribute('value');
-          if (valueRaw === null) continue;
-          const key: StageScriptKey = {
-            frame: Math.max(0, parseFloat(keyEl.getAttribute('frame') || '0') || 0),
-            value: parseAnimationValue(valueRaw),
-            easing: keyEl.getAttribute('easing')?.trim() || undefined,
-            events: this.parseStageScriptEvents(keyEl),
-          };
-          keys.push(key);
-        }
-        keys.sort((left, right) => left.frame - right.frame);
-        tracks.push({
-          role,
-          prop,
-          interpolation: parseStageInterpolation(trackEl.getAttribute('interpolation')),
-          valueMode: parseStageValueMode(trackEl.getAttribute('valueMode')),
-          keys,
-        });
-      }
-    }
-
-    const cues: StageScriptCue[] = [];
-    if (cuesEl) {
-      for (const cueEl of this.getDirectChildren(cuesEl)) {
-        if (cueEl.tagName !== 'Cue') continue;
-        const signal = (cueEl.getAttribute('signal') || '').trim();
-        if (!signal) continue;
-        cues.push({
-          frame: Math.max(0, parseFloat(cueEl.getAttribute('frame') || '0') || 0),
-          signal,
-          payloadSets: this.parsePayloadSets(this.getDirectChildByTag(cueEl, 'Payload')),
-        });
-      }
-    }
-
-    return {
-      id,
-      duration,
-      fps: Math.max(1, parseFloat(scriptEl.getAttribute('fps') || `${defaultFps}`) || defaultFps),
-      interruptPolicy: parseInterruptPolicy(scriptEl.getAttribute('interruptPolicy')),
-      completeSignal: scriptEl.getAttribute('completeSignal')?.trim() || undefined,
-      roles,
-      tracks,
-      cues,
-    };
-  }
-
-  private static parseStageScriptEvents(keyEl: Element): StageScriptEvent[] {
-    const eventsEl = this.getDirectChildByTag(keyEl, 'Events');
-    if (!eventsEl) return [];
-
-    const events: StageScriptEvent[] = [];
-    for (const eventEl of this.getDirectChildren(eventsEl)) {
-      if (eventEl.tagName !== 'Event') continue;
-      const signal = (eventEl.getAttribute('signal') || '').trim();
-      if (!signal) continue;
-      events.push({
-        signal,
-        once: eventEl.getAttribute('once') !== 'false',
-        phase: parseAnimationKeyEventPhase(eventEl.getAttribute('phase')),
-        direction: parseAnimationKeyEventDirection(eventEl.getAttribute('direction')),
-        fireOnSeek: eventEl.getAttribute('fireOnSeek') === 'true',
-        cooldownMs: Math.max(0, parseFloat(eventEl.getAttribute('cooldownMs') || '0') || 0),
-        payloadSets: this.parsePayloadSets(this.getDirectChildByTag(eventEl, 'Payload')),
-      });
-    }
-    return events;
-  }
-
-  private static parsePayloadSets(payloadEl: Element | undefined): Array<{
-    key: string;
-    from?: string;
-    value?: number | string | boolean;
-  }> {
-    if (!payloadEl) return [];
-    const sets: Array<{ key: string; from?: string; value?: number | string | boolean }> = [];
-    for (const setEl of this.getDirectChildren(payloadEl)) {
-      if (setEl.tagName !== 'Set') continue;
-      const key = (setEl.getAttribute('key') || '').trim();
-      if (!key) continue;
-      const from = setEl.getAttribute('from')?.trim() || undefined;
-      const valueAttr = setEl.getAttribute('value');
-      sets.push({
-        key,
-        from,
-        value: valueAttr === null ? undefined : parseLoosePrimitive(valueAttr),
-      });
-    }
-    return sets;
   }
 
   private static parseEngineConfig(worldEl: Element): EngineConfig {
@@ -794,8 +638,6 @@ export class XmlParser {
         return this.parseAnimations(el);
       case 'AnimationController':
         return this.parseAnimationController(el);
-      case 'StageDirectorController':
-        return this.parseStageDirectorController(el);
       case 'GameObjectController':
         return this.parseGameObjectController(el);
       case 'SignalConfig':
@@ -1173,33 +1015,6 @@ export class XmlParser {
     return events;
   }
 
-  private static parseStageDirectorController(el: Element): StageDirectorControllerComponent {
-    const actionsAttr = (el.getAttribute('actions') || '').trim();
-    const allowedActions = actionsAttr
-      ? actionsAttr
-          .split(',')
-          .map((item) => item.trim())
-          .filter(isStageDirectorActionName)
-      : DEFAULT_STAGE_DIRECTOR_ACTIONS;
-    const id = (el.getAttribute('id') || '').trim();
-    const scope = (el.getAttribute('scope') || '').trim();
-
-    return {
-      type: 'StageDirectorController',
-      id: id || `director_${scope || 'default'}`,
-      scope: scope || 'default',
-      enabled: el.getAttribute('enabled') !== 'false',
-      conflictPolicy: parseStageDirectorConflictPolicy(el.getAttribute('conflictPolicy')),
-      maxActiveInstances: Math.max(1, parseInt(el.getAttribute('maxActiveInstances') || '16', 10) || 16),
-      defaultPriority: parseInt(el.getAttribute('defaultPriority') || '0', 10) || 0,
-      allowCrossScope: el.getAttribute('allowCrossScope') === 'true',
-      allowedActions: allowedActions.length > 0 ? allowedActions : DEFAULT_STAGE_DIRECTOR_ACTIONS,
-      actionRequests: createStageDirectorActionRequestState(
-        allowedActions.length > 0 ? allowedActions : DEFAULT_STAGE_DIRECTOR_ACTIONS,
-      ),
-    };
-  }
-
   private static parseGameObjectController(el: Element): GameObjectControllerComponent {
     const actionsAttr = (el.getAttribute('actions') || '').trim();
     const allowedActions: GameObjectControllerActionName[] = actionsAttr
@@ -1295,14 +1110,6 @@ const DEFAULT_ANIMATION_ACTIONS: AnimationActionName[] = [
   'disableLayer',
 ];
 
-const DEFAULT_STAGE_DIRECTOR_ACTIONS: StageDirectorActionName[] = [
-  'playScript',
-  'stopScript',
-  'stopAll',
-  'pauseScript',
-  'resumeScript',
-];
-
 function createAnimationActionRequestState(
   allowedActions: readonly AnimationActionName[],
 ): AnimationControllerComponent['actionRequests'] {
@@ -1375,16 +1182,6 @@ function isAnimationActionName(value: string): value is AnimationActionName {
   );
 }
 
-function isStageDirectorActionName(value: string): value is StageDirectorActionName {
-  return (
-    value === 'playScript' ||
-    value === 'stopScript' ||
-    value === 'stopAll' ||
-    value === 'pauseScript' ||
-    value === 'resumeScript'
-  );
-}
-
 function parseAnimationDirection(value: string | null): AnimationDirection {
   return value === 'backward' ? 'backward' : 'forward';
 }
@@ -1403,24 +1200,6 @@ function parseAnimationControllerMode(value: string | null): AnimationController
   return value === 'layered' ? 'layered' : 'single';
 }
 
-function parseStageInterpolation(value: string | null): StageScriptTrack['interpolation'] {
-  return value === 'linear' ? 'linear' : 'hold';
-}
-
-function parseStageValueMode(value: string | null): StageScriptTrack['valueMode'] {
-  return value === 'relative' ? 'relative' : 'absolute';
-}
-
-function parseInterruptPolicy(value: string | null): StageScriptAsset['interruptPolicy'] {
-  if (value === 'reject' || value === 'queue') return value;
-  return 'replace';
-}
-
-function parseUnknownScriptPolicy(value: string | null): StageScriptLibraryAsset['unknownScript'] {
-  if (value === 'warn' || value === 'ignore') return value;
-  return 'error';
-}
-
 function parseLayerConflictPolicy(value: string | null): AnimationLayerConflictPolicy {
   if (value === 'priority' || value === 'weight') return value;
   return 'byMask';
@@ -1428,13 +1207,6 @@ function parseLayerConflictPolicy(value: string | null): AnimationLayerConflictP
 
 function parseLayerBlendMode(value: string | null): AnimationLayerConfig['blendMode'] {
   return value === 'additive' ? 'additive' : 'override';
-}
-
-function parseStageDirectorConflictPolicy(
-  value: string | null,
-): StageDirectorControllerComponent['conflictPolicy'] {
-  if (value === 'stageFirst' || value === 'byMask') return value;
-  return 'localFirst';
 }
 
 function parseMaskList(value: string | null): string[] {

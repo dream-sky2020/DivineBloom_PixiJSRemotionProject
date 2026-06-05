@@ -9,8 +9,6 @@ import type { AnimationControllerComponent } from '../components/AnimationContro
 import { queueAnimationControllerAction } from '../components/AnimationController';
 import type { GameObjectControllerComponent } from '../components/GameObjectController';
 import { queueGameObjectControllerAction } from '../components/GameObjectController';
-import type { StageDirectorControllerComponent } from '../components/StageDirectorController';
-import { queueStageDirectorControllerAction } from '../components/StageDirectorController';
 import {
   consumeQueuedSignalEvents,
   enqueueSignalEvent,
@@ -113,33 +111,6 @@ export class EcsSignalSystem extends System {
       if (!controller) return;
       queueGameObjectControllerAction(controller, rule.action, resolveActionArgs(rule, payload, entity));
       return;
-    }
-
-    if (normalizedTarget === 'stagedirectorcontroller') {
-      const resolvedArgs = resolveActionArgs(rule, payload, entity);
-      const localController = entity.components.get('StageDirectorController') as
-        | StageDirectorControllerComponent
-        | undefined;
-      if (localController) {
-        queueStageDirectorControllerAction(localController, rule.action, resolvedArgs);
-        return;
-      }
-      const requestedDirectorId =
-        typeof resolvedArgs.directorId === 'string' ? resolvedArgs.directorId.trim() : '';
-      const requestedScope = typeof resolvedArgs.scope === 'string' ? resolvedArgs.scope.trim() : '';
-      for (const candidate of entities) {
-        const candidateController = candidate.components.get('StageDirectorController') as
-          | StageDirectorControllerComponent
-          | undefined;
-        if (!candidateController) continue;
-        if (requestedDirectorId && candidateController.id !== requestedDirectorId) continue;
-        if (requestedScope && candidateController.scope !== requestedScope) continue;
-        queueStageDirectorControllerAction(candidateController, rule.action, resolvedArgs);
-        return;
-      }
-      console.warn(
-        `[SignalSystem] No StageDirectorController matched action "${rule.action}" (directorId=${requestedDirectorId || '*'}, scope=${requestedScope || '*'})`,
-      );
     }
   }
 }

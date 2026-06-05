@@ -4,7 +4,6 @@
 
 - 单实体动画资产：`Animations`
 - 单实体动画控制：`AnimationController`
-- 多角色舞台动画资产：`StageScriptLibrary`
 - 关键帧事件（类 Unity Animation Event）：`Key.Events`
 
 目标是提供可被解析器与运行时共同依赖的统一规范。
@@ -13,8 +12,7 @@
 
 ## 1. 设计目标
 
-- 用清晰分层定义动画能力：资产定义、运行时控制、跨实体编排。
-- 用“角色占位符（Role）”描述多对象剧本资产，不直接绑定实体 ID。
+- 用清晰分层定义动画能力：资产定义、运行时控制。
 - 支持关键帧直接发送信号，驱动复杂动画链路（特效、镜头、业务事件）。
 - 将“资产定义”与“触发策略/业务逻辑”解耦。
 
@@ -151,92 +149,14 @@
 
 ---
 
-## 4. 多角色舞台动画资产（StageScriptLibrary）
+## 4. 关键帧事件（Key.Events，类 Unity Animation Event）
 
-### 4.1 顶层结构
-
-```xml
-<StageScriptLibrary mode="strict" defaultFps="60" unknownScript="error">
-    <StageScript id="stage.example.dual" duration="90" fps="60" interruptPolicy="replace">
-        <Roles>
-            <Role id="attacker" required="true" />
-            <Role id="target" required="true" />
-            <Role id="camera" required="false" />
-        </Roles>
-
-        <Tracks>
-            <Track role="attacker" prop="transform.position.x" interpolation="linear" valueMode="absolute">
-                <Key frame="0" value="420" />
-                <Key frame="20" value="520">
-                    <Events>
-                        <Event signal="anim.attack.windup.enter" once="true">
-                            <Payload>
-                                <Set key="sourceId" from="role.attacker" />
-                                <Set key="targetId" from="role.target" />
-                            </Payload>
-                        </Event>
-                    </Events>
-                </Key>
-                <Key frame="40" value="460" />
-            </Track>
-        </Tracks>
-
-        <Cues>
-            <Cue frame="18" signal="combat.hit.window.open">
-                <Payload>
-                    <Set key="sourceId" from="role.attacker" />
-                    <Set key="targetId" from="role.target" />
-                    <Set key="scriptId" value="stage.example.dual" />
-                </Payload>
-            </Cue>
-        </Cues>
-    </StageScript>
-</StageScriptLibrary>
-```
-
-### 4.2 字段定义
-
-`StageScriptLibrary`：
-
-- `mode`：`[可选]` `strict | loose`，默认 `strict`。
-- `defaultFps`：`[可选]` 默认帧率，默认 `60`，要求 `> 0`。
-- `unknownScript`：`[可选]` `error | warn | ignore`，默认 `error`。
-
-`StageScript`：
-
-- `id`：`[必填]` 剧本唯一标识（全库唯一）。
-- `duration`：`[必填]` 时长（帧），要求 `> 0`。
-- `fps`：`[可选]` 剧本帧率，要求 `> 0`，缺省使用 `defaultFps`。
-- `interruptPolicy`：`[可选]` `replace | reject | queue`，默认 `replace`。
-- `completeSignal`：`[可选]` 完成时发出的事件 ID。
-
-`Roles / Role`：
-
-- `Role.id`：`[必填]` 剧本内唯一。
-- `Role.required`：`[可选]` 默认 `true`。
-
-`Tracks / Track`：
-
-- `Track.role`：`[必填]` 必须引用已定义角色。
-- `Track.prop`：`[必填]` 目标属性路径。
-- `Track.interpolation`：`[可选]` `hold | linear`，默认 `hold`。
-- `Track.valueMode`：`[可选]` `absolute | relative`，默认 `absolute`。
-
-`Cues / Cue`：
-
-- `Cue.frame`：`[必填]`，`0 <= frame <= duration`。
-- `Cue.signal`：`[必填]` 触发事件 ID。
-
----
-
-## 5. 关键帧事件（Key.Events，类 Unity Animation Event）
-
-### 5.1 语义
+### 4.1 语义
 
 - 关键帧可挂载多个事件，命中关键帧时发送信号。
 - 用于触发复杂动画流程中的业务动作、特效、镜头、音频等。
 
-### 5.2 字段定义
+### 4.2 字段定义
 
 - `Event.signal`：`[必填]` 事件 ID。
 - `Event.once`：`[可选]` boolean，默认 `true`。
@@ -249,12 +169,11 @@
 
 - 与 `Cue.Payload.Set` 同规则，支持 `key / from / value`。
 - 常用 `from`：
-  - `role.<roleId>`
-  - `ctx.scriptId` / `ctx.instanceId` / `ctx.localFrame` / `ctx.eventSignal`
+  - `ctx.localFrame` / `ctx.eventSignal`
 
 ---
 
-## 6. Payload.Set 通用规则（Cue / Event 共用）
+## 5. Payload.Set 通用规则（Cue / Event 共用）
 
 - `Set.key`：`[必填]` 输出字段名。
 - `Set.from`：`[可选]` 取值来源。
@@ -263,107 +182,12 @@
 
 `from` 规范：
 
-- `role.<roleId>`：取绑定实体 ID。
-- `role.<roleId>.<path>`：取绑定实体上下文路径（是否支持由实现声明）。
-- `ctx.scriptId` / `ctx.instanceId` / `ctx.localFrame`。
+- `ctx.localFrame`。
 
 ---
 
-## 7. 多导演运行时编排组件（StageDirectorController + scope 隔离）
+## 6. 最小语义约束（解析期）
 
-`StageDirectorController` 定义为 ECS 组件，需挂载在 `GameObject` 上，并由 `GameObject` 生命周期统一管理（创建、禁用、销毁）。
-该组件负责：
-
-- 创建/推进/停止舞台剧本实例；
-- 维护角色绑定（`role -> entityId`）；
-- 在本导演作用域内执行冲突仲裁；
-- 管理实例级暂停、恢复、队列与中断。
-
-### 7.1 StageDirectorController 组件结构示例
-
-```xml
-<GameObject name="BattlefieldDirectorA" id="director_go_a">
-    <StageDirectorController
-        id="director.battlefield.A"
-        scope="battlefield.A"
-        enabled="true"
-        conflictPolicy="localFirst"
-        maxActiveInstances="16"
-        defaultPriority="0"
-        allowCrossScope="false"
-        actions="playScript,stopScript,stopAll,pauseScript,resumeScript"
-    />
-</GameObject>
-```
-
-### 7.2 字段定义
-
-- `id`：`[必填]` 导演实例 ID（全局唯一）。
-- `scope`：`[必填]` 导演作用域标识（如 `battlefield.A`）。
-- `enabled`：`[可选]` 是否启用，默认 `true`。
-- `conflictPolicy`：`[可选]` `localFirst | stageFirst | byMask`，默认 `localFirst`。
-- `maxActiveInstances`：`[可选]` 并发实例上限，默认 `16`，要求 `> 0`。
-- `defaultPriority`：`[可选]` 默认实例优先级，默认 `0`。
-- `allowCrossScope`：`[可选]` 是否允许跨作用域绑定，默认 `false`（建议保持 false）。
-- `actions`：`[可选]` 可接受动作白名单。
-
-### 7.3 多导演约束
-
-- `StageDirectorController` **不要求全局唯一**，可同时存在多个实例。
-- `StageDirectorController.id` 必须全局唯一。
-- 每个 `StageDirectorController` 必须归属于一个 `GameObject`，并随该 `GameObject` 生命周期变化。
-- 建议每个 `scope` 仅有一个主导演；若同一 `scope` 存在多个导演，需明确优先级与分工。
-- 当 `allowCrossScope=false` 时，导演只可绑定和控制本 `scope` 实体。
-- 跨导演实体控制重叠属于高风险配置，建议在加载期发出 warning 或直接拒绝（由模式决定）。
-
-### 7.4 导演动作定义
-
-- `playScript`：创建并播放剧本实例。
-- `stopScript`：按实例 ID 或 scriptId 停止实例。
-- `stopAll`：停止当前导演作用域内全部实例。
-- `pauseScript`：暂停指定实例。
-- `resumeScript`：恢复指定实例。
-
----
-
-## 8. 运行时绑定契约（与 SignalConfig 衔接）
-
-推荐在 `SignalConfig` 中显式路由到目标导演：
-
-```xml
-<On event="combat.skill.dualStrike" target="StageDirectorController" action="playScript">
-    <Args
-        directorId="director.battlefield.A"
-        scope="battlefield.A"
-        scriptId="stage.example.dual"
-        speed="1.0"
-        loop="false"
-        priority="100"
-        bind.attacker="payload.sourceId"
-        bind.target="payload.targetId"
-    />
-</On>
-```
-
-约束：
-
-- `scriptId`：`[必填]`。
-- `directorId` / `scope`：`[可选但强烈建议]`，用于明确路由目标导演。
-- `priority`：`[可选]`，当前实例优先级；缺省回退 `StageDirectorController.defaultPriority`。
-- `bind.<roleId>`：`[可选/建议]`，将角色绑定到实体 ID。
-- `<roleId>` 必须存在于目标剧本角色列表。
-- 缺失必绑角色时，实例创建失败。
-- 当 `allowCrossScope=false` 时，`bind.<roleId>` 指向实体必须与目标导演 `scope` 一致。
-
----
-
-## 9. 最小语义约束（解析期）
-
-- 一个 `StageScript` 至少包含一个 `Role`。
-- 一个 `StageScript` 至少包含一条 `Track` 或一条 `Cue`。
-- `StageScript.id` 全库唯一。
-- `Role.id` 在同一 `StageScript` 内唯一。
-- `Track.role` 必须存在于 `Roles`。
 - `Cue.frame` / `Key.frame` 必须在时长范围内。
 - `Key.Event.phase` / `Key.Event.direction` 必须为合法枚举值。
 - `Key.Event.cooldownMs` 若填写，必须 `>= 0`。
@@ -373,31 +197,20 @@
 - `Layer.id` 在同一 `AnimationController` 内必须唯一。
 - `Layer.weight` 若填写，建议在 `[0, 1]`；超出范围在 strict 下报错。
 - `Layer.blendMode` 必须为 `override | additive`。
-- `StageDirectorController.id` 必须唯一。
-- `StageDirectorController.maxActiveInstances` 必须 `> 0`。
-- `StageDirectorController.conflictPolicy` 必须为合法枚举值。
 - 非法枚举值在 strict 下报错，loose 下回退默认值并警告。
 
 ---
 
-## 10. 冲突与覆盖规则（建议标准）
+## 7. 冲突与覆盖规则（建议标准）
 
-- 同一导演内，同一实体同一属性同一帧被多个剧本写入时：
-  1) 实例优先级高者优先；
-  2) 若相同，后启动覆盖先启动；
-  3) 若仍相同，按稳定排序（实例 ID）。
-- 跨导演写入同一实体同一属性时：
-  1) 若两个导演 `scope` 不同，视为配置冲突（建议拒绝）；
-  2) 若允许重叠，按 `directorPriority -> instancePriority -> startTime` 决议（需项目显式声明）。
-- 同一剧本内部同帧同属性多轨命中，按声明顺序后者覆盖前者。
 - 多事件同帧触发顺序建议：
-  1) 先 `Key.Event`，后 `Cue`；
-  2) 同类型按声明顺序；
-  3) 单个事件失败不阻断同帧其他事件派发。
+  - `Key.Event`；
+  - 同类型按声明顺序；
+  - 单个事件失败不阻断同帧其他事件派发。
 
 ---
 
-## 11. 错误码建议
+## 8. 错误码建议
 
 - `ANIM_LABEL_DUPLICATE_NAME`
 - `ANIM_LABEL_INVALID_DURATION`
@@ -414,38 +227,16 @@
 - `ANIM_LAYER_NOT_FOUND`
 - `ANIM_LAYER_ACTION_INVALID`
 
-- `STAGE_LIB_DUPLICATE_SCRIPT_ID`
-- `STAGE_SCRIPT_INVALID_DURATION`
-- `STAGE_SCRIPT_INVALID_FPS`
-- `STAGE_ROLE_DUPLICATE_ID`
-- `STAGE_ROLE_NOT_FOUND`
-- `STAGE_TRACK_EMPTY_KEYS`
-- `STAGE_KEYFRAME_OUT_OF_RANGE`
-- `STAGE_KEYFRAME_NOT_ASCENDING`
-- `STAGE_KEY_EVENT_SIGNAL_EMPTY`
-- `STAGE_KEY_EVENT_INVALID_PHASE`
-- `STAGE_KEY_EVENT_INVALID_DIRECTION`
-- `STAGE_KEY_EVENT_INVALID_COOLDOWN`
-- `STAGE_CUE_OUT_OF_RANGE`
-- `STAGE_BINDING_REQUIRED_ROLE_MISSING`
-- `STAGE_BINDING_ROLE_UNKNOWN`
-- `STAGE_DIRECTOR_DUPLICATE_ID`
-- `STAGE_DIRECTOR_INVALID_MAX_ACTIVE`
-- `STAGE_DIRECTOR_INVALID_CONFLICT_POLICY`
-- `STAGE_DIRECTOR_SCOPE_MISMATCH`
-- `STAGE_DIRECTOR_SCOPE_OVERLAP_CONFLICT`
-- `STAGE_PLAY_UNKNOWN_SCRIPT`
-
 ---
 
-## 12. 严格模式与宽松模式行为建议
+## 9. 严格模式与宽松模式行为建议
 
 - `strict`：发现任一错误码即失败并拒绝加载。
 - `loose`：可定位到单项错误时跳过该项继续；无法安全回退时仍失败。
 
 ---
 
-## 13. 与 ECS 世界文档的关系
+## 10. 与 ECS 世界文档的关系
 
 - `world_data_structures.txt` 保留动画相关“入口级定义”和最小示例。
 - 本文档提供完整字段、约束、错误码与运行时契约。
