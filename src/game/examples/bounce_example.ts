@@ -1,14 +1,6 @@
 import {
   GameEngine,
-  EcsPhysicsSystem,
-  EcsRenderSystem,
-  EcsParticleSystem,
-  EcsInputSystem,
-  EcsSignalSystem,
-  EcsGameObjectLifecycleSystem,
-  EcsBehaviorSystem,
-  EcsTimerSystem,
-  EcsAnimationSystem,
+  registerDefaultSystems,
 } from '../index';
 import type { PixiCommandProcessor } from '../../pixiJSRenderer/PixiCommandProcessor';
 
@@ -19,17 +11,12 @@ import type { PixiCommandProcessor } from '../../pixiJSRenderer/PixiCommandProce
  * @param xmlString bounce_scene.xml 的内容
  */
 export async function initBounceExample(pixiProcessor: PixiCommandProcessor, xmlString: string) {
-  // 1. 注册系统工厂函数
-  // 这里的名称必须与 XML 中的 <System name="..." /> 匹配
-  GameEngine.registerSystem('PhysicsSystem', () => new EcsPhysicsSystem({ x: 0, y: 0 }, 4));
-  GameEngine.registerSystem('RenderSystem', () => new EcsRenderSystem(pixiProcessor));
-  GameEngine.registerSystem('ParticleSystem', () => new EcsParticleSystem(pixiProcessor));
-  GameEngine.registerSystem('InputSystem', () => new EcsInputSystem());
-  GameEngine.registerSystem('SignalSystem', () => new EcsSignalSystem());
-  GameEngine.registerSystem('GameObjectLifecycleSystem', () => new EcsGameObjectLifecycleSystem());
-  GameEngine.registerSystem('BehaviorSystem', () => new EcsBehaviorSystem());
-  GameEngine.registerSystem('TimerSystem', () => new EcsTimerSystem());
-  GameEngine.registerSystem('AnimationSystem', () => new EcsAnimationSystem());
+  // 1. 注册系统工厂函数（名称需与 XML 中的 <System name="..." /> 匹配）
+  registerDefaultSystems({
+    processor: pixiProcessor,
+    gravity: { x: 0, y: 0 },
+    substeps: 4,
+  });
 
   // 2. 从 XML 创建世界
   // 解析器会自动处理 EngineConfig (系统加载) 和 GameObject (实体创建)

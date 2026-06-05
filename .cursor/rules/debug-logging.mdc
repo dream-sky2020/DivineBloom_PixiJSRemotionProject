@@ -1,0 +1,18 @@
+# 调试日志统一规范
+
+为避免调试输出分散，本项目要求所有调试/诊断日志统一走 `src/debug/DebugLogger.ts`。
+
+## 1. 统一入口
+- 仅允许使用 `sendDebugCommand(command)` 记录调试信息。
+- `command` 必须包含：`level`、`source`、`message`，可选 `detail`。
+
+## 2. 输出目标
+- `DebugLogger` 模块的职责只有一个：接收命令并写入 `public/log.txt`。
+- 禁止在业务模块中自行处理写文件、格式化落盘、日志路由等逻辑。
+
+## 3. 禁止事项
+- 禁止在业务代码中新增 `console.log`、`console.debug`、`console.warn`、`console.error` 作为调试手段。
+- 若需调试输出，必须改为 `sendDebugCommand(...)`。
+
+## 4. 修改约束
+- 调试相关改动优先修改 `src/debug/DebugLogger.ts`，其他模块仅负责发送命令。

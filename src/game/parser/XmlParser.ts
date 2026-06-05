@@ -1,36 +1,9 @@
-import type { 
-  Entity, 
-  AnyComponent, 
-  TransformComponent, 
-  SpriteComponent, 
-  RigidBodyComponent, 
-  BoxColliderComponent,
-  CircleColliderComponent,
-  PolygonColliderComponent,
-  GraphicComponent,
-  CameraComponent,
-  ParticleEmitterComponent,
-  GameObjectControllerComponent,
-  GameObjectControllerActionName,
-  InputActionDefinition,
-  InputActionMapDefinition,
-  InputBindingDefinition,
-  InputBindingPartDefinition,
-  InputConfig,
-  InputRouteDefinition,
-  InputRouteSetDefinition,
-  InputToSignalMapConfig,
-  InputRoutePhase,
-  SignalConfigComponent,
-  CanvasComponent,
-  WorldData,
-  EngineConfig,
-  SystemConfig,
-  BehaviorComponent,
-  TimerComponent,
-  AnimationComponent
-} from '../types';
-import { createGameObjectControllerActionRequestState } from '../ecs/components/GameObjectController';
+import type { AnyComponent, Entity, WorldData } from '../types';
+import { parseCanvas } from './passes/parseCanvas';
+import { parseEngineConfig } from './passes/parseEngineConfig';
+import { parseComponentByRegistry } from './components/componentParsers';
+import { getDirectChildByTag, getDirectChildren } from './xml/XmlDom';
+import { sendDebugCommand } from '../../debug/DebugLogger';
 
 interface PrefabDefinition {
   id: string;
@@ -45,7 +18,10 @@ interface ResolvedPrefabTemplate {
 }
 
 export class XmlParser {
+  private static readonly DEBUG_ENABLED = true;
+
   static async parseWorld(xmlString: string): Promise<WorldData> {
+    this.debug('parseWorld:start', { xmlLength: xmlString.length });
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xmlString, 'text/xml');
     const worldElement = xmlDoc.getElementsByTagName('World')[0];
@@ -54,14 +30,13 @@ export class XmlParser {
       throw new Error('Invalid XML: Missing <World> root element');
     }
 
-    // Parse EngineConfig
-    const config = this.parseEngineConfig(worldElement);
+    const config = this.runStage('parseEngineConfig', () => parseEngineConfig(worldElement));
 
-    // Parse Canvas
-    const canvas = this.parseCanvas(worldElement);
+    const canvas = this.runStage('parseCanvas', () => parseCanvas(worldElement));
 
-    // Parse Prefab library
-    const prefabRegistry = await this.parsePrefabLibrary(worldElement);
+    const prefabRegistry = await this.runStageAsync('parsePrefabLibrary', () =>
+      this.parsePrefabLibrary(worldElement),
+    );
     const resolvedPrefabCache = new Map<string, ResolvedPrefabTemplate>();
 
     // Parse scene entities from direct World children
@@ -69,210 +44,70 @@ export class XmlParser {
     const existingEntityIds = new Set<string>();
     let fallbackIdCounter = 0;
 
-    for (const child of this.getDirectChildren(worldElement)) {
+    const directChildren = getDirectChildren(worldElement);
+    this.debug('parseWorld:children', {
+      total: directChildren.length,
+      tags: directChildren.map((child) => child.tagName),
+    });
+
+    for (let childIndex = 0; childIndex < directChildren.length; childIndex++) {
+      const child = directChildren[childIndex];
       if (child.tagName === 'GameObject') {
-        const entity = this.parseGameObjectElement(child, `entity_${fallbackIdCounter++}`);
+        const entity = this.runStage(
+          `parseGameObject[index=${childIndex}]`,
+          () => this.parseGameObjectElement(child, `entity_${fallbackIdCounter++}`),
+          {
+            id: child.getAttribute('id') || undefined,
+            name: child.getAttribute('name') || undefined,
+          },
+        );
         this.appendEntity(entities, existingEntityIds, entity);
         continue;
       }
 
       if (child.tagName === 'Instance') {
-        const entity = this.parseInstanceElement(
-          child,
-          prefabRegistry,
-          resolvedPrefabCache,
-          `entity_${fallbackIdCounter++}`,
+        const entity = this.runStage(
+          `parseInstance[index=${childIndex}]`,
+          () =>
+            this.parseInstanceElement(
+              child,
+              prefabRegistry,
+              resolvedPrefabCache,
+              `entity_${fallbackIdCounter++}`,
+            ),
+          {
+            id: child.getAttribute('id') || undefined,
+            prefab: child.getAttribute('prefab') || undefined,
+          },
         );
         this.appendEntity(entities, existingEntityIds, entity);
       }
     }
 
+    this.debug('parseWorld:done', { entityCount: entities.length });
     return { config, canvas, entities };
   }
 
-  private static parseCanvas(worldEl: Element): CanvasComponent | undefined {
-    const canvasEl = this.getDirectChildByTag(worldEl, 'Canvas');
-    if (!canvasEl) return undefined;
-
-    return {
-      type: 'Canvas',
-      name: canvasEl.getAttribute('name') || 'Untitled',
-      width: parseFloat(canvasEl.getAttribute('width') || '1920'),
-      height: parseFloat(canvasEl.getAttribute('height') || '1080'),
-      background: canvasEl.getAttribute('background') || undefined,
-    };
-  }
-
-  private static parseEngineConfig(worldEl: Element): EngineConfig {
-    const configEl = this.getDirectChildByTag(worldEl, 'EngineConfig');
-    const systems: SystemConfig[] = [];
-    let inputConfig: InputConfig | undefined;
-    let inputToSignalMap: InputToSignalMapConfig | undefined;
-
-    if (configEl) {
-      const pipelineEl = this.getDirectChildByTag(configEl, 'SystemPipeline');
-      if (pipelineEl) {
-        for (const el of this.getDirectChildren(pipelineEl)) {
-          if (el.tagName !== 'System') continue;
-          systems.push({
-            name: el.getAttribute('name') || '',
-            enabled: el.getAttribute('enabled') !== 'false'
-          });
-        }
-      }
-
-      inputConfig = this.parseInputConfig(configEl);
-      inputToSignalMap = this.parseInputToSignalMap(configEl);
-    }
-
-    return { systems, inputConfig, inputToSignalMap };
-  }
-
-  private static parseInputConfig(configEl: Element): InputConfig | undefined {
-    const inputEl = this.getDirectChildByTag(configEl, 'InputConfig');
-    if (!inputEl) return undefined;
-
-    const modeAttr = (inputEl.getAttribute('mode') || 'strict').trim().toLowerCase();
-    const mode: 'strict' | 'loose' = modeAttr === 'loose' ? 'loose' : 'strict';
-    const devicePolicy = (inputEl.getAttribute('devicePolicy') || 'keyboard,mouse')
-      .split(',')
-      .map((part) => part.trim())
-      .filter(Boolean);
-    const deadzone = parseFloat(inputEl.getAttribute('deadzone') || '0.15');
-
-    const actionMaps: InputActionMapDefinition[] = [];
-    const actionMapsEl = this.getDirectChildByTag(inputEl, 'ActionMaps');
-    const activeMap = actionMapsEl?.getAttribute('active')?.trim() || undefined;
-    if (actionMapsEl) {
-      for (const mapEl of this.getDirectChildren(actionMapsEl)) {
-        if (mapEl.tagName !== 'ActionMap') continue;
-        const mapId = (mapEl.getAttribute('id') || '').trim();
-        if (!mapId) continue;
-        const actions: InputActionDefinition[] = [];
-        for (const actionEl of this.getDirectChildren(mapEl)) {
-          if (actionEl.tagName !== 'Action') continue;
-          const actionId = (actionEl.getAttribute('id') || '').trim();
-          if (!actionId) continue;
-          const actionTypeRaw = (actionEl.getAttribute('type') || 'button').trim();
-          const actionType =
-            actionTypeRaw === 'axis1' || actionTypeRaw === 'axis2' ? actionTypeRaw : 'button';
-          actions.push({
-            id: actionId,
-            type: actionType,
-          });
-        }
-        actionMaps.push({
-          id: mapId,
-          enabled: mapEl.getAttribute('enabled') !== 'false',
-          actions,
-        });
-      }
-    }
-
-    const bindings: InputBindingDefinition[] = [];
-    const bindingsEl = this.getDirectChildByTag(inputEl, 'Bindings');
-    if (bindingsEl) {
-      for (const bindingEl of this.getDirectChildren(bindingsEl)) {
-        if (bindingEl.tagName !== 'Binding') continue;
-        const action = (bindingEl.getAttribute('action') || '').trim();
-        if (!action) continue;
-        const parts: InputBindingPartDefinition[] = [];
-        for (const partEl of this.getDirectChildren(bindingEl)) {
-          if (partEl.tagName !== 'Part') continue;
-          const partName = (partEl.getAttribute('name') || '').trim();
-          const partPath = (partEl.getAttribute('path') || '').trim();
-          if (!partName || !partPath) continue;
-          parts.push({ name: partName, path: partPath });
-        }
-
-        const kindAttr = (bindingEl.getAttribute('kind') || '').trim();
-        const kind = kindAttr === '2dComposite' ? '2dComposite' : undefined;
-
-        bindings.push({
-          action,
-          map: bindingEl.getAttribute('map')?.trim() || undefined,
-          path: bindingEl.getAttribute('path')?.trim() || undefined,
-          kind,
-          processor: bindingEl.getAttribute('processor')?.trim() || undefined,
-          parts,
-        });
-      }
-    }
-
-    return {
-      mode,
-      devicePolicy,
-      deadzone: Number.isFinite(deadzone) ? deadzone : 0.15,
-      activeMap,
-      actionMaps,
-      bindings,
-    };
-  }
-
-  private static parseInputToSignalMap(configEl: Element): InputToSignalMapConfig | undefined {
-    const mapEl = this.getDirectChildByTag(configEl, 'InputToSignalMap');
-    if (!mapEl) return undefined;
-
-    const routes: InputRouteDefinition[] = [];
-    for (const routeEl of this.getDirectChildren(mapEl)) {
-      if (routeEl.tagName !== 'Route') continue;
-      const action = (routeEl.getAttribute('action') || '').trim();
-      const emit = (routeEl.getAttribute('emit') || '').trim();
-      const phaseRaw = (routeEl.getAttribute('phase') || 'pressed').trim().toLowerCase();
-      const phase: InputRoutePhase = isInputRoutePhase(phaseRaw) ? phaseRaw : 'pressed';
-      if (!action || !emit) continue;
-
-      const sets: InputRouteSetDefinition[] = [];
-      const payloadEl = this.getDirectChildByTag(routeEl, 'Payload');
-      if (payloadEl) {
-        for (const setEl of this.getDirectChildren(payloadEl)) {
-          if (setEl.tagName !== 'Set') continue;
-          const key = (setEl.getAttribute('key') || '').trim();
-          if (!key) continue;
-          const from = setEl.getAttribute('from')?.trim() || undefined;
-          const valueAttr = setEl.getAttribute('value');
-          sets.push({
-            key,
-            from,
-            value: valueAttr === null ? undefined : parseLoosePrimitive(valueAttr),
-          });
-        }
-      }
-
-      routes.push({
-        action,
-        map: routeEl.getAttribute('map')?.trim() || undefined,
-        phase,
-        emit,
-        throttleMs: parseInt(routeEl.getAttribute('throttleMs') || '0', 10) || 0,
-        sets,
-      });
-    }
-
-    return {
-      defaultMap: mapEl.getAttribute('defaultMap')?.trim() || undefined,
-      routes,
-    };
-  }
-
   private static async parsePrefabLibrary(worldEl: Element): Promise<Map<string, PrefabDefinition>> {
-    const libraryEl = this.getDirectChildByTag(worldEl, 'PrefabLibrary');
+    const libraryEl = getDirectChildByTag(worldEl, 'PrefabLibrary');
     const prefabs = new Map<string, PrefabDefinition>();
 
     if (!libraryEl) return prefabs;
 
-    for (const prefabEl of this.getDirectChildren(libraryEl)) {
+    for (const prefabEl of getDirectChildren(libraryEl)) {
       if (prefabEl.tagName !== 'Prefab') continue;
 
       const declaredId = prefabEl.getAttribute('id')?.trim();
       const src = prefabEl.getAttribute('src')?.trim();
 
       let extendsId = prefabEl.getAttribute('extends')?.trim() || undefined;
-      let gameObjectEl = this.getDirectChildByTag(prefabEl, 'GameObject');
+      let gameObjectEl = getDirectChildByTag(prefabEl, 'GameObject');
       let resolvedId = declaredId;
 
       if (src) {
-        const loaded = await this.loadPrefabDefinitionFromPublic(src);
+        const loaded = await this.runStageAsync('loadPrefabDefinitionFromPublic', () =>
+          this.loadPrefabDefinitionFromPublic(src),
+        );
         resolvedId = resolvedId || loaded.id;
         extendsId = extendsId || loaded.extendsId;
         gameObjectEl = loaded.gameObjectEl;
@@ -293,8 +128,14 @@ export class XmlParser {
         extendsId,
         gameObjectEl,
       });
+      this.debug('parsePrefabLibrary:item', {
+        id: resolvedId,
+        extendsId,
+        fromSrc: src || undefined,
+      });
     }
 
+    this.debug('parsePrefabLibrary:done', { prefabCount: prefabs.size });
     return prefabs;
   }
 
@@ -327,7 +168,7 @@ export class XmlParser {
 
     if (prefabRoot.tagName === 'Prefab') {
       const id = prefabRoot.getAttribute('id')?.trim();
-      const gameObjectEl = this.getDirectChildByTag(prefabRoot, 'GameObject');
+      const gameObjectEl = getDirectChildByTag(prefabRoot, 'GameObject');
       if (!gameObjectEl) {
         throw new Error(`Invalid XML: Prefab file "${src}" must contain one <GameObject>`);
       }
@@ -347,12 +188,12 @@ export class XmlParser {
     }
 
     if (prefabRoot.tagName === 'PrefabLibrary') {
-      const prefabEls = this.getDirectChildren(prefabRoot).filter((child) => child.tagName === 'Prefab');
+      const prefabEls = getDirectChildren(prefabRoot).filter((child) => child.tagName === 'Prefab');
       if (prefabEls.length === 0) {
         throw new Error(`Invalid XML: Prefab file "${src}" has no <Prefab> definition`);
       }
       const selectedPrefab = this.selectExportedPrefab(prefabEls, src);
-      const gameObjectEl = this.getDirectChildByTag(selectedPrefab, 'GameObject');
+      const gameObjectEl = getDirectChildByTag(selectedPrefab, 'GameObject');
       if (!gameObjectEl) {
         throw new Error(`Invalid XML: Prefab file "${src}" has <Prefab> without <GameObject>`);
       }
@@ -364,18 +205,18 @@ export class XmlParser {
     }
 
     if (prefabRoot.tagName === 'World') {
-      const externalLibrary = this.getDirectChildByTag(prefabRoot, 'PrefabLibrary');
+      const externalLibrary = getDirectChildByTag(prefabRoot, 'PrefabLibrary');
       if (!externalLibrary) {
         throw new Error(`Invalid XML: World prefab file "${src}" must contain <PrefabLibrary>`);
       }
 
-      const prefabEls = this.getDirectChildren(externalLibrary).filter((child) => child.tagName === 'Prefab');
+      const prefabEls = getDirectChildren(externalLibrary).filter((child) => child.tagName === 'Prefab');
       if (prefabEls.length === 0) {
         throw new Error(`Invalid XML: World prefab file "${src}" has no <Prefab> definition`);
       }
 
       const selectedPrefab = this.selectExportedPrefab(prefabEls, src);
-      const gameObjectEl = this.getDirectChildByTag(selectedPrefab, 'GameObject');
+      const gameObjectEl = getDirectChildByTag(selectedPrefab, 'GameObject');
       if (!gameObjectEl) {
         throw new Error(`Invalid XML: World prefab file "${src}" has exported <Prefab> without <GameObject>`);
       }
@@ -466,7 +307,7 @@ export class XmlParser {
     const name = instanceEl.getAttribute('name') || resolvedPrefab.name || undefined;
 
     const mergedComponentEls = this.cloneComponentElementMap(resolvedPrefab.components);
-    for (const overrideEl of this.getDirectChildren(instanceEl)) {
+    for (const overrideEl of getDirectChildren(instanceEl)) {
       const type = overrideEl.tagName;
       const baseEl = mergedComponentEls.get(type);
       mergedComponentEls.set(type, this.mergeComponentElements(baseEl, overrideEl));
@@ -536,7 +377,7 @@ export class XmlParser {
   private static collectComponentElements(parent: Element): Map<string, Element> {
     const map = new Map<string, Element>();
 
-    for (const child of this.getDirectChildren(parent)) {
+    for (const child of getDirectChildren(parent)) {
       map.set(child.tagName, child);
     }
 
@@ -549,9 +390,29 @@ export class XmlParser {
 
   private static parseComponentsFromMap(componentEls: Map<string, Element>): Map<string, AnyComponent> {
     const components = new Map<string, AnyComponent>();
+    const interfaceEl = componentEls.get('Interface');
 
-    for (const componentEl of componentEls.values()) {
-      const component = this.parseComponent(componentEl);
+    for (const [type, componentEl] of componentEls.entries()) {
+      if (type === 'Interface') continue; // Interface 不是独立组件
+
+      const component = this.runStage(
+        `parseComponent[type=${type}]`,
+        () => (type === 'SignalConfig'
+          ? parseComponentByRegistry(componentEl, { interfaceEl })
+          : parseComponentByRegistry(componentEl)),
+      );
+
+      if (component) {
+        components.set(component.type, component);
+      }
+    }
+
+    // 如果有 Interface 但没有 SignalConfig，自动创建一个空的 SignalConfig 来存放接口
+    if (interfaceEl && !components.has('SignalConfig')) {
+      const virtualSignalConfigEl = document.createElement('SignalConfig');
+      const component = this.runStage('parseComponent[type=SignalConfig][virtual]', () =>
+        parseComponentByRegistry(virtualSignalConfigEl, { interfaceEl }),
+      );
       if (component) {
         components.set(component.type, component);
       }
@@ -575,11 +436,32 @@ export class XmlParser {
     }
 
     const merged = baseEl.cloneNode(true) as Element;
+    
+    // 合并属性
     for (let i = 0; i < overrideEl.attributes.length; i++) {
       const attr = overrideEl.attributes.item(i);
       if (!attr) continue;
       merged.setAttribute(attr.name, attr.value);
     }
+
+    // 对于 SignalConfig，合并子元素（追加规则）
+    if (overrideEl.tagName === 'SignalConfig') {
+      for (const child of getDirectChildren(overrideEl)) {
+        merged.appendChild(child.cloneNode(true));
+      }
+    } else if (overrideEl.tagName === 'Animation') {
+        // Animation 通常是覆盖整个标签，或者合并 Label？
+        // 这里简单处理，如果有子元素则清空原有的并使用新的
+        if (overrideEl.children.length > 0) {
+            while (merged.firstChild) {
+                merged.removeChild(merged.firstChild);
+            }
+            for (const child of getDirectChildren(overrideEl)) {
+                merged.appendChild(child.cloneNode(true));
+            }
+        }
+    }
+
     return merged;
   }
 
@@ -599,421 +481,55 @@ export class XmlParser {
     };
   }
 
-  private static getDirectChildren(parent: Element): Element[] {
-    return Array.from(parent.children) as Element[];
-  }
-
-  private static getDirectChildByTag(parent: Element, tagName: string): Element | undefined {
-    return this.getDirectChildren(parent).find((child) => child.tagName === tagName);
-  }
-
-  private static parseComponent(el: Element): AnyComponent | null {
-    const type = el.tagName;
-
-    switch (type) {
-      case 'Transform':
-        return this.parseTransform(el);
-      case 'Sprite':
-        return this.parseSprite(el);
-      case 'RigidBody':
-        return this.parseRigidBody(el);
-      case 'BoxCollider':
-        return this.parseBoxCollider(el);
-      case 'CircleCollider':
-        return this.parseCircleCollider(el);
-      case 'PolygonCollider':
-        return this.parsePolygonCollider(el);
-      case 'Graphic':
-        return this.parseGraphic(el);
-      case 'Camera':
-        return this.parseCamera(el);
-      case 'ParticleEmitter':
-        return this.parseParticleEmitter(el);
-      case 'GameObjectController':
-        return this.parseGameObjectController(el);
-      case 'SignalConfig':
-        return this.parseSignalConfig(el);
-      case 'Behavior':
-        return this.parseBehavior(el);
-      case 'Timer':
-        return this.parseTimer(el);
-      case 'Animation':
-        return this.parseAnimation(el);
-      default:
-        console.warn(`Unknown component type: ${type}`);
-        return null;
+  private static runStage<T>(stage: string, fn: () => T, detail?: Record<string, unknown>): T {
+    this.debug(`${stage}:start`, detail);
+    try {
+      const result = fn();
+      this.debug(`${stage}:ok`);
+      return result;
+    } catch (error) {
+      this.debug(`${stage}:error`, { detail, error: this.stringifyError(error) });
+      throw this.wrapError(stage, error, detail);
     }
   }
 
-  private static parseCircleCollider(el: Element): CircleColliderComponent {
-    return {
-      type: 'CircleCollider',
-      radius: parseFloat(el.getAttribute('radius') || '0'),
-      offset: {
-        x: parseFloat(el.getAttribute('offsetX') || '0'),
-        y: parseFloat(el.getAttribute('offsetY') || '0')
-      }
-    };
+  private static async runStageAsync<T>(
+    stage: string,
+    fn: () => Promise<T>,
+    detail?: Record<string, unknown>,
+  ): Promise<T> {
+    this.debug(`${stage}:start`, detail);
+    try {
+      const result = await fn();
+      this.debug(`${stage}:ok`);
+      return result;
+    } catch (error) {
+      this.debug(`${stage}:error`, { detail, error: this.stringifyError(error) });
+      throw this.wrapError(stage, error, detail);
+    }
   }
 
-  private static parsePolygonCollider(el: Element): PolygonColliderComponent {
-    const pointsStr = el.getAttribute('points') || '';
-    const points = pointsStr.split(' ').map(p => {
-      const [x, y] = p.split(',').map(s => parseFloat(s.trim()));
-      return { x, y };
+  private static wrapError(stage: string, error: unknown, detail?: Record<string, unknown>): Error {
+    const baseMessage = error instanceof Error ? error.message : String(error);
+    const detailSuffix = detail ? ` | detail=${JSON.stringify(detail)}` : '';
+    return new Error(`[XmlParser:${stage}] ${baseMessage}${detailSuffix}`);
+  }
+
+  private static stringifyError(error: unknown): string {
+    if (error instanceof Error) {
+      return `${error.name}: ${error.message}`;
+    }
+    return String(error);
+  }
+
+  private static debug(message: string, payload?: Record<string, unknown>): void {
+    if (!this.DEBUG_ENABLED) return;
+    sendDebugCommand({
+      level: 'DEBUG',
+      source: 'XmlParser',
+      message,
+      detail: payload,
     });
-    return {
-      type: 'PolygonCollider',
-      points
-    };
   }
 
-  private static parseGraphic(el: Element): GraphicComponent {
-    const kind = el.getAttribute('kind') as any;
-    const fillColor = el.getAttribute('fillColor');
-    const fillAlpha = el.getAttribute('fillAlpha');
-    const strokeColor = el.getAttribute('strokeColor');
-    const strokeWidth = el.getAttribute('strokeWidth');
-    const strokeAlpha = el.getAttribute('strokeAlpha');
-
-    const graphic: GraphicComponent = {
-      type: 'Graphic',
-      kind,
-      fill: fillColor ? { color: fillColor, alpha: parseFloat(fillAlpha || '1') } : undefined,
-      stroke: strokeColor ? { color: strokeColor, width: parseFloat(strokeWidth || '1'), alpha: parseFloat(strokeAlpha || '1') } : undefined,
-      width: parseFloat(el.getAttribute('width') || '0') || undefined,
-      height: parseFloat(el.getAttribute('height') || '0') || undefined,
-      radius: parseFloat(el.getAttribute('radius') || '0') || undefined,
-    };
-
-    const anchorStr = el.getAttribute('anchor');
-    if (anchorStr) {
-      const [ax, ay] = anchorStr.split(',').map((s) => parseFloat(s.trim()));
-      if (Number.isFinite(ax) || Number.isFinite(ay)) {
-        graphic.anchor = {
-          x: Number.isFinite(ax) ? ax : 0,
-          y: Number.isFinite(ay) ? ay : 0,
-        };
-      }
-    }
-
-    const pointsStr = el.getAttribute('points');
-    if (pointsStr) {
-      graphic.points = pointsStr.split(' ').map(p => {
-        const [x, y] = p.split(',').map(s => parseFloat(s.trim()));
-        return { x, y };
-      });
-    }
-
-    return graphic;
-  }
-
-  private static parseTransform(el: Element): TransformComponent {
-    const posStr = el.getAttribute('position') || '0, 0, 0';
-    const parent = el.getAttribute('parent') || undefined;
-    const rotStr = el.getAttribute('rotation') || '0';
-    const scaleStr = el.getAttribute('scale') || '1, 1, 1';
-
-    const [px, py, pz] = posStr.split(',').map(s => parseFloat(s.trim()) || 0);
-    const [sx, sy, sz] = scaleStr.split(',').map(s => parseFloat(s.trim()) || 1);
-
-    return {
-      type: 'Transform',
-      position: { x: px, y: py, z: pz || 0 },
-      parent,
-      rotation: (parseFloat(rotStr) || 0) * (Math.PI / 180), // 转换为弧度
-      scale: { x: sx, y: sy, z: sz || 1 }
-    };
-  }
-
-  private static parseSprite(el: Element): SpriteComponent {
-    const texturePath = el.getAttribute('texture') || '';
-    const anchorStr = el.getAttribute('anchor') || '0.5, 0.5';
-    const [ax, ay] = anchorStr.split(',').map(s => parseFloat(s.trim()) || 0.5);
-    const tintStr = el.getAttribute('tint') || '0xffffff';
-
-    return {
-      type: 'Sprite',
-      texture: { kind: 'image', image: texturePath },
-      anchor: { x: ax, y: ay },
-      alpha: parseFloat(el.getAttribute('alpha') || '1'),
-      visible: el.getAttribute('visible') !== 'false',
-      blendMode: (el.getAttribute('blendMode') as any) || 'normal',
-      tint: parseInt(tintStr.startsWith('0x') ? tintStr : `0x${tintStr.replace('#', '')}`, 16),
-      layer: parseInt(el.getAttribute('layer') || '0', 10)
-    };
-  }
-
-  private static parseRigidBody(el: Element): RigidBodyComponent {
-    const velStr = el.getAttribute('linearVelocity') || '0, 0';
-    const [vx, vy] = velStr.split(',').map(s => parseFloat(s.trim()) || 0);
-    const emitsAttr = (el.getAttribute('emits') || '').trim();
-    const allowedEmits: RigidBodyComponent['allowedEmits'] = emitsAttr
-      ? emitsAttr
-          .split(',')
-          .map((item) => item.trim())
-          .filter(isRigidBodyEmitName)
-      : ['sensor.enter', 'sensor.stay', 'sensor.exit'];
-
-    return {
-      type: 'RigidBody',
-      mass: parseFloat(el.getAttribute('mass') || '1.0'),
-      bodyType: (el.getAttribute('type') as any) || 'dynamic',
-      linearVelocity: { x: vx, y: vy },
-      angularVelocity: parseFloat(el.getAttribute('angularVelocity') || '0'),
-      fixedRotation: el.getAttribute('fixedRotation') === 'true',
-      bullet: el.getAttribute('bullet') === 'true',
-      sensor: el.getAttribute('sensor') === 'true',
-      allowedEmits,
-      gravityScale: parseFloat(el.getAttribute('gravityScale') || '1'),
-      friction: parseFloat(el.getAttribute('friction') || '0.5'),
-      restitution: parseFloat(el.getAttribute('restitution') || '0.2'),
-      density: parseFloat(el.getAttribute('density') || '1.0')
-    };
-  }
-
-  private static parseBoxCollider(el: Element): BoxColliderComponent {
-    return {
-      type: 'BoxCollider',
-      width: parseFloat(el.getAttribute('width') || '0'),
-      height: parseFloat(el.getAttribute('height') || '0'),
-      offset: {
-        x: parseFloat(el.getAttribute('offsetX') || '0'),
-        y: parseFloat(el.getAttribute('offsetY') || '0')
-      }
-    };
-  }
-
-  private static parseCamera(el: Element): CameraComponent {
-    return {
-      type: 'Camera',
-      x: parseFloat(el.getAttribute('x') || '0'),
-      y: parseFloat(el.getAttribute('y') || '0'),
-      z: parseFloat(el.getAttribute('z') || '0'),
-      focus: parseFloat(el.getAttribute('focus') || '400'),
-    };
-  }
-
-  private static parseParticleEmitter(el: Element): ParticleEmitterComponent {
-    const texturePath = el.getAttribute('texture');
-    const graphicKind = el.getAttribute('graphicKind') as 'circleGraphic' | 'squareGraphic' | null;
-    return {
-      type: 'ParticleEmitter',
-      maxParticles: parseInt(el.getAttribute('maxParticles') || '200', 10),
-      emissionRate: parseFloat(el.getAttribute('emissionRate') || '30'),
-      texture: texturePath ? { kind: 'image', image: texturePath } : undefined,
-      graphicKind: graphicKind || undefined,
-      lifetimeMin: parseFloat(el.getAttribute('lifetimeMin') || '0.5'),
-      lifetimeMax: parseFloat(el.getAttribute('lifetimeMax') || '1.5'),
-      speedMin: parseFloat(el.getAttribute('speedMin') || '50'),
-      speedMax: parseFloat(el.getAttribute('speedMax') || '120'),
-      angle: parseFloat(el.getAttribute('angle') || '-90'),
-      spread: parseFloat(el.getAttribute('spread') || '45'),
-      startColor: el.getAttribute('startColor') || '#ffaa00',
-      endColor: el.getAttribute('endColor') || '#ff0000',
-      startSize: parseFloat(el.getAttribute('startSize') || '1.5'),
-      endSize: parseFloat(el.getAttribute('endSize') || '0.2'),
-      startAlpha: parseFloat(el.getAttribute('startAlpha') || '1'),
-      endAlpha: parseFloat(el.getAttribute('endAlpha') || '0'),
-      blendMode: (el.getAttribute('blendMode') as any) || 'add',
-      anchor: parseAnchor(el.getAttribute('anchor') || '0.5, 0.5'),
-    };
-  }
-
-  private static parseGameObjectController(el: Element): GameObjectControllerComponent {
-    const actionsAttr = (el.getAttribute('actions') || '').trim();
-    const allowedActions: GameObjectControllerActionName[] = actionsAttr
-      ? actionsAttr
-          .split(',')
-          .map((item) => item.trim())
-          .filter(isGameObjectControllerActionName)
-      : ['destroy'];
-
-    return {
-      type: 'GameObjectController',
-      alive: el.getAttribute('alive') !== 'false',
-      destroyable: el.getAttribute('destroyable') !== 'false',
-      destroyDelayMs: parseInt(el.getAttribute('destroyDelayMs') || '0', 10) || 0,
-      allowedActions,
-      actionRequests: createGameObjectControllerActionRequestState(allowedActions),
-      pendingDestroy: false,
-      destroyAt: null,
-      destroyReason: undefined,
-    };
-  }
-
-  private static parseSignalConfig(el: Element): SignalConfigComponent {
-    const rules: SignalConfigComponent['rules'] = [];
-
-    for (const childEl of this.getDirectChildren(el)) {
-      const whenEl = this.getDirectChildByTag(childEl, 'When');
-      const argsEl = this.getDirectChildByTag(childEl, 'Args');
-      const args: Record<string, string | number | boolean> = {};
-      if (argsEl) {
-        for (let i = 0; i < argsEl.attributes.length; i++) {
-          const attr = argsEl.attributes.item(i);
-          if (!attr) continue;
-          args[attr.name] = parseLoosePrimitive(attr.value);
-        }
-      }
-
-      if (childEl.tagName === 'On') {
-        const event = (childEl.getAttribute('event') || '').trim();
-        const target = (childEl.getAttribute('target') || '').trim();
-        const action = (childEl.getAttribute('action') || '').trim();
-        if (!event || !target || !action) continue;
-        rules.push({
-          kind: 'action',
-          event,
-          target,
-          action,
-          when: whenEl?.getAttribute('expr')?.trim() || undefined,
-          args,
-          priority: parseInt(childEl.getAttribute('priority') || '0', 10) || 0,
-        });
-        continue;
-      }
-
-      if (childEl.tagName === 'Emit') {
-        const from = (childEl.getAttribute('from') || '').trim();
-        const emit = (childEl.getAttribute('emit') || '').trim();
-        const signal = (childEl.getAttribute('signal') || '').trim();
-        if (!from || !emit || !signal) continue;
-        rules.push({
-          kind: 'emit',
-          from,
-          emit,
-          signal,
-          when: whenEl?.getAttribute('expr')?.trim() || undefined,
-          args,
-          priority: parseInt(childEl.getAttribute('priority') || '0', 10) || 0,
-        });
-      }
-    }
-
-    rules.sort((left, right) => right.priority - left.priority);
-    return {
-      type: 'SignalConfig',
-      rules,
-    };
-  }
-
-  private static parseBehavior(el: Element): BehaviorComponent {
-    const behaviorType = (el.getAttribute('type') || '').trim();
-    const params: Record<string, any> = {};
-    
-    // 解析所有属性作为参数
-    for (let i = 0; i < el.attributes.length; i++) {
-      const attr = el.attributes.item(i);
-      if (attr && attr.name !== 'type') {
-        params[attr.name] = parseLoosePrimitive(attr.value);
-      }
-    }
-
-    // 解析子元素作为参数 (可选)
-    for (const child of this.getDirectChildren(el)) {
-      const key = child.tagName;
-      const value = child.textContent?.trim();
-      if (value !== undefined) {
-        params[key] = parseLoosePrimitive(value);
-      }
-    }
-
-    return {
-      type: 'Behavior',
-      behaviorType,
-      params,
-    };
-  }
-
-  private static parseTimer(el: Element): TimerComponent {
-    return {
-      type: 'Timer',
-      time: parseFloat(el.getAttribute('time') || '0'),
-      duration: parseFloat(el.getAttribute('duration') || '1'),
-      loop: el.getAttribute('loop') === 'true',
-      active: el.getAttribute('active') !== 'false',
-      onCompleteSignal: el.getAttribute('onCompleteSignal') || undefined
-    };
-  }
-
-  private static parseAnimation(el: Element): AnimationComponent {
-    const labels: any[] = [];
-    const defaultLabel = el.getAttribute('defaultLabel') || undefined;
-
-    for (const labelEl of this.getDirectChildren(el)) {
-      if (labelEl.tagName === 'Label') {
-        const tracks: any[] = [];
-        for (const trackEl of this.getDirectChildren(labelEl)) {
-          if (trackEl.tagName === 'Track') {
-            const keyframes: any[] = [];
-            for (const keyEl of this.getDirectChildren(trackEl)) {
-              if (keyEl.tagName === 'Key') {
-                keyframes.push({
-                  frame: parseFloat(keyEl.getAttribute('frame') || '0'),
-                  value: parseLoosePrimitive(keyEl.getAttribute('value') || '0'),
-                  easing: keyEl.getAttribute('easing') || undefined
-                });
-              }
-            }
-            // 确保按帧排序
-            keyframes.sort((a, b) => a.frame - b.frame);
-
-            tracks.push({
-              property: trackEl.getAttribute('prop') || '',
-              interpolation: (trackEl.getAttribute('interpolation') || 'hold') as any,
-              valueMode: (trackEl.getAttribute('valueMode') || 'absolute') as any,
-              keyframes
-            });
-          }
-        }
-
-        labels.push({
-          name: labelEl.getAttribute('name') || 'default',
-          duration: parseFloat(labelEl.getAttribute('duration') || '1'),
-          loop: labelEl.getAttribute('loop') !== 'false',
-          speed: parseFloat(labelEl.getAttribute('speed') || '1.0'),
-          tracks
-        });
-      }
-    }
-
-    return {
-      type: 'Animation',
-      labels,
-      activeLabel: defaultLabel || (labels.length > 0 ? labels[0].name : undefined),
-      currentFrame: 0,
-      defaultLabel
-    };
-  }
-}
-
-function parseAnchor(anchorStr: string): { x: number; y: number } {
-  const [x, y] = anchorStr.split(',').map((s) => parseFloat(s.trim()));
-  return {
-    x: Number.isFinite(x) ? x : 0.5,
-    y: Number.isFinite(y) ? y : 0.5,
-  };
-}
-
-function parseLoosePrimitive(value: string): string | number | boolean {
-  const normalized = value.trim();
-  if (normalized === 'true') return true;
-  if (normalized === 'false') return false;
-  if (/^-?\d+(\.\d+)?$/.test(normalized)) {
-    return parseFloat(normalized);
-  }
-  return value;
-}
-
-function isInputRoutePhase(value: string): value is InputRoutePhase {
-  return value === 'pressed' || value === 'released' || value === 'held' || value === 'changed';
-}
-
-function isGameObjectControllerActionName(value: string): value is GameObjectControllerActionName {
-  return value === 'destroy';
-}
-
-function isRigidBodyEmitName(value: string): value is 'sensor.enter' | 'sensor.stay' | 'sensor.exit' {
-  return value === 'sensor.enter' || value === 'sensor.stay' || value === 'sensor.exit';
 }

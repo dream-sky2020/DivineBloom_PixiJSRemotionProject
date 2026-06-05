@@ -1,6 +1,6 @@
 import { System } from '../types';
 import type { Entity, EntityId, WorldData } from '../types';
-import { consumeQueuedDestroyEntityIds } from './lifecycleRuntime';
+import { consumeQueuedDestroyEntityIds } from '../modules/lifecycle/lifecycleRuntime';
 
 export class World {
   private entities: Map<EntityId, Entity> = new Map();

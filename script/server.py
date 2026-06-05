@@ -210,6 +210,14 @@ class RenderHandler(BaseHTTPRequestHandler):
                 self.respond(200, {"ok": True, "message": f"Batch updated {len(updates)} assets"})
             except Exception as error:
                 self.respond(500, {"ok": False, "error": str(error)})
+
+        elif route == "/debug/log":
+            try:
+                payload = self.read_json()
+                append_debug_log(payload)
+                self.respond(200, {"ok": True})
+            except Exception as error:
+                self.respond(500, {"ok": False, "error": str(error)})
         
         elif route == "/tool/batch-rename":
             try:
@@ -351,6 +359,22 @@ def read_local_text_file(raw_path: str) -> str:
             continue
 
     raise ValueError("文件不是可读取的文本编码（支持 utf-8 / gb18030）")
+
+
+def append_debug_log(payload: dict[str, Any]) -> None:
+    log_file = PUBLIC_DIR / "log.txt"
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    record = {
+        "time": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "level": payload.get("level", "DEBUG"),
+        "source": payload.get("source", ""),
+        "message": payload.get("message", ""),
+        "detail": payload.get("detail"),
+    }
+
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
 def render_video(payload: dict[str, Any]) -> str:

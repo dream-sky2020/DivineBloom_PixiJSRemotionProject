@@ -2,15 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { PixiPhysicsCanvas, type PixiPhysicsRuntime } from '../components/PixiPhysicsCanvas';
 import {
   GameEngine,
-  EcsPhysicsSystem,
-  EcsRenderSystem,
-  EcsParticleSystem,
-  EcsInputSystem,
-  EcsSignalSystem,
-  EcsGameObjectLifecycleSystem,
-  EcsBehaviorSystem,
-  EcsTimerSystem,
-  EcsAnimationSystem,
+  setupDefaultGame,
 } from '../game';
 import type { World } from '../game/ecs/World';
 import { toast } from '../components/Toast';
@@ -153,16 +145,12 @@ export function GameECSPage() {
       const processor = runtimeRef.current.processor;
       clearCurrentScene();
 
-      // 1. 注册系统工厂
-      GameEngine.registerSystem('PhysicsSystem', () => new EcsPhysicsSystem({ x: 0, y: 0 }, 4));
-      GameEngine.registerSystem('RenderSystem', () => new EcsRenderSystem(processor));
-      GameEngine.registerSystem('ParticleSystem', () => new EcsParticleSystem(processor));
-      GameEngine.registerSystem('InputSystem', () => new EcsInputSystem());
-      GameEngine.registerSystem('SignalSystem', () => new EcsSignalSystem());
-      GameEngine.registerSystem('GameObjectLifecycleSystem', () => new EcsGameObjectLifecycleSystem());
-      GameEngine.registerSystem('BehaviorSystem', () => new EcsBehaviorSystem());
-      GameEngine.registerSystem('TimerSystem', () => new EcsTimerSystem());
-      GameEngine.registerSystem('AnimationSystem', () => new EcsAnimationSystem());
+      // 1. 统一注册默认组件、行为和系统工厂
+      setupDefaultGame({
+        processor,
+        gravity: { x: 0, y: 0 },
+        substeps: 4,
+      });
 
       // 2. 创建世界
       const newWorld = await GameEngine.createWorldFromXml(xmlString);

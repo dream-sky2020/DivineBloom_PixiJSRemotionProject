@@ -1,0 +1,162 @@
+<World>
+    <EngineConfig>
+        <SystemPipeline>
+            <System name="InputSystem" enabled="true" />
+            <System name="SignalSystem" enabled="true" />
+            <System name="BehaviorSystem" enabled="true" />
+            <System name="RenderSystem" enabled="true" />
+        </SystemPipeline>
+
+        <!-- 信号定义：明确系统中流转的数据结构 -->
+        <SignalDefinitions>
+            <Signal id="SWITCH_TOGGLED" scope="GLOBAL" description="开关切换（旧链路）">
+                <Payload>
+                    <Field name="state" type="string" description="on | off" />
+                    <Field name="id" type="string" description="触发来源ID（可选）" />
+                    <Field name="name" type="string" description="触发来源名称（可选）" />
+                </Payload>
+            </Signal>
+            <Signal id="SWITCH_STATE_CHANGED" scope="GLOBAL" description="开关状态改变">
+                <Payload>
+                    <Field name="isOn" type="boolean" description="当前是否开启" />
+                    <Field name="switchId" type="string" description="触发开关的ID" />
+                </Payload>
+            </Signal>
+        </SignalDefinitions>
+
+        <InputConfig mode="strict">
+            <ActionMaps active="gameplay">
+                <ActionMap id="gameplay" enabled="true">
+                    <Action id="toggle_switch" type="button" />
+                    <Action id="interact" type="button" />
+                    <Action id="toggle_light_q" type="button" />
+                    <Action id="toggle_light_hotkeys" type="button" />
+                </ActionMap>
+            </ActionMaps>
+            <Bindings>
+                <Binding action="toggle_switch" map="gameplay" path="Keyboard/Space" />
+                <Binding action="interact" map="gameplay" path="Keyboard/E" />
+                <Binding action="toggle_light_q" map="gameplay" path="Keyboard/KeyQ" />
+                <Binding action="toggle_light_hotkeys" map="gameplay" path="Keyboard/KeyR" />
+                <Binding action="toggle_light_hotkeys" map="gameplay" path="Keyboard/KeyT" />
+                <Binding action="toggle_light_hotkeys" map="gameplay" path="Keyboard/KeyY" />
+                <Binding action="toggle_light_hotkeys" map="gameplay" path="Keyboard/KeyU" />
+            </Bindings>
+        </InputConfig>
+
+        <InputToSignalMap defaultMap="gameplay">
+            <Route action="toggle_switch" phase="pressed" emit="GLOBAL:INPUT_TOGGLE" />
+            <Route action="toggle_switch" phase="pressed" emit="GLOBAL:SWITCH_TOGGLED">
+                <Payload>
+                    <Set key="state" value="on" />
+                    <Set key="id" value="keyboard-space" />
+                    <Set key="name" value="DirectSpaceTrigger" />
+                </Payload>
+            </Route>
+            <Route action="interact" phase="pressed" emit="GLOBAL:PLAYER_INTERACT" />
+            <Route action="toggle_light_q" phase="pressed" emit="GLOBAL:SWITCH_TOGGLED">
+                <Payload>
+                    <Set key="state" value="on" />
+                    <Set key="id" value="keyboard-q" />
+                    <Set key="name" value="DirectKeyTrigger" />
+                </Payload>
+            </Route>
+            <Route action="toggle_light_hotkeys" phase="pressed" emit="GLOBAL:SWITCH_TOGGLED">
+                <Payload>
+                    <Set key="state" value="on" />
+                    <Set key="id" from="ctx.path" />
+                    <Set key="name" value="DirectMultiKeyTrigger" />
+                </Payload>
+            </Route>
+        </InputToSignalMap>
+    </EngineConfig>
+
+    <Canvas name="signal_demo" width="1280" height="720" background="#0f172a" />
+
+    <PrefabLibrary>
+        <!-- === 原有测试预制体 === -->
+        <Prefab id="switch_prefab">
+            <GameObject name="Switch">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="40" fillColor="#4b5563" />
+                <Behavior type="Switch" initialState="off" />
+                <SignalConfig>
+                    <On event="GLOBAL:INPUT_TOGGLE" target="Behavior:Switch" action="toggle" />
+                </SignalConfig>
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="light_prefab">
+            <GameObject name="Light">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="rectangleGraphic" width="200" height="200" fillColor="#fbbf24" alpha="0.2" />
+                <Behavior type="Light" initialBrightness="0.2" />
+                <SignalConfig>
+                    <On event="GLOBAL:SWITCH_TOGGLED" target="Behavior:Light" action="onSwitchToggled" />
+                </SignalConfig>
+            </GameObject>
+        </Prefab>
+
+        <!-- === 新规范测试预制体 (Smart 系列) === -->
+        <Prefab id="smart_switch">
+            <GameObject name="SmartSwitchEntity">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="30" fillColor="#0ea5e9" />
+                <Behavior type="SwitchBehavior" />
+                <SignalConfig>
+                    <!-- 同时响应 E 键和 Space 键，方便测试 -->
+                    <On event="GLOBAL:PLAYER_INTERACT" target="Behavior:SwitchBehavior" action="toggle" />
+                    <On event="GLOBAL:INPUT_TOGGLE" target="Behavior:SwitchBehavior" action="toggle" />
+                </SignalConfig>
+                <Interface>
+                    <Signal name="onChanged" internal="LOCAL:toggled" direction="out" />
+                </Interface>
+            </GameObject>
+        </Prefab>
+
+        <Prefab id="smart_light">
+            <GameObject name="SmartLightEntity">
+                <Transform position="0, 0, 0" />
+                <Graphic kind="circleGraphic" radius="100" fillColor="#ffffff" alpha="0.1" />
+                <Behavior type="LightBehavior" />
+                <Interface>
+                    <Signal name="power" internal="Behavior:LightBehavior/setIntensity" direction="in" />
+                </Interface>
+            </GameObject>
+        </Prefab>
+    </PrefabLibrary>
+
+    <!-- === 实例化：原有测试 === -->
+    <Instance prefab="switch_prefab" id="sw-old" name="OldSwitch">
+        <Transform position="300, 200, 0" />
+    </Instance>
+
+    <Instance prefab="light_prefab" id="lt-old" name="OldLight">
+        <Transform position="800, 200, 0" />
+    </Instance>
+
+    <!-- === 实例化：新规范测试 === -->
+    <Instance prefab="smart_switch" id="sw-smart">
+        <Transform position="300, 500, 0" />
+        <SignalConfig>
+            <On event="INTERFACE:onChanged" emit="GLOBAL:SWITCH_STATE_CHANGED">
+                <Args>
+                    <Set key="isOn" from="payload.state === 'on'" />
+                    <Set key="switchId" value="sw-smart" />
+                </Args>
+            </On>
+        </SignalConfig>
+    </Instance>
+
+    <Instance prefab="smart_light" id="lt-smart">
+        <Transform position="800, 500, 0" />
+        <SignalConfig>
+            <On event="GLOBAL:SWITCH_STATE_CHANGED" target="INTERFACE:power">
+                <Args>
+                    <Set key="intensity" from="payload.isOn ? 1.0 : 0.1" />
+                </Args>
+            </On>
+        </SignalConfig>
+    </Instance>
+
+</World>

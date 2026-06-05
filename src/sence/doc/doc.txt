@@ -136,53 +136,43 @@
 用于将 `Action` 的阶段变化统一映射为 `EventBus` 事件。推荐作为 `<EngineConfig>` 直接子节点。
 
 ```xml
-    <InputToSignalMap defaultMap="gameplay">
-        <Route action="move" phase="changed" emit="input.move.changed" throttleMs="16">
-            <Payload>
-                <Set key="axis" from="ctx.value" />
-                <Set key="device" from="ctx.device" />
-                <Set key="entityId" value="$player" />
-            </Payload>
-        </Route>
+<InputToSignalMap defaultMap="gameplay">
+    <Route action="move" phase="changed" emit="input.move.changed" throttleMs="16">
+        <Payload>
+            <Set key="axis" from="ctx.value" />
+            <Set key="device" from="ctx.device" />
+            <Set key="entityId" value="$player" />
+        </Payload>
+    </Route>
 
-        <Route action="jump" phase="pressed" emit="input.jump.triggered">
-            <Payload>
-                <Set key="device" from="ctx.device" />
-                <Set key="entityId" value="$player" />
-            </Payload>
-        </Route>
-    </InputToSignalMap>
+    <Route action="jump" phase="pressed" emit="input.jump.triggered">
+        <Payload>
+            <Set key="device" from="ctx.device" />
+            <Set key="entityId" value="$player" />
+        </Payload>
+    </Route>
+</InputToSignalMap>
 
-    ### 2.4 信号定义 (SignalDefinitions)
+### 2.4 信号注册表 (SignalRegistry)
 
-    用于正式定义系统中流转的信号及其 Payload 结构。这不仅是文档，也可以作为运行时校验或编辑器提示的依据。
+定义游戏中所有信号的数据契约（Payload 结构）。
 
-    ```xml
-    <SignalDefinitions>
-        <!-- 全局信号：通常用于跨系统、跨 Prefab 的宏观事件 -->
-        <Signal id="PLAYER_DIED" scope="GLOBAL" description="玩家死亡时触发">
-            <Payload>
-                <Field name="playerId" type="string" description="死亡玩家的 ID" />
-                <Field name="killerId" type="string" description="击杀者 ID" />
-                <Field name="position" type="vector2" description="死亡位置" />
-            </Payload>
-        </Signal>
+```xml
+<SignalRegistry>
+    <!-- 定义全局信号：玩家得分改变 -->
+    <Signal name="GLOBAL:SCORE_CHANGED">
+        <Param name="playerId" type="string" />
+        <Param name="newScore" type="number" />
+        <Param name="delta" type="number" />
+    </Signal>
 
-        <!-- 本地信号：通常用于 Prefab 内部组件间的微观协作 -->
-        <Signal id="timer.done" scope="LOCAL" description="定时器完成">
-            <Payload>
-                <Field name="timerId" type="string" description="完成的定时器 ID" />
-            </Payload>
-        </Signal>
-
-        <!-- 预制体接口信号：定义 Prefab 对外暴露的“插槽” -->
-        <Signal id="INTERACTED" scope="INTERFACE" description="对象被交互时触发" />
-    </SignalDefinitions>
-    ```
-
-    - `id`: 信号唯一标识。
-    - `scope`: `GLOBAL` | `LOCAL` | `INTERFACE`。
-    - `INTERFACE` 作用域的信号仅在 Prefab 的 `<Interface>` 中定义，表示该 Prefab 承诺会发出或接收此类信号。
+    <!-- 定义本地信号：受到伤害 -->
+    <Signal name="LOCAL:damaged">
+        <Param name="amount" type="number" />
+        <Param name="sourceId" type="string" />
+    </Signal>
+</SignalRegistry>
+```
 ```
 
 ## 3. 游戏对象 (GameObject)
@@ -339,28 +329,28 @@
 
 ### 4.11 信号配置组件 (SignalConfig)
 
-定义实体的“信号编排规则”，支持跨实体通信。
+定义实体的“信号编排规则”。为了保持解耦，禁止直接跨实体触发 Action。支持将信号中的 Payload 映射到 Action 参数。
 
 ```xml
 <SignalConfig>
     <!-- 监听本地信号：由本实体的组件（如 Timer, Behavior）发出 -->
     <On event="LOCAL:timer.done" target="GameObjectController" action="destroy" />
 
-    <!-- 监听全局信号：由任何实体发出 -->
-    <On event="GLOBAL:PLAYER_DIED" target="Behavior:GameUI" action="showGameOver" />
-
-    <!-- 跨实体触发：监听到信号后，操作另一个实体 -->
-    <On event="GLOBAL:SWITCH_PRESSED" target="ENTITY:Door_01/Behavior:DoorLogic" action="open">
-        <Args speed="2.0" />
+    <!-- 监听全局信号：支持参数映射 -->
+    <!-- 将信号中的 newScore 映射为 Action 的 score 参数 -->
+    <On event="GLOBAL:SCORE_CHANGED" target="Behavior:ScoreUI" action="updateDisplay">
+        <Args score="fromPayload:newScore" />
     </On>
 </SignalConfig>
 ```
 
 - `event`: 格式为 `[SCOPE]:[SIGNAL_NAME]`。Scope 可选 `LOCAL` (默认) 或 `GLOBAL`。
-- `target`: 格式为 `[TARGET_TYPE]:[IDENTIFIER]`。
+- `target`: 格式为 `[TARGET_TYPE]`。**禁止使用 ENTITY 前缀跨实体操作**。
     - `GameObjectController`: 操作本实体的生命周期。
     - `Behavior:[BehaviorType]`: 触发本实体上特定类型的 Behavior 方法。
-    - `ENTITY:[EntityID|Name]/[SUB_TARGET]`: 远程操作另一个实体的组件。
+- `Args`: 传递给 Action 的参数。
+    - 使用 `fromPayload:[Key]` 语法从信号数据中提取值。
+    - 使用固定值（如 `speed="2.0"`）。
 
 ### 4.12 游戏对象控制组件 (GameObjectController)
 
@@ -443,9 +433,7 @@
 
 ## 6. 预制体 (Prefab)
 
-用于复用常见实体结构，并定义其对外暴露的接口。
-
-### 6.1 预制体定义
+用于复用常见实体结构。
 
 <PrefabLibrary>
     <Prefab id="bouncing_circle">
@@ -453,39 +441,10 @@
             <!-- Components -->
         </GameObject>
     </Prefab>
-
-    <Prefab id="lever">
-        <GameObject name="LeverTemplate">
-            <Behavior type="SwitchBehavior" />
-            <SignalConfig>
-                <!-- 内部逻辑：当 Behavior 发出 'switched' 信号时 -->
-                <On event="LOCAL:switched" target="GameObjectController" action="log">
-                    <Args message="Lever toggled internally" />
-                </On>
-            </SignalConfig>
-            
-            <!-- 接口定义：暴露给外部的信号插槽 -->
-            <Interface>
-                <Signal name="onToggle" internal="LOCAL:switched" direction="out" />
-                <Signal name="reset" internal="Behavior:SwitchBehavior/reset" direction="in" />
-            </Interface>
-        </GameObject>
-    </Prefab>
 </PrefabLibrary>
 
-### 6.2 实例化与接口重映射
-
-实例化时，可以通过 `SignalConfig` 对 Prefab 暴露的接口进行重映射，而无需关心 Prefab 内部的具体实现。
-
-<Instance prefab="lever" id="lever_01">
+<Instance prefab="bouncing_circle" id="obj-01" name="BallA">
     <Transform position="200, 200, 0" />
-    <SignalConfig>
-        <!-- 将 Prefab 的接口信号 'onToggle' 映射到全局信号 -->
-        <On event="INTERFACE:onToggle" emit="GLOBAL:GATE_OPEN" />
-        
-        <!-- 响应外部信号，触发 Prefab 的接口 'reset' -->
-        <On event="GLOBAL:LEVEL_START" target="INTERFACE:reset" />
-    </SignalConfig>
 </Instance>
 
 ## 7. 信号与通信系统 (Signals & Communication)
@@ -519,10 +478,11 @@ this.emit("GLOBAL:ACHIEVEMENT_UNLOCKED", { id: "first_blood" }); // 全局
 信号的处理统一由 `SignalConfig` 组件编排。它扮演了“接线员”的角色，将信号路由到具体的逻辑处理函数（Action）。
 
 #### 接收流程：
-1.  **监听**: `SignalSystem` 捕获到信号。
+1.  **监听**: `SignalSystem` 捕获到信号及其 Payload。
 2.  **匹配**: 查找所有挂载了 `SignalConfig` 且订阅了该信号的实体。
 3.  **过滤 (When)**: 如果定义了 `when` 表达式，则进行条件判断。
-4.  **执行 (Action)**: 调用目标组件的方法。
+4.  **映射 (Mapping)**: 根据 `Args` 配置，从 Payload 中提取数据。
+5.  **执行 (Action)**: 调用目标组件的方法并传入映射后的参数。
 
 ### 7.4 Behavior 通信最佳实践
 
@@ -531,27 +491,6 @@ this.emit("GLOBAL:ACHIEVEMENT_UNLOCKED", { id: "first_blood" }); // 全局
 1.  **解耦发送**: Prefab A 内部发生重要事件时，只管 `emit("GLOBAL:EVENT_NAME")`，不需要知道谁在听。
 2.  **配置接收**: Prefab B 是否响应 Prefab A 的事件，通过在 Prefab B 的 XML 中配置 `SignalConfig` 来决定。
 3.  **接口化**: 在 Prefab 的 `Behavior` 中定义清晰的 `public` 方法作为 Action 入口。
-
-### 7.5 预制体信号接口与重映射 (Prefab Signal Interface & Remapping)
-
-为了解决 Prefab 内部信号安排混乱以及引用复杂的问题，引入 `INTERFACE` 作用域。
-
-#### A. 接口定义 (Inside Prefab)
-在 Prefab 的 `<GameObject>` 下添加 `<Interface>` 节点：
-- `<Signal name="[PublicName]" internal="[InternalEvent]" direction="out" />`: 
-    - 当内部发出 `internal` 信号时，会自动触发外部监听的 `PublicName`。
-- `<Signal name="[PublicName]" internal="[InternalTarget]" direction="in" />`:
-    - 当外部触发 `PublicName` 时，会自动转发给内部的 `InternalTarget`。
-
-#### B. 接口重映射 (Inside Instance)
-在 `<Instance>` 的 `SignalConfig` 中使用 `INTERFACE:` 前缀：
-- `event="INTERFACE:onToggle"`: 监听该实例暴露的 `onToggle` 接口。
-- `target="INTERFACE:reset"`: 触发该实例暴露的 `reset` 接口。
-
-**优势**：
-1.  **封装性**: 修改 Prefab 内部实现（如更换 Behavior 类型或内部信号名）不需要修改所有 Instance。
-2.  **清晰性**: 开发者只需查看 Prefab 的 `<Interface>` 就能知道如何与其交互。
-3.  **复用性**: 同一个 Prefab 的不同实例可以绑定到完全不同的全局信号。
 
 **示例：解耦的“开关与灯”系统**
 

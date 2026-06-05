@@ -1,0 +1,31 @@
+<PrefabLibrary>
+    <!-- 1. 开关预制体：封装内部逻辑，只暴露接口 -->
+    <Prefab id="smart_switch">
+        <GameObject name="SwitchEntity">
+            <Transform position="0, 0, 0" />
+            <Graphic kind="circleGraphic" radius="30" fillColor="#4b5563" />
+            <Behavior type="SwitchBehavior" />
+            <SignalConfig>
+                <!-- 内部逻辑：响应玩家交互 -->
+                <On event="GLOBAL:PLAYER_INTERACT" target="Behavior:SwitchBehavior" action="toggle" />
+            </SignalConfig>
+            <Interface>
+                <!-- 将内部 LOCAL:toggled 信号映射为公共接口 onChanged -->
+                <Signal name="onChanged" internal="LOCAL:toggled" direction="out" />
+            </Interface>
+        </GameObject>
+    </Prefab>
+
+    <!-- 2. 灯光预制体：定义接收外部指令的接口 -->
+    <Prefab id="smart_light">
+        <GameObject name="LightEntity">
+            <Transform position="0, 0, 0" />
+            <Graphic kind="circleGraphic" radius="100" fillColor="#ffffff" alpha="0.1" />
+            <Behavior type="LightBehavior" />
+            <Interface>
+                <!-- 定义 power 接口，外部触发它时会转发给内部 Behavior 的 setIntensity 方法 -->
+                <Signal name="power" internal="Behavior:LightBehavior/setIntensity" direction="in" />
+            </Interface>
+        </GameObject>
+    </Prefab>
+</PrefabLibrary>

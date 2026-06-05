@@ -2,21 +2,20 @@
  * ECS 核心类型定义
  */
 
-import type { TransformComponent } from './ecs/components/Transform';
-import type { SpriteComponent } from './ecs/components/Sprite';
-import type { RigidBodyComponent } from './ecs/components/RigidBody';
-import type { CircleColliderComponent } from './ecs/components/CircleCollider';
-import type { PolygonColliderComponent } from './ecs/components/PolygonCollider';
-import type { GraphicComponent } from './ecs/components/Graphic';
-import type { CameraComponent } from './ecs/components/Camera';
-import type { CanvasComponent } from './ecs/components/Canvas';
-import type { ParticleEmitterComponent } from './ecs/components/ParticleEmitter';
-import type { TimerComponent } from './ecs/components/Timer';
-import type { AnimationComponent, AnimationLabel, AnimationTrack, AnimationKeyframe } from './ecs/components/Animation';
+import type { TransformComponent } from './modules/transform/Transform';
+import type { SpriteComponent } from './modules/rendering/Sprite';
+import type { RigidBodyComponent } from './modules/physics/RigidBody';
+import type { CircleColliderComponent, PolygonColliderComponent } from './modules/physics/Colliders';
+import type { GraphicComponent } from './modules/rendering/Graphic';
+import type { CameraComponent } from './modules/rendering/Camera';
+import type { CanvasComponent } from './modules/rendering/Canvas';
+import type { ParticleEmitterComponent } from './modules/particles/ParticleEmitter';
+import type { TimerComponent } from './modules/timer/Timer';
+import type { AnimationComponent, AnimationLabel, AnimationTrack, AnimationKeyframe } from './modules/animation/Animation';
 import type {
   GameObjectControllerActionName,
   GameObjectControllerComponent,
-} from './ecs/components/GameObjectController';
+} from './modules/lifecycle/GameObjectController';
 
 export type { 
   TransformComponent, 
@@ -52,9 +51,10 @@ export interface BoxColliderComponent extends Component {
 
 export interface SignalActionRule {
   kind: 'action';
-  event: string;
-  target: string;
-  action: string;
+  event: string; // 支持 LOCAL:, GLOBAL:, INTERFACE:
+  target?: string; // 支持 GameObjectController, Behavior:[Type], ENTITY:[ID]/[SUB], INTERFACE:[Name]
+  action?: string;
+  emit?: string; // 新增：支持直接转发为另一个信号
   when?: string;
   args: Record<string, string | number | boolean>;
   priority: number;
@@ -72,9 +72,16 @@ export interface SignalEmitRule {
 
 export type SignalBindingRule = SignalActionRule | SignalEmitRule;
 
+export interface SignalInterfaceDefinition {
+  name: string;
+  internal: string; // 内部信号名或目标路径
+  direction: 'in' | 'out';
+}
+
 export interface SignalConfigComponent extends Component {
   readonly type: 'SignalConfig';
   rules: SignalBindingRule[];
+  interfaces?: SignalInterfaceDefinition[]; // Prefab 暴露的接口
 }
 
 export type InputActionType = 'button' | 'axis1' | 'axis2';
@@ -170,12 +177,17 @@ export interface GameObject {
   /**
    * 通信协议：处理自定义消息
    */
-  onMessage?(message: string, payload: any): void;
+  onMessage?(message: string, payload: any): boolean | void;
 
   /**
    * 销毁时调用
    */
   onDestroy?(): void;
+
+  /**
+   * 发送信号的辅助方法
+   */
+  emit?(signal: string, payload?: any): void;
 }
 
 export interface BehaviorComponent extends Component {
